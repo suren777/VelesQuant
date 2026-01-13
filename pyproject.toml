@@ -1,0 +1,40 @@
+[build-system]
+requires = ["scikit-build-core", "pybind11"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "velesquant"
+version = "0.1.0"
+description = "A high-performance financial valuation library"
+readme = "README.md"
+authors = [
+  { name = "Valuation Lib Team", email = "info@valuationlib.com" },
+]
+requires-python = ">=3.12"
+dependencies = [
+    "numpy",
+]
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[tool.poetry]
+name = "velesquant"
+version = "0.1.0"
+description = "A high-performance financial valuation library"
+authors = ["Valuation Lib Team <info@valuationlib.com>"]
+readme = "README.md"
+packages = [{include = "velesquant", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+numpy = "^1.26.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+
+[tool.scikit-build]
+cmake.verbose = true
+logging.level = "INFO"
+# Set the wheel install directory to match src-layout
+wheel.packages = ["src/velesquant"]
