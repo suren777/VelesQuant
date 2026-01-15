@@ -16,7 +16,7 @@ def test_ctree_binding():
 
     tree = native.CTree(S, T, F, IV, r, q)
     # European call using binomial tree
-    price = tree.calculateBinomial(
+    price = tree.calculate_binomial(
         100.0,
         1.0,
         100,
@@ -37,7 +37,7 @@ def test_ctree_american_put():
 
     tree = native.CTree(S, T, F, IV)
 
-    euro_put = tree.calculateBinomial(
+    euro_put = tree.calculate_binomial(
         100.0,
         1.0,
         100,
@@ -45,7 +45,7 @@ def test_ctree_american_put():
         native.OptionType.Put,
         native.TreeType.Recombining,
     )
-    amer_put = tree.calculateBinomial(
+    amer_put = tree.calculate_binomial(
         100.0,
         1.0,
         100,
@@ -66,7 +66,7 @@ def test_ctree_trinomial():
     IV = [0.2, 0.22]
 
     tree = native.CTree(S, T, F, IV)
-    price = tree.calculateTrinomial(
+    price = tree.calculate_trinomial(
         100.0,
         1.0,
         50,

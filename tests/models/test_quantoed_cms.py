@@ -29,12 +29,12 @@ def test_quantoed_cms_init_and_pricing():
     )
 
     # Test Fair Value
-    val = q_cms.fairValue(0.03, m.OptionType.Call)
+    val = q_cms.fair_value(0.03, m.OptionType.Call)
     assert val > 0.0
 
     # Test Forward
     # Quanto adjustment usually shifts the forward
-    fwd_res = q_cms.getForward()
+    fwd_res = q_cms.get_forward()
     assert fwd_res != fwd  # Should be adjusted
 
 
@@ -61,7 +61,7 @@ def test_quantoed_cms_simulation():
         m.CalibrationTarget.Price,
     )
 
-    sim_val = q_cms.simulation(0.0)
+    sim_val = q_cms.simulate(0.0)
     assert isinstance(sim_val, (float, list))
 
 

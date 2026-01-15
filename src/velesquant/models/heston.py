@@ -43,13 +43,13 @@ class HestonModel(Model):
             if option_type.lower() == "call"
             else native.OptionType.Put
         )
-        return self._cpp_model.hestonPrice(maturity, forward, strike, native_type)
+        return self._cpp_model.price(maturity, forward, strike, native_type)
 
     def simulate(self, times: List[float], forwards: List[float]) -> List[float]:
         """
         Simulate Heston paths.
         """
-        return self._cpp_model.simulationHeston(times, forwards)
+        return self._cpp_model.simulate(times, forwards)
 
     def calibrate(
         self,

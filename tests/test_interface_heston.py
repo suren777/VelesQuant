@@ -36,23 +36,23 @@ def test_heston_calibration():
     true_theta = 0.05
     model_true = HestonModel(100.0, 0.04, true_kappa, true_theta, 0.1, -0.5)
 
-    maturities = [1.0, 1.0, 1.0]
-    forwards = [100.0, 100.0, 100.0]
-    strikes = [90.0, 100.0, 110.0]
+    maturities = np.array([1.0] * 9).reshape(-1, 1)
+    forwards = np.array([100.0] * 9).reshape(-1, 1)
+    # Strikes 80 to 120 step 5
+    strikes_list = [80.0, 85.0, 90.0, 95.0, 100.0, 105.0, 110.0, 115.0, 120.0]
+    strikes = np.array(strikes_list).reshape(-1, 1)
 
-    prices = [
-        model_true.price_option(m, f, k, "call")
-        for m, f, k in zip(maturities, forwards, strikes)
-    ]
+    prices_list = [model_true.price_option(1.0, 100.0, k, "call") for k in strikes_list]
+    prices = np.array(prices_list).reshape(-1, 1)
 
-    # Start guess
-    model_guess = HestonModel(100.0, 0.04, 0.5, 0.02, 0.1, -0.5)
+    # Start guess - close to true
+    model_guess = HestonModel(100.0, 0.04, 1.2, 0.04, 0.1, -0.5)
 
     # Calibrate
     model_guess.calibrate(maturities, forwards, strikes, prices, "Price")
 
-    # Verify API contract: The method should run and update attributes (or at least return them)
+    # Verify API contract: The method should run and update attributes
     assert model_guess.var0 > 0
     assert model_guess.kappa > 0
-    # Note: Convergence might vary on synthetic data, so we mainly check that the call completes
-    # and populates the model state.
+    # Check if we got somewhat closer or at least didn't explode
+    assert abs(model_guess.theta - true_theta) < 0.1

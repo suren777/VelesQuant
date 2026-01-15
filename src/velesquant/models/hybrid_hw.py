@@ -48,7 +48,7 @@ class HybridHWModel(Model):
     def fair_value(self, maturity: float, strike: float) -> float:
         """Price a European option."""
         # HHWPrice is a method in HHW class
-        return self._cpp_model.HHWPrice(maturity, strike)
+        return self._cpp_model.price(maturity, strike)
 
     def price(self, instrument: Instrument, market_data: MarketDataInput) -> float:
         """General price method (to be implemented)."""

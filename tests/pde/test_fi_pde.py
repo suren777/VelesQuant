@@ -29,7 +29,7 @@ def test_hwpde_swaption():
     hwpde = HWPDE(R0, kappa, timeSigmas, sigmas, timeThetas, thetas)
 
     # Price a 1Y into 5Y swaption
-    price = hwpde.pricingSwaption(1.0, 5.0, 0.03, 0.5)
+    price = hwpde.price_swaption(1.0, 5.0, 0.03, 0.5)
     assert isinstance(price, float)
     # Swaption price should be positive
     assert price >= 0.0

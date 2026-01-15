@@ -27,7 +27,7 @@ def test_skewmc_simulation():
     spot = 100.0
     kappa = 0.1
 
-    path = mc.simulation(times, spot, kappa)
+    path = mc.simulate(times, spot, kappa)
     assert len(path) == len(times)
     # Spot values should be positive
     assert all(s > 0 for s in path)

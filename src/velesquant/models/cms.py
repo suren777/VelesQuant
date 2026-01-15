@@ -63,12 +63,12 @@ class CMSModel(Model):
     @property
     def adjusted_forward(self) -> float:
         """Get convexity-adjusted forward CMS rate."""
-        return self._cpp_model.getForward()
+        return self._cpp_model.get_forward()
 
     @property
     def maturity(self) -> float:
         """Get CMS maturity."""
-        return self._cpp_model.getMaturity()
+        return self._cpp_model.get_maturity()
 
     def fair_value(self, strike: float, option_type: str = "Call") -> float:
         """
@@ -84,7 +84,7 @@ class CMSModel(Model):
         otype = native.OptionType.Call
         if option_type.lower() == "put":
             otype = native.OptionType.Put
-        return self._cpp_model.fairValue(strike, otype)
+        return self._cpp_model.fair_value(strike, otype)
 
     def implied_vol(self, strike: float) -> float:
         """
@@ -96,7 +96,7 @@ class CMSModel(Model):
         Returns:
             Implied Black volatility.
         """
-        return self._cpp_model.getImpliedVol(strike)
+        return self._cpp_model.get_implied_vol(strike)
 
     def to_dict(self) -> dict:
         """Serialize model state."""

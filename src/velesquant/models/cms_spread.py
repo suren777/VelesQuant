@@ -115,11 +115,11 @@ class CMSSpreadModel(Model):
             a: Weight for first CMS rate.
             b: Weight for second CMS rate.
         """
-        return self._cpp_model.spreadOption(strike, a, b)
+        return self._cpp_model.spread_option(strike, a, b)
 
     def simulate(self) -> list[float]:
         """Run Monte Carlo simulation for CMS rates."""
-        return self._cpp_model.simulationCMSs()
+        return self._cpp_model.simulate()
 
     def price(self, instrument: Instrument, market_data: MarketDataInput) -> float:
         """General price method (to be implemented)."""

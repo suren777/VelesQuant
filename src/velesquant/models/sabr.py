@@ -43,7 +43,7 @@ class SabrModel(Model):
         """
         Calculate implied volatility for a given strike.
         """
-        return self._cpp_model.impliedVol(strike)
+        return self._cpp_model.implied_vol(strike)
 
     def calibrate(
         self,

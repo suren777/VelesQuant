@@ -110,7 +110,7 @@ class SchobelZhuModel(Model):
             if target.lower() == "price"
             else native.CalibrationTarget.Volatility
         )
-        self._cpp_model.calibrator(maturities, forwards, strikes, quotes, ctarget)
+        self._cpp_model.calibrate(maturities, forwards, strikes, quotes, ctarget)
 
         # Update attributes from calibrated C++ model
         self._var0 = self._cpp_model.var0
@@ -122,11 +122,11 @@ class SchobelZhuModel(Model):
 
     def price_european(self, maturity: float, forward: float, strike: float) -> float:
         """Price a European option."""
-        return self._cpp_model.SchobelPrice(maturity, forward, strike)
+        return self._cpp_model.price(maturity, forward, strike)
 
     def simulate(self, times: list[float], forwards: list[float]) -> list[float]:
         """Run Monte Carlo simulation."""
-        return self._cpp_model.simulation(times, forwards)
+        return self._cpp_model.simulate(times, forwards)
 
     def price(self, instrument: Instrument, market_data: MarketDataInput) -> float:
         """General price method (to be implemented)."""

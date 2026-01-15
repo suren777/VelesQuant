@@ -23,10 +23,10 @@ def test_log_basket_init_and_sim():
 
     lb = m.LogNormalBasket(spots, strikes, maturities, forwards, iv, correlation)
 
-    assert lb.get_nassets() == 2
+    assert lb.get_n_assets() == 2
 
     schedule = [1.0]
-    paths = lb.simulate_basket(schedule)
+    paths = lb.simulate(schedule)
     # Returns Mdoub: [sim][asset]? Or [asset][sim]?
     # Assuming list of lists
     assert isinstance(paths, list)

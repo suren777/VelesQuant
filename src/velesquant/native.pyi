@@ -77,6 +77,10 @@ __all__: list[str] = [
     "SouthAfrica",
     "SouthKorea",
     "Swaption",
+    "VelesQuantError",
+    "CalibrationError",
+    "PricingError",
+    "NumericalError",
     "Sweden",
     "Switzerland",
     "TARGET",
@@ -92,9 +96,55 @@ __all__: list[str] = [
     "black_scholes_call",
     "black_scholes_call_vega",
     "cdf_normal",
+    "CalibrationTarget",
+    "PricingError",
+    "CalibrationError",
+    "NumericalError",
+    "VelesQuantError",
     "implied_vol",
     "pdf_normal",
 ]
+
+class CalibrationTarget:
+    """
+    Members:
+
+      Volatility
+      Price
+    """
+
+    def __eq__(self, other: object) -> bool: ...
+    def __getstate__(self) -> int: ...
+    def __hash__(self) -> int: ...
+    def __index__(self) -> int: ...
+    def __init__(self, value: int) -> None: ...
+    def __int__(self) -> int: ...
+    def __ne__(self, other: object) -> bool: ...
+    def __repr__(self) -> str: ...
+    def __setstate__(self, state: int) -> None: ...
+    @property
+    def name(self) -> str: ...
+    @property
+    def value(self) -> int: ...
+    Price: typing.ClassVar[CalibrationTarget]  # value = <CalibrationTarget.Price: 1>
+    Volatility: typing.ClassVar[
+        CalibrationTarget
+    ]  # value = <CalibrationTarget.Volatility: 0>
+    __members__: typing.ClassVar[
+        dict[str, CalibrationTarget]
+    ]  # value = {'Volatility': <CalibrationTarget.Volatility: 0>, 'Price': <CalibrationTarget.Price: 1>}
+
+class VelesQuantError(Exception):
+    def __init__(self, arg0: str) -> None: ...
+
+class CalibrationError(VelesQuantError):
+    def __init__(self, arg0: str) -> None: ...
+
+class PricingError(VelesQuantError):
+    def __init__(self, arg0: str) -> None: ...
+
+class NumericalError(VelesQuantError):
+    def __init__(self, arg0: str) -> None: ...
 
 class DefSwap:
     expiry: float
@@ -138,25 +188,25 @@ class AntonovSabr(SabrPDE):
 class CMS:
     def __init__(
         self,
-        expirySR: typing.SupportsFloat,
-        tenorSR: typing.SupportsFloat,
-        forwardSR: typing.SupportsFloat,
-        annuitySR: typing.SupportsFloat,
-        payCMS: typing.SupportsFloat,
-        discountCMS: typing.SupportsFloat,
+        expiry_sr: typing.SupportsFloat,
+        tenor_sr: typing.SupportsFloat,
+        forward_sr: typing.SupportsFloat,
+        annuity_sr: typing.SupportsFloat,
+        pay_cms: typing.SupportsFloat,
+        discount_cms: typing.SupportsFloat,
         beta: typing.SupportsFloat = 0.85,
         alpha: typing.SupportsFloat = 0.5,
         nu: typing.SupportsFloat = 0.25,
         rho: typing.SupportsFloat = -0.75,
     ) -> None: ...
-    def fairValue(
-        self, strike: typing.SupportsFloat, callORput: OptionType = OptionType.Call
+    def fair_value(
+        self, strike: typing.SupportsFloat, type: OptionType = OptionType.Call
     ) -> float: ...
-    def getATMvol(self) -> float: ...
-    def getDiscountCMS(self) -> float: ...
-    def getForward(self) -> float: ...
-    def getImpliedVol(self, strike: typing.SupportsFloat) -> float: ...
-    def getMaturity(self) -> float: ...
+    def get_atm_vol(self) -> float: ...
+    def get_discount_cms(self) -> float: ...
+    def get_forward(self) -> float: ...
+    def get_implied_vol(self, strike: typing.SupportsFloat) -> float: ...
+    def get_maturity(self) -> float: ...
     @property
     def alpha(self) -> float: ...
     @property
@@ -175,23 +225,23 @@ class CTree:
         F: collections.abc.Sequence[typing.SupportsFloat],
         IV: collections.abc.Sequence[typing.SupportsFloat],
     ) -> None: ...
-    def calculateBinomial(
+    def calculate_binomial(
         self,
         strike: typing.SupportsFloat,
-        Maturity: typing.SupportsFloat,
-        Nnodes: typing.SupportsInt,
+        maturity: typing.SupportsFloat,
+        n_nodes: typing.SupportsInt,
         style: ExerciseStyle,
-        pay: OptionType,
-        tree: TreeType,
+        call_put: OptionType,
+        tree_type: TreeType,
     ) -> float: ...
-    def calculateTrinomial(
+    def calculate_trinomial(
         self,
         strike: typing.SupportsFloat,
-        Maturity: typing.SupportsFloat,
-        Nnodes: typing.SupportsInt,
+        maturity: typing.SupportsFloat,
+        n_nodes: typing.SupportsInt,
         style: ExerciseStyle,
-        pay: OptionType,
-        tree: TreeType,
+        call_put: OptionType,
+        tree_type: TreeType,
     ) -> float: ...
 
 class CalendarType:
@@ -350,8 +400,8 @@ class CmsSpread:
         type2: CalibrationTarget,
         corr: typing.SupportsFloat,
     ) -> None: ...
-    def simulationCMSs(self) -> list[float]: ...
-    def spreadOption(
+    def simulate(self) -> list[float]: ...
+    def spread_option(
         self, K: typing.SupportsFloat, a: typing.SupportsFloat, b: typing.SupportsFloat
     ) -> float: ...
 
@@ -620,22 +670,27 @@ class HullWhite:
     def __init__(
         self,
         kappa: typing.SupportsFloat,
-        timeSigmas: collections.abc.Sequence[typing.SupportsFloat],
+        time_sigmas: collections.abc.Sequence[typing.SupportsFloat],
         sigmas: collections.abc.Sequence[typing.SupportsFloat],
         discount_factor_times: collections.abc.Sequence[typing.SupportsFloat],
         discount_factors: collections.abc.Sequence[typing.SupportsFloat],
     ) -> None: ...
-    def getParameterKappa(self) -> float: ...
-    def getSigmas(self) -> list[float]: ...
-    def getTimeSigmas(self) -> list[float]: ...
-    def optionBond(
+    def calibrate(
+        self,
+        swap_quotes: typing.Any,
+        target: CalibrationTarget = CalibrationTarget.Volatility,
+    ) -> None: ...
+    def get_kappa(self) -> float: ...
+    def get_sigmas(self) -> list[float]: ...
+    def get_time_sigmas(self) -> list[float]: ...
+    def option_bond(
         self,
         expiry: typing.SupportsFloat,
         maturity: typing.SupportsFloat,
         strike: typing.SupportsFloat,
-        callORput: OptionType,
+        type: OptionType,
     ) -> float: ...
-    def simulationHW(
+    def simulate(
         self, times: collections.abc.Sequence[typing.SupportsFloat]
     ) -> list[float]: ...
     def swaption(
@@ -645,6 +700,12 @@ class HullWhite:
         strike: typing.SupportsFloat,
         pay_frequency: typing.SupportsFloat = 0.5,
     ) -> float: ...
+    def zero_coupon(self, expiry: typing.SupportsFloat) -> float: ...
+    def get_sigmas_array(self) -> numpy.typing.NDArray[numpy.float64]: ...
+    def get_time_sigmas_array(self) -> numpy.typing.NDArray[numpy.float64]: ...
+    def simulate_array(
+        self, times: collections.abc.Sequence[typing.SupportsFloat]
+    ) -> numpy.typing.NDArray[numpy.float64]: ...
 
 class LocalVol:
     @typing.overload
@@ -685,11 +746,11 @@ class LogNormalBasket:
             collections.abc.Sequence[typing.SupportsFloat]
         ],
     ) -> None: ...
-    def get_nassets(self) -> int: ...
-    def simulate_basket(
+    def get_n_assets(self) -> int: ...
+    def simulate(
         self, schedule: collections.abc.Sequence[typing.SupportsFloat]
     ) -> list[list[float]]: ...
-    def simulate_basketWR(
+    def simulate_with_rebalancing(
         self, schedule: collections.abc.Sequence[typing.SupportsFloat]
     ) -> list[float]: ...
 
@@ -731,18 +792,18 @@ class QuantoedCMS:
         annuity: typing.SupportsFloat,
         pay: typing.SupportsFloat,
         disc: typing.SupportsFloat,
-        corFX: typing.SupportsFloat,
-        atmVolFX: typing.SupportsFloat,
+        cor_fx: typing.SupportsFloat,
+        atm_vol_fx: typing.SupportsFloat,
         beta: typing.SupportsFloat,
         strikes: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, n]"],
         quotes: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, n]"],
         type: CalibrationTarget = CalibrationTarget.Price,
     ) -> None: ...
-    def fairValue(
-        self, strike: typing.SupportsFloat, callORput: OptionType = OptionType.Call
+    def fair_value(
+        self, strike: typing.SupportsFloat, type: OptionType = OptionType.Call
     ) -> float: ...
-    def getForward(self) -> float: ...
-    def simulation(self, corrRN: typing.SupportsFloat) -> float: ...
+    def get_forward(self) -> float: ...
+    def simulate(self, corr_rn: typing.SupportsFloat) -> float: ...
 
 class QuantoedCmsSpread:
     def __init__(
@@ -753,8 +814,8 @@ class QuantoedCmsSpread:
         annuity1: typing.SupportsFloat,
         pay1: typing.SupportsFloat,
         disc1: typing.SupportsFloat,
-        corFX1: typing.SupportsFloat,
-        atmVolFX1: typing.SupportsFloat,
+        cor_fx1: typing.SupportsFloat,
+        atm_vol_fx1: typing.SupportsFloat,
         beta1: typing.SupportsFloat,
         strikes1: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, n]"],
         quotes1: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, n]"],
@@ -765,15 +826,15 @@ class QuantoedCmsSpread:
         annuity2: typing.SupportsFloat,
         pay2: typing.SupportsFloat,
         disc2: typing.SupportsFloat,
-        corFX2: typing.SupportsFloat,
-        atmVolFX2: typing.SupportsFloat,
+        cor_fx2: typing.SupportsFloat,
+        atm_vol_fx2: typing.SupportsFloat,
         beta2: typing.SupportsFloat,
         strikes2: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, n]"],
         quotes2: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, n]"],
         type2: CalibrationTarget,
         corr: typing.SupportsFloat,
     ) -> None: ...
-    def simulationQuantoedCMSs(
+    def simulate(
         self, cr1: typing.SupportsFloat, cr2: typing.SupportsFloat
     ) -> list[float]: ...
 
@@ -801,14 +862,33 @@ class Sabr:
         rho: typing.SupportsFloat,
         shift: typing.SupportsFloat,
     ) -> None: ...
-    def impliedVol(self, strike: typing.SupportsFloat) -> float: ...
-    def localVol(self, spot: typing.SupportsFloat) -> float: ...
-    def normalVol(self, K: typing.SupportsFloat) -> float: ...
-    def premiumBachelier(
-        self, strike: typing.SupportsFloat, callORput: OptionType = OptionType.Call
+    def calibrate(
+        self,
+        maturities: typing.Any,
+        forwards: typing.Any,
+        strikes: typing.Any,
+        quotes: typing.Any,
+        quote_type: CalibrationTarget = CalibrationTarget.Price,
+    ) -> dict[str, float]: ...
+    def price(
+        self,
+        maturity: typing.SupportsFloat,
+        forward: typing.SupportsFloat,
+        strike: typing.SupportsFloat,
+        opt_type: OptionType = OptionType.Call,
     ) -> float: ...
-    def premiumBlackScholes(
-        self, strike: typing.SupportsFloat, callORput: OptionType = OptionType.Call
+    def simulate(
+        self,
+        times: collections.abc.Sequence[typing.SupportsFloat],
+        forwards: collections.abc.Sequence[typing.SupportsFloat],
+    ) -> collections.abc.Sequence[collections.abc.Sequence[float]]: ...
+    def local_vol(self, spot: typing.SupportsFloat) -> float: ...
+    def normal_vol(self, K: typing.SupportsFloat) -> float: ...
+    def premium_bachelier(
+        self, strike: typing.SupportsFloat, call_or_put: OptionType = OptionType.Call
+    ) -> float: ...
+    def premium_black_scholes(
+        self, strike: typing.SupportsFloat, call_or_put: OptionType = OptionType.Call
     ) -> float: ...
     @property
     def alpha(self) -> float: ...
@@ -844,7 +924,7 @@ class SabrPDE:
     def getRho(self) -> float: ...
 
 class SchobelZhu:
-    def SchobelPrice(
+    def price(
         self,
         maturity: typing.SupportsFloat,
         forward: typing.SupportsFloat,
@@ -859,14 +939,15 @@ class SchobelZhu:
         xi: typing.SupportsFloat,
         rho: typing.SupportsFloat,
     ) -> None: ...
-    def calibrator(
+    def calibrate(
         self,
-        maturitys: collections.abc.Sequence[typing.SupportsFloat],
+        maturities: collections.abc.Sequence[typing.SupportsFloat],
         forwards: collections.abc.Sequence[typing.SupportsFloat],
         strikes: collections.abc.Sequence[typing.SupportsFloat],
-        marketQuotes: collections.abc.Sequence[typing.SupportsFloat],
+        market_quotes: collections.abc.Sequence[typing.SupportsFloat],
+        target: CalibrationTarget = CalibrationTarget.Price,
     ) -> None: ...
-    def simulationSchobelZhu(
+    def simulate(
         self,
         times: collections.abc.Sequence[typing.SupportsFloat],
         forwards: collections.abc.Sequence[typing.SupportsFloat],
@@ -961,7 +1042,7 @@ class SkewMC:
     def __init__(self) -> None: ...
     @typing.overload
     def __init__(self, sabrModels: collections.abc.Sequence[Sabr]) -> None: ...
-    def simulation(
+    def simulate(
         self,
         times: collections.abc.Sequence[typing.SupportsFloat],
         spot: typing.SupportsFloat,

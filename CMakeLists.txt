@@ -96,9 +96,16 @@ if(OpenMP_CXX_FLAGS)
     target_compile_options(velesquant_core PRIVATE ${OpenMP_CXX_FLAGS})
 endif()
 
-# Create the Python Extension Module
+# Create the Python Extension Module (modular bindings)
 pybind11_add_module(native
-    bindings/bindings.cpp
+    bindings/module.cpp
+    bindings/bind_enums.cpp
+    bindings/bind_exceptions.cpp
+    bindings/bind_remaining.cpp
+    bindings/models/bind_sabr.cpp
+    bindings/models/bind_heston.cpp
+    bindings/models/bind_hull_white.cpp
+    bindings/pde_solvers/bind_pde_solvers.cpp
 )
 
 target_link_libraries(native PRIVATE velesquant_core)

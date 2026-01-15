@@ -10,9 +10,9 @@ def test_hull_white_binding():
 
     hw = n.HullWhite(kappa, time_sigmas, sigmas, time_dfs, dfs)
 
-    assert hw.getParameterKappa() == kappa
-    assert hw.getSigmas() == sigmas
-    assert hw.getTimeSigmas() == time_sigmas
+    assert hw.get_kappa() == kappa
+    assert hw.get_sigmas() == sigmas
+    assert hw.get_time_sigmas() == time_sigmas
 
     swaps = []
 
@@ -59,7 +59,7 @@ def test_short_rate_2f_binding():
     )
 
     try:
-        val = sr2f.pricingSwaption(1.0, 5.0, 0.03)
+        val = sr2f.pricing_swaption(1.0, 5.0, 0.03)
         assert isinstance(val, float)
     except Exception:
         pass

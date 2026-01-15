@@ -50,12 +50,12 @@ class LogNormalBasketModel(Model):
         Run Monte Carlo simulation for the basket.
         """
         if with_rate_curves:
-            return self._cpp_model.simulate_basketWR(schedule)
-        return self._cpp_model.simulate_basket(schedule)
+            return self._cpp_model.simulate_with_rebalancing(schedule)
+        return self._cpp_model.simulate(schedule)
 
     def get_num_assets(self) -> int:
         """Get the number of assets in the basket."""
-        return self._cpp_model.get_nassets()
+        return self._cpp_model.get_n_assets()
 
     def price(self, instrument: Instrument, market_data: MarketDataInput) -> float:
         """General price method (to be implemented)."""

@@ -60,7 +60,7 @@ class LocalVolModel(Model):
         Returns:
             Call option price.
         """
-        return self._cpp_model.callPDE(maturity, strike, num_steps)
+        return self._cpp_model.call_pde(maturity, strike, num_steps)
 
     def put_pde(self, maturity: float, strike: float, num_steps: int = 50) -> float:
         """
@@ -74,7 +74,7 @@ class LocalVolModel(Model):
         Returns:
             Put option price.
         """
-        return self._cpp_model.putPDE(maturity, strike, num_steps)
+        return self._cpp_model.put_pde(maturity, strike, num_steps)
 
     def density(self, maturity: float, num_steps: int = 50) -> List[float]:
         """

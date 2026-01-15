@@ -67,7 +67,7 @@ class TreeModel(Model):
         otype = self._get_enum(native.OptionType, option_type)
         ttype = self._get_enum(native.TreeType, tree_type)
 
-        return self._cpp_model.calculateBinomial(
+        return self._cpp_model.calculate_binomial(
             strike, maturity, n_nodes, style, otype, ttype
         )
 
@@ -85,7 +85,7 @@ class TreeModel(Model):
         otype = self._get_enum(native.OptionType, option_type)
         ttype = self._get_enum(native.TreeType, tree_type)
 
-        return self._cpp_model.calculateTrinomial(
+        return self._cpp_model.calculate_trinomial(
             strike, maturity, n_nodes, style, otype, ttype
         )
 

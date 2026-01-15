@@ -36,7 +36,7 @@ class SkewMCModel(Model):
         """
         Run Monte Carlo simulation.
         """
-        return self._cpp_model.simulation(times, spot, kappa)
+        return self._cpp_model.simulate(times, spot, kappa)
 
     def price(self, instrument: Instrument, market_data: MarketDataInput) -> float:
         """General price method (to be implemented)."""

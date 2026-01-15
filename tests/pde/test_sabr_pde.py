@@ -6,12 +6,12 @@ def test_sabr_pde_binding():
     af = AfSabr(0.2, 0.5, 0.3, -0.4, 0.0, 1.0, 0.03, 100, 100, 3.0)
 
     # Check base class methods
-    assert af.getAlpha() == 0.2
-    assert af.getBeta() == 0.5
+    assert af.get_alpha() == 0.2
+    assert af.get_beta() == 0.5
 
     # AntonovSabr
     ant = AntonovSabr(0.2, 0.5, 0.3, -0.4, 1.0, 0.03, 100, 100, 3.0)
-    assert ant.getNu() == 0.3
+    assert ant.get_nu() == 0.3
 
 
 def test_sabr_pde_density():
@@ -31,8 +31,8 @@ def test_sabr_pde_density():
     sabr = AfSabr(alpha, beta, nu, rho, 0.0, T, F, 500, 100, 8.0)
 
     # Get density
-    density = sabr.getDensity()
-    f_grid = sabr.getFgrid()
+    density = sabr.get_density()
+    f_grid = sabr.get_f_grid()
 
     assert len(density) == 500
     assert len(f_grid) == 500

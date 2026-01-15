@@ -127,7 +127,7 @@ class QuantoedCMSSpreadModel(Model):
             cr1: Correlation parameter 1.
             cr2: Correlation parameter 2.
         """
-        return self._cpp_model.simulationQuantoedCMSs(cr1, cr2)
+        return self._cpp_model.simulate(cr1, cr2)
 
     def price(self, instrument: Instrument, market_data: MarketDataInput) -> float:
         """General price method (to be implemented)."""

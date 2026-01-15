@@ -24,27 +24,27 @@ def test_hwpde_basic_pricing():
     )
 
     # Test pricingZB
-    zb_price = hwpde.pricingZB(5.0)
+    zb_price = hwpde.price_zero_bond(5.0)
     assert 0 < zb_price <= 1.0
 
     # Test pricingSwaption (already existed)
-    swaption = hwpde.pricingSwaption(1.0, 5.0, 0.03, 0.5)
+    swaption = hwpde.price_swaption(1.0, 5.0, 0.03, 0.5)
     assert swaption >= 0
 
     # Test pricingSwap
-    swap = hwpde.pricingSwap(0.0, 5.0, 0.03, 0.5)
+    swap = hwpde.price_swap(0.0, 5.0, 0.03, 0.5)
     assert isinstance(swap, float)
 
     # Test pricingZBO
-    zbo = hwpde.pricingZBO(1.0, 5.0, 0.90, n.OptionType.Call)
+    zbo = hwpde.price_zero_bond_option(1.0, 5.0, 0.90, n.OptionType.Call)
     assert zbo >= 0
 
     # Test pricingCouponBond
-    coupon_bond = hwpde.pricingCouponBond(0.0, 5.0, 0.04, 0.5)
+    coupon_bond = hwpde.price_coupon_bond(0.0, 5.0, 0.04, 0.5)
     assert coupon_bond > 0
 
     # Test pricingCBO
-    cbo = hwpde.pricingCBO(1.0, 5.0, 0.04, 1.0, 0.5, n.OptionType.Call)
+    cbo = hwpde.price_coupon_bond_option(1.0, 5.0, 0.04, 1.0, 0.5, n.OptionType.Call)
     assert cbo >= 0
 
 
@@ -60,11 +60,11 @@ def test_hwpde_exotic_pricing():
 
     # Test pricingBermudan
     exercises = [2.0, 3.0, 4.0]  # Exercise dates
-    bermudan = hwpde.pricingBermudan(1.0, 5.0, exercises, 0.03, 0.5)
+    bermudan = hwpde.price_bermudan(1.0, 5.0, exercises, 0.03, 0.5)
     assert bermudan >= 0
 
     # Test pricingCallableSwap
-    callable_swap = hwpde.pricingCallableSwap(
+    callable_swap = hwpde.price_callable_swap(
         1.0, 5.0, exercises, 0.04, 1.0, 0.5, n.OptionType.Call
     )
     assert isinstance(callable_swap, float)
@@ -81,31 +81,31 @@ def test_hwpde_analysis():
     )
 
     # Test getSwapRate
-    swap_rate = hwpde.getSwapRate(1.0, 5.0, 0.5)
+    swap_rate = hwpde.get_swap_rate(1.0, 5.0, 0.5)
     assert -0.01 < swap_rate < 0.20
 
     # Test getImpVolATM
-    imp_vol = hwpde.getImpVolATM(1.0, 5.0, 0.5)
+    imp_vol = hwpde.get_implied_vol_atm(1.0, 5.0, 0.5)
     assert 0 < imp_vol < 2.0
 
     # Test getDFs
     time_points = [1.0, 2.0, 5.0]
-    dfs = hwpde.getDFs(time_points)
+    dfs = hwpde.get_discount_factors(time_points)
     assert len(dfs) == 3
     assert all(isinstance(x, float) for x in dfs)
 
     # Test simulationPDE
     sim_times = [0.5, 1.0, 2.0]
-    sim_path = hwpde.simulationPDE(sim_times)
+    sim_path = hwpde.simulate(sim_times)
     assert len(sim_path) == 3
     assert all(isinstance(x, float) for x in sim_path)
 
     # Test getters
-    assert hwpde.getKappa() == 0.05
-    assert hwpde.getTimeSigmas() == [1.0, 5.0]
-    assert hwpde.getSigmas() == [0.01, 0.012]
-    assert isinstance(hwpde.getInitialRate(), float)
-    assert len(hwpde.getThetas()) > 0
+    assert hwpde.get_kappa() == 0.05
+    assert hwpde.get_time_sigmas() == [1.0, 5.0]
+    assert hwpde.get_sigmas() == [0.01, 0.012]
+    assert isinstance(hwpde.get_initial_rate(), float)
+    assert len(hwpde.get_thetas()) > 0
 
 
 def test_hwpde_calibration():
@@ -145,7 +145,7 @@ def test_hwpde_calibration():
     try:
         hwpde.calibrate(time_dfs, dfs, swaps)
         # Check that calibration changed parameters or finished
-        assert hwpde.getKappa() is not None
+        assert hwpde.get_kappa() is not None
     except RuntimeError:
         # We expect a RuntimeError with "too much freedom" or similar
         # because the input data is dummy data and might not converge/be valid

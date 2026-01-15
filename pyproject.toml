@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "A high-performance financial valuation library"
 readme = "README.md"
 authors = [
-  { name = "Valuation Lib Team", email = "info@valuationlib.com" },
+  { name = "Suren Islyaev", email = "suren.islyaev@gmail.com" },
 ]
 requires-python = ">=3.12"
 dependencies = [
@@ -28,8 +28,8 @@ classifiers = [
 ]
 
 [project.urls]
-Repository = "https://github.com/valuationlib/velesquant"
-Issues = "https://github.com/valuationlib/velesquant/issues"
+Repository = "https://github.com/suren777/VelesQuant"
+Issues = "https://github.com/suren777/VelesQuant/issues"
 
 [project.optional-dependencies]
 test = ["pytest"]
@@ -39,7 +39,7 @@ dev = ["pytest"]
 name = "velesquant"
 version = "0.1.0"
 description = "A high-performance financial valuation library"
-authors = ["Valuation Lib Team <info@valuationlib.com>"]
+authors = ["Suren Islyaev <suren.islyaev@gmail.com>"]
 readme = "README.md"
 packages = [{include = "velesquant", from = "src"}]
 

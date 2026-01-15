@@ -1,4 +1,3 @@
-
 from velesquant import HHW
 from velesquant.instruments.rates import Swaption
 from velesquant.market.curves import DiscountCurve
@@ -49,7 +48,7 @@ def test_hhw_binding():
     # This tests the hybrid model binding which is NOT wrapped yet.
     # Leaving as native usage.
     hhw = HHW(100.0, 0.04, 0.03, 1.0, 0.1, -0.5, 0.2, 0.2, 0.5)
-    price = hhw.HHWPrice(1.0, 100.0)
+    price = hhw.price(1.0, 100.0)
     assert isinstance(price, float)
     assert price > 0
 
@@ -61,11 +60,11 @@ def test_hhw_pricing_scenario():
     """
     # Base case
     hhw_base = HHW(100.0, 0.04, 0.03, 1.0, 0.1, -0.5, 0.2, 0.2, 0.5)
-    price_base = hhw_base.HHWPrice(1.0, 100.0)
+    price_base = hhw_base.price(1.0, 100.0)
 
     # Increased volatility (sigma1)
     hhw_vol = HHW(100.0, 0.04, 0.03, 1.0, 0.1, -0.5, 0.4, 0.2, 0.5)
-    price_vol = hhw_vol.HHWPrice(1.0, 100.0)
+    price_vol = hhw_vol.price(1.0, 100.0)
 
     # Volatility impact can be complex in HHW depending on regimes/calibration.
     # For now, we verified the price changes (sensitivity exists).

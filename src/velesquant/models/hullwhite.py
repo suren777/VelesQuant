@@ -46,7 +46,7 @@ class HullWhiteModel(Model):
         time_sigmas = [0.0, max_time]
         sigmas = [self.sigma, self.sigma]
         hw = native.HullWhite(self.kappa, time_sigmas, sigmas, curve.times, curve.dfs)
-        return hw.simulation(times)
+        return hw.simulate(times)
 
     def price_bond_option(
         self,
@@ -69,7 +69,7 @@ class HullWhiteModel(Model):
         if option_type.lower() == "put":
             otype = native.OptionType.Put
 
-        return hw.optionBond(expiry, maturity, strike, otype)
+        return hw.option_bond(expiry, maturity, strike, otype)
 
     def price(
         self,
@@ -245,13 +245,13 @@ class HullWhiteModel(Model):
         hw = native.HullWhite(self.kappa, time_sigmas, sigmas, curve.times, curve.dfs)
 
         if isinstance(instrument, ZeroCouponBond):
-            return hw.ZC(instrument.maturity)
+            return hw.zero_coupon(instrument.maturity)
 
         elif isinstance(instrument, CouponBond):
             value = 0.0
             t = instrument.pay_frequency
             while t <= instrument.maturity + 1e-9:
-                df = hw.ZC(t)
+                df = hw.zero_coupon(t)
                 coupon = (
                     instrument.face_value
                     * instrument.coupon_rate
@@ -260,7 +260,7 @@ class HullWhiteModel(Model):
                 value += coupon * df
                 t += instrument.pay_frequency
 
-            value += instrument.face_value * hw.ZC(instrument.maturity)
+            value += instrument.face_value * hw.zero_coupon(instrument.maturity)
             return value
 
         else:
@@ -271,7 +271,7 @@ class HullWhiteModel(Model):
         time_sigmas = [0.0, max_time]
         sigmas = [self.sigma, self.sigma]
         hw = native.HullWhite(self.kappa, time_sigmas, sigmas, curve.times, curve.dfs)
-        return hw.ZC(maturity)
+        return hw.zero_coupon(maturity)
 
     def _price_cb_scalar(self, maturity, pay_freq, coupon_rate, face_value, curve):
         max_time = maturity + 1.0
@@ -282,10 +282,10 @@ class HullWhiteModel(Model):
         value = 0.0
         t = pay_freq
         while t <= maturity + 1e-9:
-            df = hw.ZC(t)
+            df = hw.zero_coupon(t)
             coupon = face_value * coupon_rate * pay_freq
             value += coupon * df
             t += pay_freq
 
-        value += face_value * hw.ZC(maturity)
+        value += face_value * hw.zero_coupon(maturity)
         return value

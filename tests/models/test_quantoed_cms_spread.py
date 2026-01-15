@@ -52,7 +52,7 @@ def test_quantoed_cms_spread_init_and_sim():
         corr,
     )
 
-    sim = qcs.simulationQuantoedCMSs(0.0, 0.0)
+    sim = qcs.simulate(0.0, 0.0)
     assert isinstance(sim, list)
     assert len(sim) == 2
 

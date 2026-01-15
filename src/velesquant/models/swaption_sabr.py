@@ -70,7 +70,7 @@ class SabrSwaptionModel(Model):
         otype = native.OptionType.Call
         if option_type.lower() == "put":
             otype = native.OptionType.Put
-        return self._cpp_model.swaptionFairValue(strike, otype)
+        return self._cpp_model.fair_value(strike, otype)
 
     def implied_vol(self, strike: float) -> float:
         """
@@ -82,7 +82,7 @@ class SabrSwaptionModel(Model):
         Returns:
             Implied Black volatility.
         """
-        return self._cpp_model.getImpliedVol(strike)
+        return self._cpp_model.get_implied_vol(strike)
 
     def swap_value(self, strike: float) -> float:
         """
@@ -94,7 +94,7 @@ class SabrSwaptionModel(Model):
         Returns:
             Swap fair value.
         """
-        return self._cpp_model.swapFairValue(strike)
+        return self._cpp_model.swap_fair_value(strike)
 
     def to_dict(self) -> dict:
         """Serialize model state."""

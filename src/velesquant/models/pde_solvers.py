@@ -55,7 +55,7 @@ class HWPDEModel(Model):
         self, expiry: float, tenor: float, strike: float, pay_freq: float = 0.5
     ) -> float:
         """Price a swaption."""
-        return self._cpp_model.pricingSwaption(expiry, tenor, strike, pay_freq)
+        return self._cpp_model.price_swaption(expiry, tenor, strike, pay_freq)
 
     def price_bermudan(
         self,
@@ -66,7 +66,7 @@ class HWPDEModel(Model):
         pay_freq: float = 0.5,
     ) -> float:
         """Price a Bermudan swaption."""
-        return self._cpp_model.pricingBermudan(
+        return self._cpp_model.price_bermudan(
             expiry, tenor, exercises, strike, pay_freq
         )
 
@@ -86,7 +86,7 @@ class HWPDEModel(Model):
             if option_type.capitalize() == "Call"
             else native.OptionType.Put
         )
-        return self._cpp_model.pricingCallableSwap(
+        return self._cpp_model.price_callable_swap(
             expiry, tenor, exercises, coupon, strike, pay_freq, native_type
         )
 
@@ -99,7 +99,9 @@ class HWPDEModel(Model):
             if option_type.capitalize() == "Call"
             else native.OptionType.Put
         )
-        return self._cpp_model.pricingZBO(expiry, maturity, strike, native_type)
+        return self._cpp_model.price_zero_bond_option(
+            expiry, maturity, strike, native_type
+        )
 
     def price_cbo(
         self,
@@ -116,7 +118,7 @@ class HWPDEModel(Model):
             if option_type.capitalize() == "Call"
             else native.OptionType.Put
         )
-        return self._cpp_model.pricingCBO(
+        return self._cpp_model.price_coupon_bond_option(
             expiry, tenor, coupon, strike, pay_freq, native_type
         )
 
@@ -143,7 +145,7 @@ class HWPDEModel(Model):
 
     def simulate(self, time_points: list[float]) -> list[float]:
         """Run Monte Carlo simulation using the PDE grid."""
-        return self._cpp_model.simulationPDE(time_points)
+        return self._cpp_model.simulate(time_points)
 
     def to_dict(self) -> dict:
         """Serialize model state."""
@@ -186,7 +188,7 @@ class ShortRate1FPDEModel(Model):
     def price_swaption(
         self, expiry: float, tenor: float, strike: float, pay_freq: float = 0.5
     ) -> float:
-        return self._cpp_model.pricingSwaption(expiry, tenor, strike, pay_freq)
+        return self._cpp_model.price_swaption(expiry, tenor, strike, pay_freq)
 
     def price_zbo(
         self, expiry: float, maturity: float, strike: float, option_type: str = "Call"
@@ -197,7 +199,9 @@ class ShortRate1FPDEModel(Model):
             if option_type.capitalize() == "Call"
             else native.OptionType.Put
         )
-        return self._cpp_model.pricingZBO(expiry, maturity, strike, native_type)
+        return self._cpp_model.price_zero_bond_option(
+            expiry, maturity, strike, native_type
+        )
 
     def price_cbo(
         self,
@@ -214,7 +218,7 @@ class ShortRate1FPDEModel(Model):
             if option_type.capitalize() == "Call"
             else native.OptionType.Put
         )
-        return self._cpp_model.pricingCBO(
+        return self._cpp_model.price_coupon_bond_option(
             expiry, tenor, coupon, strike, pay_freq, native_type
         )
 
@@ -259,11 +263,11 @@ class SabrPDEModel(Model):
 
     def get_density(self) -> list[float]:
         """Get risk-neutral density from PDE."""
-        return self._cpp_model.getDensity()
+        return self._cpp_model.get_density()
 
     def get_f_grid(self) -> list[float]:
         """Get forward price grid."""
-        return self._cpp_model.getFgrid()
+        return self._cpp_model.get_f_grid()
 
     def calibrate(self, instruments, market_data) -> "SabrPDEModel":
         raise NotImplementedError

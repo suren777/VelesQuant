@@ -45,7 +45,7 @@ def test_cms_spread_init_and_pricing():
     )
 
     # Test Spread Option
-    val = cs.spreadOption(0.01, 1.0, -1.0)
+    val = cs.spread_option(0.01, 1.0, -1.0)
     assert val > 0.0
 
 
@@ -85,7 +85,7 @@ def test_cms_spread_simulation():
         0.0,
     )
 
-    sim_res = cs.simulationCMSs()
+    sim_res = cs.simulate()
     assert isinstance(sim_res, list)
     assert len(sim_res) == 2
 

@@ -81,17 +81,17 @@ class QuantoedCMSModel(Model):
         if option_type.lower() == "put":
             otype = native.OptionType.Put
         # Note: In bindings, fairValue return value and args are fixed
-        return self._cpp_model.fairValue(strike, otype)
+        return self._cpp_model.fair_value(strike, otype)
 
     def get_forward(self) -> float:
         """Get the quanto-adjusted forward rate."""
-        return self._cpp_model.getForward()
+        return self._cpp_model.get_forward()
 
     def simulate(self, corr_rn: float) -> list[float]:
         """
         Run Monte Carlo simulation.
         """
-        return self._cpp_model.simulation(corr_rn)
+        return self._cpp_model.simulate(corr_rn)
 
     def price(self, instrument: Instrument, market_data: MarketDataInput) -> float:
         """General price method (to be implemented)."""
