@@ -18,8 +18,6 @@
 using namespace std;
 using namespace QuantLib;
 
-#pragma warning(disable : 4996)
-
 namespace velesquant {
 
 boost::mt19937 rng;
@@ -206,18 +204,18 @@ vector<double> MCimpVol(double freq, const vector<double> &theTimes,
     dt = theTimes[j] - theTimes[j - 1];
 
     // calculate log return standard deviation
-    double sum =
+    double sum2 =
         accumulate(thelogReturns[j].begin(), thelogReturns[j].end(), 0.0);
-    double mean = sum / n;
-    double sq_sum =
+    double mean2 = sum2 / n;
+    double sq_sum2 =
         inner_product(thelogReturns[j].begin(), thelogReturns[j].end(),
                       thelogReturns[j].begin(), 0.0);
-    double stDev = sqrt(sq_sum / n - mean * mean);
+    double stDev2 = sqrt(sq_sum2 / n - mean2 * mean2);
 
     // calculates implied volatility
-    double fwdVol = stDev * sqrt(freq);
+    double fwdVol2 = stDev2 * sqrt(freq);
 
-    var[j] = var[j - 1] + fwdVol * fwdVol * dt;
+    var[j] = var[j - 1] + fwdVol2 * fwdVol2 * dt;
     impVol[j] = sqrt(var[j] / theTimes[j]);
   }
 

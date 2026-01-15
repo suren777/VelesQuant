@@ -104,7 +104,6 @@ double sVol::trapz(vector<double> x, vector<double> y) const {
 }
 
 #ifdef _MSC_VER
-#pragma warning(disable : 4244)
 #endif
 
 double sVol::hestonPrice(double maturity, double forward, double strike,

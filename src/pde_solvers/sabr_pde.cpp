@@ -107,8 +107,8 @@ void sabr_pde::calculateDensity() {
     PL2 = PL1, PR2 = PR1;
     upE(Em_, Emdt1);
     oneStepForward(inV2, dt1, PL2, PR2);
-    for (int i = 0; i < sizeX_; i++)
-      inV[i] = (sqrt(2) + 1) * inV2[i] - sqrt(2) * inV[i];
+    for (int j = 0; j < sizeX_; j++)
+      inV[j] = (sqrt(2) + 1) * inV2[j] - sqrt(2) * inV[j];
     PL1 = (sqrt(2) + 1) * PL2 - sqrt(2) * PL1;
     PR1 = (sqrt(2) + 1) * PR2 - sqrt(2) * PR1;
     upE(Em_, Emdt2);

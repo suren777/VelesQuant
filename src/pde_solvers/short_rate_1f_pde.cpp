@@ -10,8 +10,7 @@
 #include <velesquant/pde_solvers/short_rate_1f_pde.h>
 #include <velesquant/volatility/lm.h>
 using namespace std;
-#pragma warning(disable : 4715)
-#pragma warning(disable : 4018)
+
 #define MR 256
 
 namespace velesquant {
@@ -341,7 +340,8 @@ void ShortRate1FPDE::calibrator(vector<double> timeDFs, vector<double> DFs,
   delete[] wa4;
 };
 
-double ShortRate1FPDE::pen_fun(double *x, int n) {
+double ShortRate1FPDE::pen_fun([[maybe_unused]] double *x,
+                               [[maybe_unused]] int n) {
   double penalty = 0.0;
   double lambda = 1e6;
   // for(int i=0; i<n-2;
@@ -351,7 +351,7 @@ double ShortRate1FPDE::pen_fun(double *x, int n) {
 }
 
 void ShortRate1FPDE::objFcnCalibrator(int m, int n, double *x, double *fvec,
-                                      int *iflag) {
+                                      [[maybe_unused]] int *iflag) {
   int ns = sigmas_.size();
   for (int i = 0; i < ns; i++)
     sigmas_[i] = fabs(x[i]);
@@ -391,8 +391,8 @@ void ShortRate1FPDE::termStructureCalibrator() {
     do {
       niter++;
 #pragma omp parallel for
-      for (int i = 0; i < MR; i++)
-        inV[i] = lastV[i]; // reset to the starting density
+      for (int r = 0; r < MR; r++)
+        inV[r] = lastV[r]; // reset to the starting density
       if (thetas_[i] == 0.0)
         thetas_[i] = 0.0005; // case of 0 value handler
       thetas_[i] *= 1.001;   // 0.1% up for theta parameter
@@ -400,8 +400,8 @@ void ShortRate1FPDE::termStructureCalibrator() {
         oneStepForward(t, inV);
       double dfUP = trapezoidal(inV);
 #pragma omp parallel for
-      for (int i = 0; i < MR; i++)
-        inV[i] = lastV[i]; // reset to the starting density
+      for (int r = 0; r < MR; r++)
+        inV[r] = lastV[r]; // reset to the starting density
       thetas_[i] /= 1.001; // back to theta
       for (int t = sT; t < iTs[i] - 1; t++)
         oneStepForward(t, inV);
@@ -412,14 +412,14 @@ void ShortRate1FPDE::termStructureCalibrator() {
           max(-0.0050, thetas_[i]); // Cutoff the nagative value (BETTER)
     } while (fabs(1.0 - df / DFinterp_[i]) >= 1.0E-6 && niter < 7);
 #pragma omp parallel for
-    for (int i = 0; i < MR; i++)
-      inV[i] = lastV[i]; // reset to the starting density
+    for (int r = 0; r < MR; r++)
+      inV[r] = lastV[r]; // reset to the starting density
 
     for (int t = sT; t < iTs[i] - 1; t++)
       oneStepForward(t, inV);
 #pragma omp parallel for
-    for (int i = 0; i < MR; i++)
-      lastV[i] = inV[i]; // remember the starting density
+    for (int r = 0; r < MR; r++)
+      lastV[r] = inV[r]; // remember the starting density
   };
   return;
 };
@@ -516,20 +516,24 @@ double ShortRate1FPDE::whichSigma(double t) const {
     return sigmas_[0];
   if (t >= timeSigmas_[n - 1])
     return sigmas_[n - 1];
-  for (int i = 1; i < n; i++)
+  for (int i = 1; i < n; i++) {
     if ((t >= timeSigmas_[i - 1]) && (t < timeSigmas_[i]))
       return sigmas_[i];
-};
+  }
+  return sigmas_.back();
+}
 double ShortRate1FPDE::whichTheta(double t) const {
   int n = thetas_.size();
   if (t < timeThetas_[0])
     return thetas_[0];
   if (t >= timeThetas_[n - 1])
     return thetas_[n - 1];
-  for (int i = 1; i < n; i++)
+  for (int i = 1; i < n; i++) {
     if (t < timeThetas_[i])
       return thetas_[i];
-};
+  }
+  return thetas_.back();
+}
 
 double ShortRate1FPDE::getDFinterp(double t) {
   QuantLib::LogLinearInterpolation interp(timeDFs_.begin(), timeDFs_.end(),

@@ -1,4 +1,3 @@
-#include <algorithm>
 #include <cmath>
 #include <memory>
 #include <vector>
@@ -15,8 +14,8 @@ namespace velesquant {
 HullWhite::HullWhite(double kappa, std::vector<double> timeSigmas,
                      std::vector<double> sigmas, std::vector<double> timeDFs,
                      std::vector<double> DFs)
-    : kappa_(kappa), timeSigmas_(timeSigmas), sigmas_(sigmas),
-      timeDFs_(timeDFs), DFs_(DFs) {
+    : kappa_(kappa), timeDFs_(timeDFs), DFs_(DFs), timeSigmas_(timeSigmas),
+      sigmas_(sigmas) {
   model_ = std::make_shared<models::HullWhiteModel>(kappa, timeSigmas, sigmas,
                                                     timeDFs, DFs);
   engine_ = std::make_shared<engines::HullWhiteAnalyticEngine>(model_);
@@ -46,16 +45,23 @@ void HullWhite::calibrator(const std::vector<defSwap> &swapQuotes,
 }
 
 // Deprecated / Unimplemented for now
-double HullWhite::BlackStrike(double T0, double TN, double impVol) {
+double HullWhite::BlackStrike([[maybe_unused]] double T0,
+                              [[maybe_unused]] double TN,
+                              [[maybe_unused]] double impVol) {
   return 0.0;
 }
-double HullWhite::BlackStrikePlain(double T0, double TN) { return 0.0; }
-double HullWhite::swaptionIVblackPub(double expiry, double tenor,
-                                     double swap_price) {
+double HullWhite::BlackStrikePlain([[maybe_unused]] double T0,
+                                   [[maybe_unused]] double TN) {
   return 0.0;
 }
-double HullWhite::getSwapRate(double expiry, double tenor,
-                              double payFrequency) {
+double HullWhite::swaptionIVblackPub([[maybe_unused]] double expiry,
+                                     [[maybe_unused]] double tenor,
+                                     [[maybe_unused]] double swap_price) {
+  return 0.0;
+}
+double HullWhite::getSwapRate([[maybe_unused]] double expiry,
+                              [[maybe_unused]] double tenor,
+                              [[maybe_unused]] double payFrequency) {
   return 0.0;
 }
 

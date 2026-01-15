@@ -45,7 +45,8 @@ swaption::swaption(double expiry, double tenor, double forward, double annuity,
 
 swaption::swaption(double expiry, double tenor, double forward, double annuity,
                    double beta, CellMatrix &strikes, CellMatrix &marketQuotes,
-                   CalibrationTarget quoteType, CellMatrix &initialParams) {
+                   CalibrationTarget quoteType,
+                   [[maybe_unused]] CellMatrix &initialParams) {
   instrument_ = std::make_shared<instruments::Swaption>(expiry, tenor, forward,
                                                         annuity, forward);
   model_ = std::make_shared<Sabr>(expiry, forward, beta);

@@ -6,10 +6,10 @@
 #include <ql/quantlib.hpp>
 #include <string>
 #include <vector>
-#include <velesquant/volatility/sabr.h>
 #include <velesquant/models/quantoed_cms.h>
 #include <velesquant/models/utility.h>
 #include <velesquant/types.h>
+#include <velesquant/volatility/sabr.h>
 
 using namespace std;
 using namespace velesquant::xlw;
@@ -24,7 +24,8 @@ quantoedCMSspread::quantoedCMSspread(
     CalibrationTarget quoteType1, double expirySR2, double tenorSR2,
     double forwardSR2, double annuitySR2, double payCMS2, double discountCMS2,
     double corFX2, double atmVolFX2, double beta2, CellMatrix &strikes2,
-    CellMatrix &marketQuotes2, CalibrationTarget quoteType2, double corr) {
+    CellMatrix &marketQuotes2, CalibrationTarget quoteType2,
+    [[maybe_unused]] double corr) {
   sabrQuantoedCMS1_ = new quantoedCMS(
       expirySR1, tenorSR1, forwardSR1, annuitySR1, payCMS1, discountCMS1,
       corFX1, atmVolFX1, beta1, strikes1, marketQuotes1, quoteType1);

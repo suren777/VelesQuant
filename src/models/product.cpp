@@ -19,7 +19,6 @@ using namespace std;
 using namespace velesquant::xlw;
 using namespace QuantLib;
 
-#pragma warning(disable : 4996)
 
 namespace velesquant {
 

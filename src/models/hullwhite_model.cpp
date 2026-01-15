@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <cmath>
-#include <stdexcept>
 #include <velesquant/constants.h>
 #include <velesquant/models/hullwhite_model.h>
 
@@ -49,7 +48,7 @@ double HullWhiteModel::A(double t, double T) const {
                     // Usually purely needed for simulating P(t,T) given r(t).
 }
 
-double HullWhiteModel::variance(double t, double T) const {
+double HullWhiteModel::variance([[maybe_unused]] double t, double T) const {
   // Calculates Variance of integral_{t}^{T} sigma(s) * exp(-kappa(T-s)) ds ?
   // Or just variance of r(T) given r(t)?
   // The existing totalVariance(T0) in HW.cpp seems to be Var(r(T0) | F0).

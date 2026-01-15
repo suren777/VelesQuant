@@ -78,12 +78,12 @@ void CyclicReduction(std::vector<double> &a, std::vector<double> &b,
     // #pragma omp parallel for
     for (i = 1; i < n_size - 1; i++) {
 
-      double alpha = -a[i] / b[i - id];
-      double gamma = -c[i] / b[i + id];
-      na[id] = -a[i - id] * alpha;
-      nb[id] = b[i] + alpha * c[i - id] + gamma * a[i + id];
-      nc[id] = gamma * c[i + id];
-      nd[id] = d[i] + alpha * d[i - id] + gamma * d[i + id];
+      double alpha_cr = -a[i];
+      double gamma_cr = -c[i] / b[i + id];
+      na[id] = -a[i - id] * alpha_cr;
+      nb[id] = b[i] + alpha_cr * c[i - id] + gamma_cr * a[i + id];
+      nc[id] = gamma_cr * c[i + id];
+      nd[id] = d[i] + alpha_cr * d[i - id] + gamma_cr * d[i + id];
     }
     i = n_size - 1;
     double alpha = -a[i] / b[i - id];
@@ -97,7 +97,7 @@ void CyclicReduction(std::vector<double> &a, std::vector<double> &b,
     nd.swap(d);
   } while (auxN > 1);
   // #pragma omp parallel for
-  for (int i = 0; i < n_size; i++)
-    x[i] = d[i] / b[i];
+  for (int k = 0; k < n_size; k++)
+    x[k] = d[k] / b[k];
 }
 } // namespace velesquant

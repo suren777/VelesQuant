@@ -11,7 +11,6 @@ namespace velesquant {
 
 // using namespace std; // REMOVED by refactor
 #ifdef _MSC_VER
-#pragma warning(disable : 4018)
 #endif
 
 class ShortRate1FPDE {

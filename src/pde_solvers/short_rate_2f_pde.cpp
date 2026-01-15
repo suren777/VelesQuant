@@ -9,8 +9,6 @@
 #include <velesquant/pde_solvers/short_rate_2f_pde.h>
 #include <velesquant/volatility/lm.h>
 using namespace std;
-#pragma warning(disable : 4715)
-#pragma warning(disable : 4018)
 
 namespace velesquant {
 
@@ -588,7 +586,7 @@ void ShortRate2FPDE::calibrator(vector<double> timeDFs, vector<double> DFs,
   delete[] wa4;
 };
 void ShortRate2FPDE::objFcnCalibrator(int m, int n, double *x, double *fvec,
-                                      int *iflag) {
+                                      [[maybe_unused]] int *iflag) {
   int ns1 = sigma1s_.size();
   int ns2 = sigma2s_.size();
   for (int i = 0; i < ns1; i++)
@@ -1117,8 +1115,10 @@ double ShortRate2FPDE::whichValue(double t, const vector<double> times,
     return values[0];
   if (t >= times[n - 1])
     return values[n - 1];
-  for (int i = 1; i < n; i++)
+  for (int i = 1; i < n; i++) {
     if ((t >= times[i - 1]) && (t < times[i]))
       return values[i];
-};
+  }
+  return values.back();
+}
 } // namespace velesquant

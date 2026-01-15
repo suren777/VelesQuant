@@ -1,7 +1,7 @@
-#include <algorithm>
+
 #include <boost/math/distributions/normal.hpp>
 #include <cmath>
-#include <iostream>
+
 #include <ql/qldefines.hpp>
 #include <velesquant/constants.h>
 #include <velesquant/models/hullwhite_calibrator.h>
@@ -144,7 +144,8 @@ void HullWhiteCalibrator::calibrate(const std::vector<defSwap> &swapQuotes,
 }
 
 void HullWhiteCalibrator::objFcnPrice(int m, int n, double *x, double *fvec,
-                                      int *iflag, double *lb, double *ub) {
+                                      [[maybe_unused]] int *iflag, double *lb,
+                                      double *ub) {
   double penalty = pen_fun(x, lb, ub, n);
 
   std::vector<double> currentSigmas(n - 1);
@@ -168,7 +169,8 @@ void HullWhiteCalibrator::objFcnPrice(int m, int n, double *x, double *fvec,
 }
 
 void HullWhiteCalibrator::objFcnIV(int m, int n, double *x, double *fvec,
-                                   int *iflag, double *lb, double *ub) {
+                                   [[maybe_unused]] int *iflag, double *lb,
+                                   double *ub) {
   double penalty = pen_fun(x, lb, ub, n);
 
   std::vector<double> currentSigmas(n - 1);
@@ -237,7 +239,8 @@ double HullWhiteCalibrator::pen_fun(double *x, double *lb, double *ub, int n) {
 
 // Stub for bootstrap if needed, or remove from header if not implementing yet.
 void HullWhiteCalibrator::calibrateBootstrap(
-    const std::vector<defSwap> &swapQuotes, CalibrationTarget target) {
+    [[maybe_unused]] const std::vector<defSwap> &swapQuotes,
+    [[maybe_unused]] CalibrationTarget target) {
   // Left empty for now, focus on main calibrator
 }
 

@@ -1,10 +1,10 @@
 
-#include <algorithm>
+
 #include <ql/math/matrixutilities/choleskydecomposition.hpp>
 #include <ql/quantlib.hpp>
+#include <velesquant/models/utility.h>
 #include <velesquant/volatility/sabr.h>
 #include <velesquant/volatility/skew_mc.h>
-#include <velesquant/models/utility.h>
 
 using namespace std;
 using namespace QuantLib;
@@ -44,8 +44,6 @@ std::vector<double> skewMC::simulation(std::vector<double> timesPath,
     spotsPath[i] = simulatedSpot(timesPath[i], spot, corrRandoms[i]);
   return spotsPath;
 };
-
-#pragma warning(disable : 4715)
 
 double skewMC::simulatedSpot(double time, double spot, double corrRN) {
   double firstMaturity = sabrModels_[0].getMaturity();

@@ -186,7 +186,6 @@ complex<double> sVolT::hestonCFTd(complex<double> k, double maturity) const {
 }
 
 #ifdef _MSC_VER
-#pragma warning(disable : 4244)
 #endif
 double sVolT::hestonPriceTd(double maturity, double forward, double strike,
                             OptionType optType) const {
@@ -213,7 +212,6 @@ double sVolT::intCFfun(double u, double ki, double X, double maturity) const {
 }
 
 #ifdef _MSC_VER
-#pragma warning(disable : 4244)
 #endif
 
 double sVolT::hestonPriceTdCF(double maturity, double forward, double strike,

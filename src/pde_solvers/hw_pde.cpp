@@ -11,8 +11,6 @@
 #include <velesquant/volatility/lm.h>
 
 using namespace std;
-#pragma warning(disable : 4715)
-#pragma warning(disable : 4018)
 
 namespace velesquant {
 
@@ -287,18 +285,18 @@ void HWPDE::calibrator(vector<double> timeDFs, vector<double> DFs,
   timeDFs_ = timeDFs;
   timeThetas_.resize(1);
   timeThetas_[0] = aux[0];
-  int i = 1;
-  int k = 1;
+  int ii = 1;
+  int kk = 1;
   do {
-    if (timeThetas_[i - 1] < aux[k]) {
-      timeThetas_.push_back(aux[k]);
-      i++;
+    if (timeThetas_[ii - 1] < aux[kk]) {
+      timeThetas_.push_back(aux[kk]);
+      ii++;
     }
-    k++;
+    kk++;
   } while (
-      (timeThetas_[i - 1] <= swapQuotes[swapQuotes.size() - 1].Expiry +
-                                 swapQuotes[swapQuotes.size() - 1].Tenor) &&
-      (aux.size() > k));
+      (timeThetas_[ii - 1] <= swapQuotes[swapQuotes.size() - 1].Expiry +
+                                  swapQuotes[swapQuotes.size() - 1].Tenor) &&
+      (aux.size() > kk));
 
   thetas_.resize(timeThetas_.size());
   for (int i = 0; i < timeThetas_.size(); i++)
@@ -416,19 +414,19 @@ double HWPDE::pen_fun(double *x, double *lb, double *ub, int n) {
   return penalty;
 }
 
-void HWPDE::objFcnCalibration(int m, int n, double *x, double *fvec, int *iflag,
-                              double *lb, double *ub) {
+void HWPDE::objFcnCalibration(int m, int n, double *x, double *fvec,
+                              [[maybe_unused]] int *iflag, double *lb,
+                              double *ub) {
   double penalty = pen_fun(x, lb, ub, n);
   for (int i = 0; i < n - 1; i++)
     sigmas_[i] = x[i];
   kappa_ = x[n - 1];         // kappa
   termStructureCalibrator(); // TEREM STRUCTURE CALIBRATION
-  int i;
-  for (i = 0; i < m; i++) {
+  for (int j = 0; j < m; j++) {
     double modelSwaption =
-        pricingSwaption(quoteSwap_[i].Expiry, quoteSwap_[i].Tenor,
-                        quoteSwap_[i].SwapRate, quoteSwap_[i].Frequency);
-    fvec[i] = modelSwaption - marketSwaption_[i] + penalty;
+        pricingSwaption(quoteSwap_[j].Expiry, quoteSwap_[j].Tenor,
+                        quoteSwap_[j].SwapRate, quoteSwap_[j].Frequency);
+    fvec[j] = modelSwaption - marketSwaption_[j] + penalty;
   }
 };
 
@@ -448,48 +446,48 @@ void HWPDE::termStructureCalibrator() {
       break;
     }
 #pragma omp parallel for
-  for (int i = 0; i < MR; i++)
-    lastV[i] = inV[i]; // remember the starting density
-  for (int i = 0; i < N; i++) {
+  for (int r = 0; r < MR; r++)
+    lastV[r] = inV[r]; // remember the starting density
+  for (int i_p = 0; i_p < N; i_p++) {
     int sT = 0;
-    if (i > 0)
-      sT = iTs[i - 1] - 1;
+    if (i_p > 0)
+      sT = iTs[i_p - 1] - 1;
     double df = 0.0;
     int niter = 0;
     do {
       niter++;
 #pragma omp parallel for
-      for (int i = 0; i < MR; i++)
-        inV[i] = lastV[i]; // reset to the starting density
+      for (int r = 0; r < MR; r++)
+        inV[r] = lastV[r]; // reset to the starting density
 
-      if (thetas_[i] == 0.0)
-        thetas_[i] = 0.0005; // case of 0 value handler
-      thetas_[i] *= 1.001;   // 0.1% up for theta parameter
-      for (int t = sT; t < iTs[i] - 1; t++)
+      if (thetas_[i_p] == 0.0)
+        thetas_[i_p] = 0.0005; // case of 0 value handler
+      thetas_[i_p] *= 1.001;   // 0.1% up for theta parameter
+      for (int t = sT; t < iTs[i_p] - 1; t++)
         oneStepForward(t, inV);
       double dfUP = trapezoidal(inV);
 
 #pragma omp parallel for
-      for (int i = 0; i < MR; i++)
-        inV[i] = lastV[i]; // reset to the starting density
+      for (int r = 0; r < MR; r++)
+        inV[r] = lastV[r]; // reset to the starting density
 
-      thetas_[i] /= 1.001; // back to theta
-      for (int t = sT; t < iTs[i] - 1; t++)
+      thetas_[i_p] /= 1.001; // back to theta
+      for (int t = sT; t < iTs[i_p] - 1; t++)
         oneStepForward(t, inV);
       df = trapezoidal(inV);
-      thetas_[i] *=
-          (1 + 0.001 * (DFinterp[i] - df) / (dfUP - df)); // Newton iteration
-      thetas_[i] =
-          max(-0.0050, thetas_[i]); // Cutoff the nagative value (BETTER)
-    } while (fabs(1.0 - df / DFinterp[i]) >= 1.0E-6 && niter < 10);
+      thetas_[i_p] *=
+          (1 + 0.001 * (DFinterp[i_p] - df) / (dfUP - df)); // Newton iteration
+      thetas_[i_p] =
+          max(-0.0050, thetas_[i_p]); // Cutoff the nagative value (BETTER)
+    } while (fabs(1.0 - df / DFinterp[i_p]) >= 1.0E-6 && niter < 10);
 #pragma omp parallel for
-    for (int i = 0; i < MR; i++)
-      inV[i] = lastV[i]; // reset to the starting density
-    for (int t = sT; t < iTs[i] - 1; t++)
+    for (int r = 0; r < MR; r++)
+      inV[r] = lastV[r]; // reset to the starting density
+    for (int t = sT; t < iTs[i_p] - 1; t++)
       oneStepForward(t, inV);
 #pragma omp parallel for
-    for (int i = 0; i < MR; i++)
-      lastV[i] = inV[i]; // remember the starting density
+    for (int r = 0; r < MR; r++)
+      lastV[r] = inV[r]; // remember the starting density
   };
   return;
 };
@@ -507,20 +505,24 @@ double HWPDE::whichSigma(double t) const {
     return sigmas_[0];
   if (t >= timeSigmas_[n - 1])
     return sigmas_[n - 1];
-  for (int i = 1; i < n; i++)
+  for (int i = 1; i < n; i++) {
     if ((t >= timeSigmas_[i - 1]) && (t < timeSigmas_[i]))
       return sigmas_[i];
-};
+  }
+  return sigmas_.back();
+}
 double HWPDE::whichTheta(double t) const {
   int n = thetas_.size();
   if (t < timeThetas_[0])
     return thetas_[0];
   if (t >= timeThetas_[n - 1])
     return thetas_[n - 1];
-  for (int i = 1; i < n; i++)
+  for (int i = 1; i < n; i++) {
     if ((t >= timeThetas_[i - 1]) && (t < timeThetas_[i]))
       return thetas_[i];
-};
+  }
+  return thetas_.back();
+}
 
 const double DT = 0.001;
 const double SDT = sqrt(DT);
@@ -753,18 +755,18 @@ void HWPDE::calibratorBootStrap(vector<double> timeDFs, vector<double> DFs,
   timeDFs_ = timeDFs;
   timeThetas_.resize(1);
   timeThetas_[0] = aux[0];
-  int i = 1;
-  int k = 1;
+  int ii2 = 1;
+  int kk2 = 1;
   do {
-    if (timeThetas_[i - 1] < aux[k]) {
-      timeThetas_.push_back(aux[k]);
-      i++;
+    if (timeThetas_[ii2 - 1] < aux[kk2]) {
+      timeThetas_.push_back(aux[kk2]);
+      ii2++;
     }
-    k++;
+    kk2++;
   } while (
-      (timeThetas_[i - 1] <= swapQuotes[swapQuotes.size() - 1].Expiry +
-                                 swapQuotes[swapQuotes.size() - 1].Tenor) &&
-      (aux.size() > k));
+      (timeThetas_[ii2 - 1] <= swapQuotes[swapQuotes.size() - 1].Expiry +
+                                   swapQuotes[swapQuotes.size() - 1].Tenor) &&
+      (aux.size() > kk2));
 
   thetas_.resize(timeThetas_.size(), 0.005);
   for (int i = 0; i < timeThetas_.size(); i++)
@@ -786,13 +788,13 @@ void HWPDE::calibratorBootStrap(vector<double> timeDFs, vector<double> DFs,
     }
   }
   sigmas_.resize(timeSigmas_.size());
-  k = 0;
+  kk2 = 0;
   for (int j = 0; j < timeSigmas_.size(); j++) {
     iter_ = j;
 
     qSB_.resize(0);
-    for (int l = k; l < quoteSwap_.size(); l++, k++) {
-      if (l <= quoteSwap_.size()) {
+    for (int l = kk2; l < quoteSwap_.size(); l++, kk2++) {
+      if (l <= (int)quoteSwap_.size()) {
         if (!(quoteSwap_[l].Expiry <= timeSigmas_[j])) {
           break;
         } else
