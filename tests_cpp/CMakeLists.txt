@@ -1,5 +1,9 @@
 add_executable(velesquant_tests
     test_sabr.cpp
+    test_hw.cpp
+    test_tree.cpp
+    test_pde.cpp
+    test_utilities.cpp
 )
 
 target_link_libraries(velesquant_tests

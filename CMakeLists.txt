@@ -4,11 +4,17 @@ project(velesquant LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+if(MSVC)
+    add_compile_options(/W4)
+else()
+    add_compile_options(-Wall -Wextra -Wshadow -Wno-unused-variable -Wno-unused-but-set-variable -Wno-sign-compare)
+endif()
 # Find Dependencies
 if(APPLE)
     list(APPEND CMAKE_PREFIX_PATH "/opt/homebrew")
     list(APPEND CMAKE_PREFIX_PATH "/opt/homebrew/opt/quantlib")
     list(APPEND CMAKE_PREFIX_PATH "/opt/homebrew/opt/boost")
+    list(APPEND CMAKE_PREFIX_PATH "/opt/homebrew/opt/eigen")
 endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
@@ -16,6 +22,15 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 find_package(QuantLib REQUIRED)
 find_package(Boost REQUIRED)
 find_package(pybind11 REQUIRED)
+find_package(Eigen3 QUIET)
+# If find_package didn't set EIGEN3_INCLUDE_DIR, use fallback
+if(NOT EIGEN3_INCLUDE_DIR OR EIGEN3_INCLUDE_DIR STREQUAL "")
+    # Fallback for Homebrew Eigen
+    if(APPLE)
+        set(EIGEN3_INCLUDE_DIR "/opt/homebrew/opt/eigen/include/eigen3")
+    endif()
+endif()
+message(STATUS "Eigen3 include dir: ${EIGEN3_INCLUDE_DIR}")
 find_package(OpenMP)
 
 if(OpenMP_FOUND)
@@ -40,17 +55,15 @@ FetchContent_MakeAvailable(googletest)
 enable_testing()
 
 # Include Directories
-include_directories(
-    include
-    ${QuantLib_INCLUDE_DIRS}
-    ${Boost_INCLUDE_DIRS}
-)
+# Include Directories moved to target setup
+# include_directories() removed
 
 # Collect Source Files
 file(GLOB_RECURSE SOURCES
-    "src/local_vol/*.cpp"
+    "src/volatility/*.cpp"
     "src/pde_solvers/*.cpp"
     "src/models/*.cpp"
+    "src/numerics/*.cpp"
 )
 list(FILTER SOURCES EXCLUDE REGEX "test_simplex.cpp")
 
@@ -62,6 +75,12 @@ target_link_libraries(velesquant_core
     PRIVATE
     ${QuantLib_LIBRARIES}
     ${Boost_LIBRARIES}
+)
+target_include_directories(velesquant_core PUBLIC include)
+target_include_directories(velesquant_core SYSTEM PUBLIC
+    ${QuantLib_INCLUDE_DIRS}
+    ${Boost_INCLUDE_DIRS}
+    ${EIGEN3_INCLUDE_DIR}
 )
 if(OpenMP_FOUND)
     target_link_libraries(velesquant_core PRIVATE OpenMP::OpenMP_CXX)
@@ -76,14 +95,14 @@ if(OpenMP_CXX_FLAGS)
 endif()
 
 # Create the Python Extension Module
-pybind11_add_module(_core
+pybind11_add_module(native
     bindings/bindings.cpp
 )
 
-target_link_libraries(_core PRIVATE velesquant_core)
+target_link_libraries(native PRIVATE velesquant_core)
 
 # Install the module to the python package
-install(TARGETS _core DESTINATION velesquant)
+install(TARGETS native DESTINATION velesquant)
 
 # Tests
 add_subdirectory(tests_cpp)

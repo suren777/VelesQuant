@@ -13,6 +13,14 @@
   - Monte Carlo Simulation.
   - Skew-adjusted simulations.
 
+## Documentation
+
+For detailed documentation, please refer to:
+*   [**Python API Reference**](docs/python_api.md)
+*   [**Pricing Model Documentation**](docs/models/README.md) (Regulatory compliant)
+
+For practical examples, see the [tests](tests/) directory.
+
 ## Prerequisites
 
 To build `velesquant`, you need the following system dependencies:

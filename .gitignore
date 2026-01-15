@@ -21,7 +21,8 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
-
+.mypy_cache
+.ruff_cache
 # Poetry
 .venv/
 
@@ -30,9 +31,9 @@ cmake-build-*/
 CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
-Makefile
 CTestTestfile.cmake
 _deps/
+Makefile
 
 # C++
 *.d
@@ -43,6 +44,8 @@ _deps/
 *.gcda
 *.gcno
 *.gcov
+*.a
+*.dylib
 
 # Mac
 .DS_Store
@@ -56,7 +59,15 @@ _deps/
 htmlcov/
 .coverage
 .coverage.*
+Testing/
+tests_cpp/velesquant_tests
+tests_cpp/*_tests.cmake
+tests_cpp/*_include.cmake
+tests_cpp/cmake_test_discovery_*.json
 
 # Custom
 test_output/
 # *.txt  <-- Removed to support CMakeLists.txt
+build_tests/
+build_coverage/
+build_debug/
