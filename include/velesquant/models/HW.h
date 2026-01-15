@@ -3,11 +3,19 @@
 #ifndef HW_H
 #define HW_H
 
+#include <memory>
 #include <vector>
 #include <velesquant/models/utility.h>
 #include <velesquant/numerics/interpolation.h>
 
 namespace velesquant {
+namespace models {
+class HullWhiteModel;
+class HullWhiteCalibrator;
+} // namespace models
+namespace engines {
+class HullWhiteAnalyticEngine;
+}
 
 // using namespace std; // REMOVED by refactor
 
@@ -22,12 +30,7 @@ class HullWhite {
 public:
   HullWhite(double kappa, std::vector<double> timeSigmas,
             std::vector<double> sigmas, std::vector<double> timeDFs,
-            std::vector<double> DFs)
-      : kappa_(kappa), timeDFs_(timeDFs), DFs_(DFs), timeSigmas_(timeSigmas),
-        sigmas_(sigmas) {
-    sigmas0_ = sigmas_;
-    kappa0_ = kappa_;
-  };
+            std::vector<double> DFs);
 
   ~HullWhite() {};
 
@@ -120,6 +123,10 @@ private:
   mutable std::vector<double> iv_ratio, bond_ratio, index;
   double objKappa(double x, const std::vector<double> &ivr,
                   const std::vector<double> &br, const std::vector<int> &ind);
+
+  std::shared_ptr<models::HullWhiteModel> model_;
+  std::shared_ptr<engines::HullWhiteAnalyticEngine> engine_;
+  std::shared_ptr<models::HullWhiteCalibrator> calibrator_;
 };
 
 } // namespace velesquant

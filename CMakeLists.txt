@@ -63,6 +63,7 @@ file(GLOB_RECURSE SOURCES
     "src/volatility/*.cpp"
     "src/pde_solvers/*.cpp"
     "src/models/*.cpp"
+    "src/engines/*.cpp"
     "src/numerics/*.cpp"
 )
 list(FILTER SOURCES EXCLUDE REGEX "test_simplex.cpp")
