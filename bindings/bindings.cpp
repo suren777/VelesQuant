@@ -110,12 +110,12 @@ PYBIND11_MODULE(native, m) {
   // defSwap struct binding for calibration inputs
   py::class_<defSwap>(m, "DefSwap")
       .def(py::init<>())
-      .def_readwrite("Expiry", &defSwap::Expiry)
-      .def_readwrite("Tenor", &defSwap::Tenor)
-      .def_readwrite("Frequency", &defSwap::Frequency)
-      .def_readwrite("SwapRate", &defSwap::SwapRate)
-      .def_readwrite("VolATM", &defSwap::VolATM)
-      .def_readwrite("Value", &defSwap::Value);
+      .def_readwrite("expiry", &defSwap::Expiry)
+      .def_readwrite("tenor", &defSwap::Tenor)
+      .def_readwrite("frequency", &defSwap::Frequency)
+      .def_readwrite("swap_rate", &defSwap::SwapRate)
+      .def_readwrite("vol_atm", &defSwap::VolATM)
+      .def_readwrite("value", &defSwap::Value);
 
   // Utility functions
   m.def("cdf_normal", &cdf_normal,
@@ -127,12 +127,12 @@ PYBIND11_MODULE(native, m) {
         "Calculate implied volatility for a Black-Scholes price");
 
   // Equity & Volatility - Black-Scholes / Black Formula
-  m.def("black_scholes_call", &BlackScholesCall, py::arg("Spot"),
-        py::arg("Strike"), py::arg("r"), py::arg("d"), py::arg("Vol"),
-        py::arg("Expiry"));
-  m.def("black_scholes_call_vega", &BlackScholesCallVega, py::arg("Spot"),
-        py::arg("Strike"), py::arg("r"), py::arg("d"), py::arg("Vol"),
-        py::arg("Expiry"));
+  m.def("black_scholes_call", &BlackScholesCall, py::arg("spot"),
+        py::arg("strike"), py::arg("rate"), py::arg("d"), py::arg("vol"),
+        py::arg("expiry"));
+  m.def("black_scholes_call_vega", &BlackScholesCallVega, py::arg("spot"),
+        py::arg("strike"), py::arg("rate"), py::arg("d"), py::arg("vol"),
+        py::arg("expiry"));
   m.def("black_formula_call", &BlackFormulaCall, py::arg("Forward"),
         py::arg("Strike"), py::arg("Vol"), py::arg("Expiry"));
   m.def("black_formula_call_vega", &BlackFormulaCallVega, py::arg("Forward"),
@@ -262,29 +262,29 @@ PYBIND11_MODULE(native, m) {
       .def(py::init<double, std::vector<double>, std::vector<double>,
                     std::vector<double>, std::vector<double>>(),
            py::arg("kappa"), py::arg("timeSigmas"), py::arg("sigmas"),
-           py::arg("timeDFs"), py::arg("DFs"))
-      .def("optionBond", &HullWhite::optionBond, py::arg("Expiry"),
-           py::arg("Maturity"), py::arg("Strike"), py::arg("type"))
-      .def("swaption", &HullWhite::swaption, py::arg("Expiry"),
-           py::arg("Tenor"), py::arg("Strike"), py::arg("PayFrequency") = 0.5)
+           py::arg("discount_factor_times"), py::arg("discount_factors"))
+      .def("optionBond", &HullWhite::optionBond, py::arg("expiry"),
+           py::arg("maturity"), py::arg("strike"), py::arg("type"))
+      .def("swaption", &HullWhite::swaption, py::arg("expiry"),
+           py::arg("tenor"), py::arg("strike"), py::arg("pay_frequency") = 0.5)
       .def("simulation", &HullWhite::simulation, py::arg("times"))
       .def("getParameterKappa", &HullWhite::getKappa)
       .def("getSigmas", &HullWhite::getSigmas)
       .def("getTimeSigmas", &HullWhite::getTimeSigmas)
-      .def("ZC", &HullWhite::ZC, py::arg("Expiry"))
-      .def("calibrate", &HullWhite::calibrator, py::arg("swapQuotes"),
+      .def("ZC", &HullWhite::ZC, py::arg("expiry"))
+      .def("calibrate", &HullWhite::calibrator, py::arg("swap_quotes"),
            py::arg("target") = CalibrationTarget::Volatility)
       .def("swaption_vec",
            py::vectorize([](HullWhite &self, double expiry, double tenor,
                             double strike, double pay_freq) {
              return self.swaption(expiry, tenor, strike, pay_freq);
            }),
-           py::arg("Expiry"), py::arg("Tenor"), py::arg("Strike"),
-           py::arg("PayFrequency") = 0.5)
+           py::arg("expiry"), py::arg("tenor"), py::arg("strike"),
+           py::arg("pay_frequency") = 0.5)
       .def("ZC_vec", py::vectorize([](HullWhite &self, double expiry) {
              return self.ZC(expiry);
            }),
-           py::arg("Expiry"));
+           py::arg("expiry"));
 
   // Swaption
   py::class_<swaption>(m, "Swaption")
@@ -305,12 +305,12 @@ PYBIND11_MODULE(native, m) {
   py::class_<cms>(m, "CMS")
       .def(py::init<double, double, double, double, double, double, double,
                     double, double, double>(),
-           py::arg("expirySR"), py::arg("tenorSR"), py::arg("forwardSR"),
-           py::arg("annuitySR"), py::arg("payCMS"), py::arg("discountCMS"),
+           py::arg("expiry_sr"), py::arg("tenor_sr"), py::arg("forward_sr"),
+           py::arg("annuity_sr"), py::arg("pay_cms"), py::arg("discount_cms"),
            py::arg("beta") = 0.85, py::arg("alpha") = 0.5, py::arg("nu") = 0.25,
            py::arg("rho") = -0.75)
       .def("fairValue", &cms::fairValue, py::arg("strike"),
-           py::arg("callORput") = velesquant::OptionType::Call)
+           py::arg("call_or_put") = velesquant::OptionType::Call)
       .def("getForward", &cms::getForward)
       .def("getDiscountCMS", &cms::getDiscountCMS)
       .def("getMaturity", &cms::getMaturity)
@@ -363,13 +363,13 @@ PYBIND11_MODULE(native, m) {
            }),
            py::arg("expiry"), py::arg("tenor"), py::arg("fwd"),
            py::arg("annuity"), py::arg("pay"), py::arg("disc"),
-           py::arg("corFX"), py::arg("atmVolFX"), py::arg("beta"),
+           py::arg("cor_fx"), py::arg("atm_vol_fx"), py::arg("beta"),
            py::arg("strikes"), py::arg("quotes"),
            py::arg("type") = velesquant::CalibrationTarget::Price)
       .def("fairValue", &quantoedCMS::fairValue, py::arg("strike"),
-           py::arg("callORput") = velesquant::OptionType::Call)
+           py::arg("call_or_put") = velesquant::OptionType::Call)
       .def("getForward", &quantoedCMS::getForward)
-      .def("simulation", &quantoedCMS::simulation, py::arg("corrRN"));
+      .def("simulation", &quantoedCMS::simulation, py::arg("corr_rn"));
 
   // Quantoed CMS Spread
   py::class_<quantoedCMSspread>(m, "QuantoedCmsSpread")
@@ -392,12 +392,12 @@ PYBIND11_MODULE(native, m) {
            }),
            py::arg("expiry1"), py::arg("tenor1"), py::arg("fwd1"),
            py::arg("annuity1"), py::arg("pay1"), py::arg("disc1"),
-           py::arg("corFX1"), py::arg("atmVolFX1"), py::arg("beta1"),
+           py::arg("cor_fx1"), py::arg("atm_vol_fx1"), py::arg("beta1"),
            py::arg("strikes1"), py::arg("quotes1"),
            py::arg("type1") = velesquant::CalibrationTarget::Price,
            py::arg("expiry2"), py::arg("tenor2"), py::arg("fwd2"),
            py::arg("annuity2"), py::arg("pay2"), py::arg("disc2"),
-           py::arg("corFX2"), py::arg("atmVolFX2"), py::arg("beta2"),
+           py::arg("cor_fx2"), py::arg("atm_vol_fx2"), py::arg("beta2"),
            py::arg("strikes2"), py::arg("quotes2"),
            py::arg("type2") = velesquant::CalibrationTarget::Price,
            py::arg("corr"))
@@ -410,8 +410,8 @@ PYBIND11_MODULE(native, m) {
                     std::vector<double>, std::vector<std::vector<double>>,
                     std::vector<std::vector<double>>,
                     std::vector<std::vector<double>>>(),
-           py::arg("Spot"), py::arg("Strike"), py::arg("Maturities"),
-           py::arg("Forwards"), py::arg("IV"), py::arg("correlation"))
+           py::arg("spot"), py::arg("strike"), py::arg("maturities"),
+           py::arg("forwards"), py::arg("iv"), py::arg("correlation"))
       .def("simulate_basket", &lBasket::simulate_basket, py::arg("schedule"))
       .def("simulate_basketWR", &lBasket::simulate_basketWR,
            py::arg("schedule"))
@@ -421,9 +421,9 @@ PYBIND11_MODULE(native, m) {
   py::class_<HHW>(m, "HHW")
       .def(py::init<double, double, double, double, double, double, double,
                     double, double>(),
-           py::arg("s0"), py::arg("v0"), py::arg("r0"), py::arg("kappa"),
-           py::arg("eta"), py::arg("rho"), py::arg("sigma1"), py::arg("sigma2"),
-           py::arg("a"))
+           py::arg("s0"), py::arg("v0"), py::arg("initial_rate"),
+           py::arg("kappa"), py::arg("eta"), py::arg("rho"), py::arg("sigma1"),
+           py::arg("sigma2"), py::arg("a"))
       .def("HHWPrice",
            static_cast<double (HHW::*)(double, double) const>(&HHW::HHWPrice),
            py::arg("maturity"), py::arg("strike"));
@@ -437,8 +437,8 @@ PYBIND11_MODULE(native, m) {
            py::arg("forward"), py::arg("strike"))
       .def("simulation", &SchobelZhu::simulation, py::arg("times"),
            py::arg("forwards"))
-      .def("calibrator", &SchobelZhu::calibrator, py::arg("maturitys"),
-           py::arg("forwards"), py::arg("strikes"), py::arg("marketQuotes"),
+      .def("calibrator", &SchobelZhu::calibrator, py::arg("maturities"),
+           py::arg("forwards"), py::arg("strikes"), py::arg("market_quotes"),
            py::arg("target") = velesquant::CalibrationTarget::Price)
       .def_property("var0", &SchobelZhu::getParameterVar0,
                     &SchobelZhu::setParameterVar0)
@@ -506,16 +506,16 @@ PYBIND11_MODULE(native, m) {
                     std::vector<double>, std::vector<double>,
                     std::vector<double>>(),
            py::arg("S"), py::arg("T"), py::arg("F"), py::arg("IV"),
-           py::arg("r") = std::vector<double>(),
+           py::arg("rate") = std::vector<double>(),
            py::arg("q") = std::vector<double>())
       .def("calculateBinomial",
            static_cast<double (CTree::*)(double, double, int, exStyle,
                                          OptionType, tType)>(
                &CTree::calculateBinomial),
-           py::arg("strike"), py::arg("Maturity"), py::arg("Nnodes"),
+           py::arg("strike"), py::arg("maturity"), py::arg("n_nodes"),
            py::arg("style"), py::arg("pay"), py::arg("tree"))
       .def("calculateTrinomial", &CTree::calculateTrinomial, py::arg("strike"),
-           py::arg("Maturity"), py::arg("Nnodes"), py::arg("style"),
+           py::arg("maturity"), py::arg("n_nodes"), py::arg("style"),
            py::arg("pay"), py::arg("tree"));
 
   // skewMC - Skew Monte Carlo
@@ -529,45 +529,45 @@ PYBIND11_MODULE(native, m) {
   py::class_<HWPDE>(m, "HWPDE")
       .def(py::init<double, double, std::vector<double>, std::vector<double>,
                     std::vector<double>, std::vector<double>>(),
-           py::arg("R0"), py::arg("kappa"), py::arg("timeSigmas"),
+           py::arg("initial_rate"), py::arg("kappa"), py::arg("timeSigmas"),
            py::arg("sigmas"), py::arg("timeThetas"), py::arg("thetas"))
       .def(py::init<double, std::vector<double>, std::vector<double>,
                     std::vector<double>, std::vector<double>>(),
            py::arg("kappa"), py::arg("timeSigmas"), py::arg("sigmas"),
-           py::arg("timeDF"), py::arg("DF"))
+           py::arg("discount_factor_times"), py::arg("discount_factors"))
       // Pricing methods
-      .def("pricingSwaption", &HWPDE::pricingSwaption, py::arg("Expiry"),
-           py::arg("Tenor"), py::arg("Strike"), py::arg("PayFrequency"))
-      .def("pricingBermudan", &HWPDE::pricingBermudan, py::arg("Expiry"),
-           py::arg("Tenor"), py::arg("Exercises"), py::arg("Strike"),
-           py::arg("PayFrequency"))
+      .def("pricingSwaption", &HWPDE::pricingSwaption, py::arg("expiry"),
+           py::arg("tenor"), py::arg("strike"), py::arg("pay_frequency"))
+      .def("pricingBermudan", &HWPDE::pricingBermudan, py::arg("expiry"),
+           py::arg("tenor"), py::arg("exercises"), py::arg("strike"),
+           py::arg("pay_frequency"))
       .def("pricingCallableSwap", &HWPDE::pricingCallableSwap,
-           py::arg("Expiry"), py::arg("Tenor"), py::arg("Exercises"),
-           py::arg("Coupon"), py::arg("Strike"), py::arg("PayFrequency"),
+           py::arg("expiry"), py::arg("tenor"), py::arg("exercises"),
+           py::arg("coupon"), py::arg("strike"), py::arg("pay_frequency"),
            py::arg("type"))
-      .def("pricingSwap", &HWPDE::pricingSwap, py::arg("Expiry"),
-           py::arg("Tenor"), py::arg("Strike"), py::arg("PayFrequency"))
-      .def("pricingZBO", &HWPDE::pricingZBO, py::arg("Expiry"),
-           py::arg("Maturity"), py::arg("Strike"), py::arg("type"))
-      .def("pricingZB", &HWPDE::pricingZB, py::arg("Maturity"))
-      .def("pricingCBO", &HWPDE::pricingCBO, py::arg("Expiry"),
-           py::arg("Tenor"), py::arg("Coupon"), py::arg("Strike"),
-           py::arg("PayFrequency"), py::arg("type"))
-      .def("pricingCouponBond", &HWPDE::pricingCouponBond, py::arg("Expiry"),
-           py::arg("Tenor"), py::arg("Coupon"), py::arg("PayFrequency"))
+      .def("pricingSwap", &HWPDE::pricingSwap, py::arg("expiry"),
+           py::arg("tenor"), py::arg("strike"), py::arg("pay_frequency"))
+      .def("pricingZBO", &HWPDE::pricingZBO, py::arg("expiry"),
+           py::arg("maturity"), py::arg("strike"), py::arg("type"))
+      .def("pricingZB", &HWPDE::pricingZB, py::arg("maturity"))
+      .def("pricingCBO", &HWPDE::pricingCBO, py::arg("expiry"),
+           py::arg("tenor"), py::arg("coupon"), py::arg("strike"),
+           py::arg("pay_frequency"), py::arg("type"))
+      .def("pricingCouponBond", &HWPDE::pricingCouponBond, py::arg("expiry"),
+           py::arg("tenor"), py::arg("coupon"), py::arg("pay_frequency"))
       // Analysis methods
-      .def("getSwapRate", &HWPDE::getSwapRate, py::arg("Expiry"),
-           py::arg("Tenor"), py::arg("PayFrequency"))
-      .def("getImpVolATM", &HWPDE::getImpVolATM, py::arg("Expiry"),
-           py::arg("Tenor"), py::arg("PayFrequency"))
-      .def("getDFs", &HWPDE::getDFs, py::arg("timePoints"))
+      .def("getSwapRate", &HWPDE::getSwapRate, py::arg("expiry"),
+           py::arg("tenor"), py::arg("pay_frequency"))
+      .def("getImpVolATM", &HWPDE::getImpVolATM, py::arg("expiry"),
+           py::arg("tenor"), py::arg("pay_frequency"))
+      .def("getDFs", &HWPDE::getDFs, py::arg("time_points"))
       .def("simulationPDE", &HWPDE::simulationPDE, py::arg("times"))
       // Calibration
-      .def("calibrate", &HWPDE::calibrator, py::arg("timeDFs"), py::arg("DFs"),
-           py::arg("swapQuotes"))
+      .def("calibrate", &HWPDE::calibrator, py::arg("discount_factor_times"),
+           py::arg("discount_factors"), py::arg("swap_quotes"))
       // Getters
       .def("getKappa", &HWPDE::getKappa)
-      .def("getR0", &HWPDE::getR0)
+      .def("getInitialRate", &HWPDE::getR0)
       .def("getTimeSigmas", &HWPDE::getTimeSigmas)
       .def("getSigmas", &HWPDE::getSigmas)
       .def("getTimeThetas", &HWPDE::getTimeThetas)
@@ -578,12 +578,12 @@ PYBIND11_MODULE(native, m) {
       .def(py::init<double, double, double, double, double, std::vector<double>,
                     std::vector<double>, std::vector<double>,
                     std::vector<double>>(),
-           py::arg("R0"), py::arg("kappa"), py::arg("alpha"), py::arg("beta"),
-           py::arg("gamma"), py::arg("timeSigmas"), py::arg("sigmas"),
-           py::arg("timeThetas"), py::arg("thetas"))
+           py::arg("initial_rate"), py::arg("kappa"), py::arg("alpha"),
+           py::arg("beta"), py::arg("gamma"), py::arg("time_sigmas"),
+           py::arg("sigmas"), py::arg("time_thetas"), py::arg("thetas"))
       .def("pricingSwaption", &ShortRate1FPDE::pricingSwaption,
-           py::arg("Expiry"), py::arg("Tenor"), py::arg("Strike"),
-           py::arg("PayFrequency") = 0.5);
+           py::arg("expiry"), py::arg("tenor"), py::arg("strike"),
+           py::arg("pay_frequency") = 0.5);
 
   // ShortRate2FPDE
   py::class_<ShortRate2FPDE>(m, "ShortRate2FPDE")
@@ -592,13 +592,14 @@ PYBIND11_MODULE(native, m) {
                     std::vector<double>, std::vector<double>,
                     std::vector<double>>(),
            py::arg("kappa1"), py::arg("kappa2"), py::arg("lambda"),
-           py::arg("timeSigma1s"), py::arg("sigma1s"), py::arg("timeSigma2s"),
-           py::arg("sigma2s"), py::arg("timeAlphas"), py::arg("alphas"))
+           py::arg("time_sigma1s"), py::arg("sigma1s"), py::arg("time_sigma2s"),
+           py::arg("sigma2s"), py::arg("time_alphas"), py::arg("alphas"))
       .def("pricingSwaption", &ShortRate2FPDE::pricingSwaption,
-           py::arg("Expiry"), py::arg("Tenor"), py::arg("Strike"),
-           py::arg("PayFrequency") = 0.5)
-      .def("calibrate", &ShortRate2FPDE::calibrator, py::arg("timeDFs"),
-           py::arg("DFs"), py::arg("swapQuotes"));
+           py::arg("expiry"), py::arg("tenor"), py::arg("strike"),
+           py::arg("pay_frequency") = 0.5)
+      .def("calibrate", &ShortRate2FPDE::calibrator,
+           py::arg("discount_factor_times"), py::arg("discount_factors"),
+           py::arg("swap_quotes"));
 
   // Facade Functions (from model.cpp)
   m.def("lv_export", &lvExport, py::arg("maturities"), py::arg("forwards"),

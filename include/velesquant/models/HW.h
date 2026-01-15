@@ -40,15 +40,15 @@ public:
    * @param type Option type (Call or Put).
    * @return Option price.
    */
-  [[nodiscard]] double optionBond(double Expiry, double Maturity, double Strike,
+  [[nodiscard]] double optionBond(double expiry, double maturity, double strike,
                                   OptionType type);
-  [[nodiscard]] double swaption(double Expiry, double Tenor, double Strike,
-                                double PayFrequency = 0.5);
+  [[nodiscard]] double swaption(double expiry, double tenor, double strike,
+                                double payFrequency = 0.5);
   [[nodiscard]] double BlackStrike(double T0, double TN, double impVol);
   [[nodiscard]] double BlackStrikePlain(double T0, double TN);
   [[nodiscard]] std::vector<double> simulation(std::vector<double> times) const;
 
-  [[nodiscard]] double ZC(double Expiry);
+  [[nodiscard]] double ZC(double expiry);
   /**
    * @brief Calibrates model parameters (sigma) to market swaptions.
    *
@@ -62,13 +62,13 @@ public:
   [[nodiscard]] double getKappa() { return kappa_; };
   [[nodiscard]] std::vector<double> getTimeSigmas() { return timeSigmas_; };
   [[nodiscard]] std::vector<double> getSigmas() { return sigmas_; };
-  [[nodiscard]] double getSwapRate(double Expiry, double Tenor,
-                                   double PayFrequency = 0.5);
-  [[nodiscard]] double swaptionIVblackPub(double Expiry, double Tenor,
+  [[nodiscard]] double getSwapRate(double expiry, double tenor,
+                                   double payFrequency = 0.5);
+  [[nodiscard]] double swaptionIVblackPub(double expiry, double tenor,
                                           double swap_price);
-  [[nodiscard]] double get_swaptionATM(double Expiry, double Tenor,
-                                       double VolATM) {
-    return swaptionATM(Expiry, Tenor, VolATM);
+  [[nodiscard]] double get_swaptionATM(double expiry, double tenor,
+                                       double volATM) {
+    return swaptionATM(expiry, tenor, volATM);
   };
   [[nodiscard]] std::vector<double> getDFs() { return DFs_; };
   [[nodiscard]] std::vector<double> getDFsTimes() { return timeDFs_; };
@@ -83,20 +83,20 @@ private:
   std::vector<defSwap> qSB_;
 
   double totalVariance(double T0);
-  double equalityCP(double vX, double vO, double Expiry, double Tenor,
-                    double Strike, double PayFrequency);
-  double criticalPoint(double Expiry, double Tenor, double Strike,
-                       double PayFrequency);
+  double equalityCP(double vX, double v0, double expiry, double tenor,
+                    double strike, double payFrequency);
+  double criticalPoint(double expiry, double tenor, double strike,
+                       double payFrequency);
 
-  double formulaBlack(double dfT0, double dfTN, double Strike, double impVol,
+  double formulaBlack(double dfT0, double dfTN, double strike, double impVol,
                       double T0, OptionType type);
 
   double getDF(double T) {
     return interpolation("CubicNaturalSpline", timeDFs_, DFs_, T);
   };
-  double swaptionATM(double Expiry, double Tenor, double VolATM) {
-    return (getDF(Expiry) - getDF(Expiry + Tenor)) *
-           (2.0 * cdf_normal(0.5 * VolATM * sqrt(Expiry)) - 1.0);
+  double swaptionATM(double expiry, double tenor, double volATM) {
+    return (getDF(expiry) - getDF(expiry + tenor)) *
+           (2.0 * cdf_normal(0.5 * volATM * sqrt(expiry)) - 1.0);
   };
 
   double whichSigma(double t) const;
@@ -112,9 +112,9 @@ private:
   double objFcnBswap(double x, int m);
   double objFcnBIV(double x, int m);
   // not used
-  double swap(double Expiry, double Tenor, double Strike,
-              double PayFrequency = 0.5);
-  double swaptionIVblack(double Expiry, double Tenor, double swaption_price);
+  double swap(double expiry, double tenor, double strike,
+              double payFrequency = 0.5);
+  double swaptionIVblack(double expiry, double tenor, double swaptionPrice);
   double Bratio(double a, double Mi, double Tj, double Tk);
   void calibrateKappa();
   mutable std::vector<double> iv_ratio, bond_ratio, index;

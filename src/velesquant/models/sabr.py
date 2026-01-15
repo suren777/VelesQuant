@@ -87,3 +87,16 @@ class SabrModel(Model):
         self.rho = params["rho"]
 
         return self
+
+    def to_dict(self) -> dict:
+        """Serialize model state."""
+        return {
+            "type": "SabrModel",
+            "maturity": self.maturity,
+            "forward": self.forward,
+            "alpha": self.alpha,
+            "beta": self.beta,
+            "nu": self.nu,
+            "rho": self.rho,
+            "shift": self.shift,
+        }

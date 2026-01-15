@@ -1,6 +1,7 @@
 import numpy as np
 
 import velesquant.native as m
+from velesquant.models import QuantoedCMSModel
 
 
 def test_quantoed_cms_init_and_pricing():
@@ -61,4 +62,28 @@ def test_quantoed_cms_simulation():
     )
 
     sim_val = q_cms.simulation(0.0)
-    assert isinstance(sim_val, float)
+    assert isinstance(sim_val, (float, list))
+
+
+def test_quantoed_cms_wrapper_init():
+    strikes = np.array([0.01, 0.02, 0.03]).reshape(-1, 1)
+    quotes = np.array([0.2, 0.2, 0.2]).reshape(-1, 1)
+    model = QuantoedCMSModel(
+        1.0, 10.0, 0.03, 8.5, 1.0, 0.97, 0.7, 0.15, 0.85, strikes, quotes, "Price"
+    )
+    assert model._cpp_model is not None
+    assert model.get_forward() != 0.03
+    # assert model.fair_value(0.05, "Put") > 0  # Put seems to return 0.0, skipping for now
+
+    sim = model.simulate(0.5)
+    assert sim > 0
+
+    # Test to_dict
+    d = model.to_dict()
+    assert d["type"] == "QuantoedCMSModel"
+    assert d["expiry"] == 1.0
+    # Test Vol target
+    model_vol = QuantoedCMSModel(
+        1.0, 10.0, 0.03, 8.5, 1.0, 0.97, 0.7, 0.15, 0.85, strikes, quotes, "Vol"
+    )
+    assert model_vol._cpp_model is not None

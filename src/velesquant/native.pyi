@@ -33,6 +33,7 @@ __all__: list[str] = [
     "CmsSpread",
     "CzechRepublic",
     "DayCounterType",
+    "DefSwap",
     "Denmark",
     "European",
     "ExerciseStyle",
@@ -94,6 +95,15 @@ __all__: list[str] = [
     "implied_vol",
     "pdf_normal",
 ]
+
+class DefSwap:
+    expiry: float
+    tenor: float
+    frequency: float
+    swap_rate: float
+    vol_atm: float
+    value: float
+    def __init__(self) -> None: ...
 
 class AfSabr(SabrPDE):
     def __init__(
@@ -457,7 +467,7 @@ class HWPDE:
     @typing.overload
     def __init__(
         self,
-        R0: typing.SupportsFloat,
+        initial_rate: typing.SupportsFloat,
         kappa: typing.SupportsFloat,
         timeSigmas: collections.abc.Sequence[typing.SupportsFloat],
         sigmas: collections.abc.Sequence[typing.SupportsFloat],
@@ -470,34 +480,96 @@ class HWPDE:
         kappa: typing.SupportsFloat,
         timeSigmas: collections.abc.Sequence[typing.SupportsFloat],
         sigmas: collections.abc.Sequence[typing.SupportsFloat],
-        timeDF: collections.abc.Sequence[typing.SupportsFloat],
-        DF: collections.abc.Sequence[typing.SupportsFloat],
+        discount_factor_times: collections.abc.Sequence[typing.SupportsFloat],
+        discount_factors: collections.abc.Sequence[typing.SupportsFloat],
     ) -> None: ...
     def pricingBermudan(
         self,
-        Expiry: typing.SupportsFloat,
-        Tenor: typing.SupportsFloat,
-        Exercises: collections.abc.Sequence[typing.SupportsFloat],
-        Strike: typing.SupportsFloat,
-        PayFrequency: typing.SupportsFloat,
+        expiry: typing.SupportsFloat,
+        tenor: typing.SupportsFloat,
+        exercises: collections.abc.Sequence[typing.SupportsFloat],
+        strike: typing.SupportsFloat,
+        pay_frequency: typing.SupportsFloat,
     ) -> float: ...
     def pricingCallableSwap(
         self,
-        Expiry: typing.SupportsFloat,
-        Tenor: typing.SupportsFloat,
-        Exercises: collections.abc.Sequence[typing.SupportsFloat],
-        Coupon: typing.SupportsFloat,
-        Strike: typing.SupportsFloat,
-        PayFrequency: typing.SupportsFloat,
+        expiry: typing.SupportsFloat,
+        tenor: typing.SupportsFloat,
+        exercises: collections.abc.Sequence[typing.SupportsFloat],
+        coupon: typing.SupportsFloat,
+        strike: typing.SupportsFloat,
+        pay_frequency: typing.SupportsFloat,
         type: str,
     ) -> float: ...
     def pricingSwaption(
         self,
-        Expiry: typing.SupportsFloat,
-        Tenor: typing.SupportsFloat,
-        Strike: typing.SupportsFloat,
-        PayFrequency: typing.SupportsFloat,
+        expiry: typing.SupportsFloat,
+        tenor: typing.SupportsFloat,
+        strike: typing.SupportsFloat,
+        pay_frequency: typing.SupportsFloat,
     ) -> float: ...
+    def pricingSwap(
+        self,
+        expiry: typing.SupportsFloat,
+        tenor: typing.SupportsFloat,
+        strike: typing.SupportsFloat,
+        pay_frequency: typing.SupportsFloat,
+    ) -> float: ...
+    def pricingZB(self, maturity: typing.SupportsFloat) -> float: ...
+    def pricingZBO(
+        self,
+        expiry: typing.SupportsFloat,
+        maturity: typing.SupportsFloat,
+        strike: typing.SupportsFloat,
+        type: str,
+    ) -> float: ...
+    def pricingCBO(
+        self,
+        expiry: typing.SupportsFloat,
+        tenor: typing.SupportsFloat,
+        coupon: typing.SupportsFloat,
+        strike: typing.SupportsFloat,
+        pay_frequency: typing.SupportsFloat,
+        type: str,
+    ) -> float: ...
+    def pricingCouponBond(
+        self,
+        expiry: typing.SupportsFloat,
+        tenor: typing.SupportsFloat,
+        coupon: typing.SupportsFloat,
+        pay_frequency: typing.SupportsFloat,
+    ) -> float: ...
+    def getSwapRate(
+        self,
+        expiry: typing.SupportsFloat,
+        tenor: typing.SupportsFloat,
+        pay_frequency: typing.SupportsFloat,
+    ) -> float: ...
+    def getImpVolATM(
+        self,
+        expiry: typing.SupportsFloat,
+        tenor: typing.SupportsFloat,
+        pay_frequency: typing.SupportsFloat,
+    ) -> float: ...
+    def getDFs(
+        self, time_points: collections.abc.Sequence[typing.SupportsFloat]
+    ) -> list[float]: ...
+    def simulationPDE(
+        self, times: collections.abc.Sequence[typing.SupportsFloat]
+    ) -> list[float]: ...
+    def calibrate(
+        self,
+        time_dfs: collections.abc.Sequence[typing.SupportsFloat],
+        dfs: collections.abc.Sequence[typing.SupportsFloat],
+        swap_quotes: collections.abc.Sequence[DefSwap],
+    ) -> None: ...
+    def getKappa(self) -> float: ...
+    @typing.overload
+    def getInitialRate(self) -> float: ...
+    def getTimeSigmas(self) -> list[float]: ...
+    def getSigmas(self) -> list[float]: ...
+    def getTimeThetas(self) -> list[float]: ...
+    def getThetas(self) -> list[float]: ...
 
 class Heston:
     @typing.overload
@@ -542,17 +614,17 @@ class HullWhite:
         kappa: typing.SupportsFloat,
         timeSigmas: collections.abc.Sequence[typing.SupportsFloat],
         sigmas: collections.abc.Sequence[typing.SupportsFloat],
-        timeDFs: collections.abc.Sequence[typing.SupportsFloat],
-        DFs: collections.abc.Sequence[typing.SupportsFloat],
+        discount_factor_times: collections.abc.Sequence[typing.SupportsFloat],
+        discount_factors: collections.abc.Sequence[typing.SupportsFloat],
     ) -> None: ...
     def getParameterKappa(self) -> float: ...
     def getSigmas(self) -> list[float]: ...
     def getTimeSigmas(self) -> list[float]: ...
     def optionBond(
         self,
-        Expiry: typing.SupportsFloat,
-        Maturity: typing.SupportsFloat,
-        Strike: typing.SupportsFloat,
+        expiry: typing.SupportsFloat,
+        maturity: typing.SupportsFloat,
+        strike: typing.SupportsFloat,
         callORput: str,
     ) -> float: ...
     def simulationHW(
@@ -560,10 +632,10 @@ class HullWhite:
     ) -> list[float]: ...
     def swaption(
         self,
-        Expiry: typing.SupportsFloat,
-        Tenor: typing.SupportsFloat,
-        Strike: typing.SupportsFloat,
-        PayFrequency: typing.SupportsFloat = 0.5,
+        expiry: typing.SupportsFloat,
+        tenor: typing.SupportsFloat,
+        strike: typing.SupportsFloat,
+        pay_frequency: typing.SupportsFloat = 0.5,
     ) -> float: ...
 
 class LocalVol:
@@ -815,22 +887,22 @@ class SchobelZhu:
 class ShortRate1FPDE:
     def __init__(
         self,
-        R0: typing.SupportsFloat,
+        initial_rate: typing.SupportsFloat,
         kappa: typing.SupportsFloat,
         alpha: typing.SupportsFloat,
         beta: typing.SupportsFloat,
         gamma: typing.SupportsFloat,
-        timeSigmas: collections.abc.Sequence[typing.SupportsFloat],
+        time_sigmas: collections.abc.Sequence[typing.SupportsFloat],
         sigmas: collections.abc.Sequence[typing.SupportsFloat],
-        timeThetas: collections.abc.Sequence[typing.SupportsFloat],
+        time_thetas: collections.abc.Sequence[typing.SupportsFloat],
         thetas: collections.abc.Sequence[typing.SupportsFloat],
     ) -> None: ...
     def pricingSwaption(
         self,
-        Expiry: typing.SupportsFloat,
-        Tenor: typing.SupportsFloat,
-        Strike: typing.SupportsFloat,
-        PayFrequency: typing.SupportsFloat = 0.5,
+        expiry: typing.SupportsFloat,
+        tenor: typing.SupportsFloat,
+        strike: typing.SupportsFloat,
+        pay_frequency: typing.SupportsFloat = 0.5,
     ) -> float: ...
 
 class ShortRate2FPDE:
@@ -839,19 +911,25 @@ class ShortRate2FPDE:
         kappa1: typing.SupportsFloat,
         kappa2: typing.SupportsFloat,
         lambda_: typing.SupportsFloat,
-        timeSigma1s: collections.abc.Sequence[typing.SupportsFloat],
+        time_sigma1s: collections.abc.Sequence[typing.SupportsFloat],
         sigma1s: collections.abc.Sequence[typing.SupportsFloat],
-        timeSigma2s: collections.abc.Sequence[typing.SupportsFloat],
+        time_sigma2s: collections.abc.Sequence[typing.SupportsFloat],
         sigma2s: collections.abc.Sequence[typing.SupportsFloat],
-        timeAlphas: collections.abc.Sequence[typing.SupportsFloat],
+        time_alphas: collections.abc.Sequence[typing.SupportsFloat],
         alphas: collections.abc.Sequence[typing.SupportsFloat],
+    ) -> None: ...
+    def calibrate(
+        self,
+        time_dfs: collections.abc.Sequence[typing.SupportsFloat],
+        dfs: collections.abc.Sequence[typing.SupportsFloat],
+        swap_quotes: collections.abc.Sequence[DefSwap],
     ) -> None: ...
     def pricingSwaption(
         self,
-        Expiry: typing.SupportsFloat,
-        Tenor: typing.SupportsFloat,
-        Strike: typing.SupportsFloat,
-        PayFrequency: typing.SupportsFloat = 0.5,
+        expiry: typing.SupportsFloat,
+        tenor: typing.SupportsFloat,
+        strike: typing.SupportsFloat,
+        pay_frequency: typing.SupportsFloat = 0.5,
     ) -> float: ...
 
 class SkewMC:
@@ -945,43 +1023,43 @@ class TreeType:
     def value(self) -> int: ...
 
 def black_formula_call(
-    Forward: typing.SupportsFloat,
-    Strike: typing.SupportsFloat,
-    Vol: typing.SupportsFloat,
-    Expiry: typing.SupportsFloat,
+    forward: typing.SupportsFloat,
+    strike: typing.SupportsFloat,
+    vol: typing.SupportsFloat,
+    expiry: typing.SupportsFloat,
 ) -> float: ...
 def black_formula_call_vega(
-    Forward: typing.SupportsFloat,
-    Strike: typing.SupportsFloat,
-    Vol: typing.SupportsFloat,
-    Expiry: typing.SupportsFloat,
+    forward: typing.SupportsFloat,
+    strike: typing.SupportsFloat,
+    vol: typing.SupportsFloat,
+    expiry: typing.SupportsFloat,
 ) -> float: ...
 def black_scholes_call(
-    Spot: typing.SupportsFloat,
-    Strike: typing.SupportsFloat,
-    r: typing.SupportsFloat,
+    spot: typing.SupportsFloat,
+    strike: typing.SupportsFloat,
+    rate: typing.SupportsFloat,
     d: typing.SupportsFloat,
-    Vol: typing.SupportsFloat,
-    Expiry: typing.SupportsFloat,
+    vol: typing.SupportsFloat,
+    expiry: typing.SupportsFloat,
 ) -> float: ...
 def black_scholes_call_vega(
-    Spot: typing.SupportsFloat,
-    Strike: typing.SupportsFloat,
-    r: typing.SupportsFloat,
+    spot: typing.SupportsFloat,
+    strike: typing.SupportsFloat,
+    rate: typing.SupportsFloat,
     d: typing.SupportsFloat,
-    Vol: typing.SupportsFloat,
-    Expiry: typing.SupportsFloat,
+    vol: typing.SupportsFloat,
+    expiry: typing.SupportsFloat,
 ) -> float: ...
-def cdf_normal(arg0: typing.SupportsFloat) -> float:
+def cdf_normal(arg0: float) -> float:
     """
     Cumulative distribution function for normal distribution
     """
 
 def implied_vol(
-    Maturity: typing.SupportsFloat,
-    Forward: typing.SupportsFloat,
-    Strike: typing.SupportsFloat,
-    Price: typing.SupportsFloat,
+    maturity: typing.SupportsFloat,
+    forward: typing.SupportsFloat,
+    strike: typing.SupportsFloat,
+    price: typing.SupportsFloat,
 ) -> float:
     """
     Calculate implied volatility for a Black-Scholes price

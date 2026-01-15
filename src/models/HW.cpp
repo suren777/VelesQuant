@@ -18,33 +18,33 @@ using namespace QuantLib;
 
 namespace velesquant {
 
-double HullWhite::optionBond(double Expiry, double Maturity, double Strike,
+double HullWhite::optionBond(double expiry, double maturity, double strike,
                              OptionType type) {
-  double v0 = totalVariance(Expiry);
+  double v0 = totalVariance(expiry);
   double impVol =
-      (1 - exp(-kappa_ * (Maturity - Expiry))) / kappa_ * sqrt(v0 / Expiry);
-  return formulaBlack(getDF(Expiry), getDF(Maturity), Strike, impVol, Expiry,
+      (1 - exp(-kappa_ * (maturity - expiry))) / kappa_ * sqrt(v0 / expiry);
+  return formulaBlack(getDF(expiry), getDF(maturity), strike, impVol, expiry,
                       type);
 };
 
-double HullWhite::ZC(double Expiry) { return getDF(Expiry); }
+double HullWhite::ZC(double expiry) { return getDF(expiry); }
 
-double HullWhite::swaption(double Expiry, double Tenor, double Strike,
-                           double PayFrequency) {
-  double CP = criticalPoint(Expiry, Tenor, Strike, PayFrequency);
-  double vO = totalVariance(Expiry);
-  double dfT0 = getDF(Expiry);
-  int nC = int(Tenor / PayFrequency + 0.5);
+double HullWhite::swaption(double expiry, double tenor, double strike,
+                           double payFrequency) {
+  double CP = criticalPoint(expiry, tenor, strike, payFrequency);
+  double v0 = totalVariance(expiry);
+  double dfT0 = getDF(expiry);
+  int nC = int(tenor / payFrequency + 0.5);
   double swaptionV = 0.0;
   for (int i = 1; i <= nC; i++) {
-    double Ti = Expiry + i * PayFrequency;
+    double Ti = expiry + i * payFrequency;
     double dfTi = getDF(Ti);
-    double Gi = (1 - exp(-kappa_ * (Ti - Expiry))) / kappa_;
-    double Ki = dfTi / dfT0 * exp(-CP * Gi - 0.5 * vO * Gi * Gi);
+    double Gi = (1 - exp(-kappa_ * (Ti - expiry))) / kappa_;
+    double Ki = dfTi / dfT0 * exp(-CP * Gi - 0.5 * v0 * Gi * Gi);
     double impVol =
-        (1 - exp(-kappa_ * (Ti - Expiry))) / kappa_ * sqrt(vO / Expiry);
-    double Puti = formulaBlack(dfT0, dfTi, Ki, impVol, Expiry, OptionType::Put);
-    swaptionV += Strike * PayFrequency * Puti;
+        (1 - exp(-kappa_ * (Ti - expiry))) / kappa_ * sqrt(v0 / expiry);
+    double Puti = formulaBlack(dfT0, dfTi, Ki, impVol, expiry, OptionType::Put);
+    swaptionV += strike * payFrequency * Puti;
     if (i == nC)
       swaptionV += Puti;
   }
@@ -219,30 +219,30 @@ double HullWhite::totalVariance(double T0) {
   return exp(-2 * kappa_ * T0) * var;
 };
 
-double HullWhite::equalityCP(double x, double vO, double Expiry, double Tenor,
-                             double Strike, double PayFrequency) {
-  double dfT0 = getDF(Expiry);
-  int nC = int(Tenor / PayFrequency + 0.5);
+double HullWhite::equalityCP(double x, double v0, double expiry, double tenor,
+                             double strike, double payFrequency) {
+  double dfT0 = getDF(expiry);
+  int nC = int(tenor / payFrequency + 0.5);
   double CP = 1.0;
   for (int i = 1; i <= nC; i++) {
-    double Ti = Expiry + i * PayFrequency;
-    double Gi = (1 - exp(-kappa_ * (Ti - Expiry))) / kappa_;
-    double Ki = getDF(Ti) / dfT0 * exp(-x * Gi - 0.5 * vO * Gi * Gi);
-    CP -= Strike * PayFrequency * Ki;
+    double Ti = expiry + i * payFrequency;
+    double Gi = (1 - exp(-kappa_ * (Ti - expiry))) / kappa_;
+    double Ki = getDF(Ti) / dfT0 * exp(-x * Gi - 0.5 * v0 * Gi * Gi);
+    CP -= strike * payFrequency * Ki;
     if (i == nC)
       CP -= Ki;
   }
   return CP;
 };
 
-double HullWhite::criticalPoint(double Expiry, double Tenor, double Strike,
-                                double PayFrequency) {
-  double totalVar = totalVariance(Expiry);
+double HullWhite::criticalPoint(double expiry, double tenor, double strike,
+                                double payFrequency) {
+  double totalVar = totalVariance(expiry);
   double lowerBound = -0.5;
   double upperBound = 0.5;
   double shortRate = 0.5 * (lowerBound + upperBound);
   double equalityValue =
-      equalityCP(shortRate, totalVar, Expiry, Tenor, Strike, PayFrequency);
+      equalityCP(shortRate, totalVar, expiry, tenor, strike, payFrequency);
   int Niter = 0;
   do {
     Niter++;
@@ -252,22 +252,22 @@ double HullWhite::criticalPoint(double Expiry, double Tenor, double Strike,
       upperBound = shortRate;
     shortRate = 0.5 * (lowerBound + upperBound);
     equalityValue =
-        equalityCP(shortRate, totalVar, Expiry, Tenor, Strike, PayFrequency);
+        equalityCP(shortRate, totalVar, expiry, tenor, strike, payFrequency);
   } while (fabs(equalityValue) >= 1.0E-10 && Niter < 20 &&
            (upperBound - lowerBound) >= 10e-6);
   return shortRate;
 };
 
-double HullWhite::formulaBlack(double dfT0, double dfTN, double Strike,
+double HullWhite::formulaBlack(double dfT0, double dfTN, double strike,
                                double impVol, double T0, OptionType type) {
   double sd = impVol * sqrt(T0);
-  double d1 = log(dfTN / (dfT0 * Strike)) / sd + 0.5 * sd;
+  double d1 = log(dfTN / (dfT0 * strike)) / sd + 0.5 * sd;
   double d2 = d1 - sd;
   double price;
   if (type == OptionType::Call)
-    price = dfTN * cdf_normal(d1) - (dfT0 * Strike) * cdf_normal(d2);
+    price = dfTN * cdf_normal(d1) - (dfT0 * strike) * cdf_normal(d2);
   else
-    price = (dfT0 * Strike) * cdf_normal(-d2) - dfTN * cdf_normal(-d1);
+    price = (dfT0 * strike) * cdf_normal(-d2) - dfTN * cdf_normal(-d1);
   return price;
 };
 
@@ -300,14 +300,14 @@ double HullWhite::whichSigma(double t) const {
   return sigmas_[i];
 }
 
-double HullWhite::getSwapRate(double Expiry, double Tenor,
-                              double PayFrequency) {
-  double dfT0 = getDF(Expiry);
-  int nC = int(Tenor / PayFrequency + 0.5);
+double HullWhite::getSwapRate(double expiry, double tenor,
+                              double payFrequency) {
+  double dfT0 = getDF(expiry);
+  int nC = int(tenor / payFrequency + 0.5);
   double Level = 0.0;
   for (int i = 1; i <= nC; i++) {
-    double dfTi = getDF(Expiry + i * PayFrequency);
-    Level += PayFrequency * dfTi;
+    double dfTi = getDF(expiry + i * payFrequency);
+    Level += payFrequency * dfTi;
     if (i == nC)
       dfT0 -= dfTi;
   }
@@ -511,15 +511,15 @@ double HullWhite::objKappa(double x, const vector<double> &ivr,
   return sum / N;
 };
 
-double HullWhite::swaptionIVblack(double Expiry, double Tenor,
-                                  double swaption_price) {
+double HullWhite::swaptionIVblack(double expiry, double tenor,
+                                  double swaptionPrice) {
   double xl = 1e-6;
   double xu = 1;
   double x = 0.5 * (xl + xu);
 
-  double DF = getDF(Expiry) - getDF(Expiry + Tenor);
+  double DF = getDF(expiry) - getDF(expiry + tenor);
   double b =
-      DF * (2.0 * cdf_normal(0.5 * x * sqrt(Expiry)) - 1.0) - swaption_price;
+      DF * (2.0 * cdf_normal(0.5 * x * sqrt(expiry)) - 1.0) - swaptionPrice;
 
   int Niter = 0;
   do {
@@ -529,7 +529,7 @@ double HullWhite::swaptionIVblack(double Expiry, double Tenor,
     if (b > 0.0)
       xu = x;
     x = 0.5 * (xl + xu);
-    b = DF * (2.0 * cdf_normal(0.5 * x * sqrt(Expiry)) - 1.0) - swaption_price;
+    b = DF * (2.0 * cdf_normal(0.5 * x * sqrt(expiry)) - 1.0) - swaptionPrice;
   } while ((fabs(b) >= 1.0E-12) && (Niter < 40) && (xu - xl > 1E-7));
   return x;
 };
@@ -563,8 +563,8 @@ double HullWhite::BlackStrikePlain(double T0, double TN) {
   return dfTN / dfT0;
 };
 
-double HullWhite::swaptionIVblackPub(double Expiry, double Tenor,
+double HullWhite::swaptionIVblackPub(double expiry, double tenor,
                                      double swap_price) {
-  return swaptionIVblack(Expiry, Tenor, swap_price);
+  return swaptionIVblack(expiry, tenor, swap_price);
 };
 } // namespace velesquant

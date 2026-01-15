@@ -17,19 +17,19 @@ def test_hull_white_binding():
     swaps = []
 
     s1 = n.DefSwap()
-    s1.Expiry = 1.0
-    s1.Tenor = 5.0
-    s1.SwapRate = 0.03
-    s1.VolATM = 0.20
-    s1.Value = 0.0
+    s1.expiry = 1.0
+    s1.tenor = 5.0
+    s1.swap_rate = 0.03
+    s1.vol_atm = 0.20
+    s1.value = 0.0
     swaps.append(s1)
 
     s2 = n.DefSwap()
-    s2.Expiry = 5.0
-    s2.Tenor = 5.0
-    s2.SwapRate = 0.04
-    s2.VolATM = 0.25
-    s2.Value = 0.0
+    s2.expiry = 5.0
+    s2.tenor = 5.0
+    s2.swap_rate = 0.04
+    s2.vol_atm = 0.25
+    s2.value = 0.0
     swaps.append(s2)
 
     assert len(swaps) == 2
@@ -69,10 +69,10 @@ def test_short_rate_2f_binding():
 
     swaps = []
     s = n.DefSwap()
-    s.Expiry = 1.0
-    s.Tenor = 5.0
-    s.SwapRate = 0.03
-    s.VolATM = 0.20
+    s.expiry = 1.0
+    s.tenor = 5.0
+    s.swap_rate = 0.03
+    s.vol_atm = 0.20
     swaps.append(s)
 
     try:

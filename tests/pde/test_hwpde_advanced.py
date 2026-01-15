@@ -19,8 +19,8 @@ def test_hwpde_basic_pricing():
         kappa=0.05,
         timeSigmas=[1.0, 5.0, 10.0],
         sigmas=[0.01, 0.012, 0.015],
-        timeDF=[0.0, 1.0, 5.0, 10.0, 30.0],
-        DF=[1.0, 0.95, 0.80, 0.65, 0.30],
+        discount_factor_times=[0.0, 1.0, 5.0, 10.0, 30.0],
+        discount_factors=[1.0, 0.95, 0.80, 0.65, 0.30],
     )
 
     # Test pricingZB
@@ -54,8 +54,8 @@ def test_hwpde_exotic_pricing():
         kappa=0.05,
         timeSigmas=[1.0, 5.0],
         sigmas=[0.01, 0.012],
-        timeDF=[0.0, 1.0, 5.0, 10.0],
-        DF=[1.0, 0.95, 0.80, 0.65],
+        discount_factor_times=[0.0, 1.0, 5.0, 10.0],
+        discount_factors=[1.0, 0.95, 0.80, 0.65],
     )
 
     # Test pricingBermudan
@@ -76,8 +76,8 @@ def test_hwpde_analysis():
         kappa=0.05,
         timeSigmas=[1.0, 5.0],
         sigmas=[0.01, 0.012],
-        timeDF=[0.0, 1.0, 5.0, 10.0],
-        DF=[1.0, 0.95, 0.80, 0.65],
+        discount_factor_times=[0.0, 1.0, 5.0, 10.0],
+        discount_factors=[1.0, 0.95, 0.80, 0.65],
     )
 
     # Test getSwapRate
@@ -104,7 +104,7 @@ def test_hwpde_analysis():
     assert hwpde.getKappa() == 0.05
     assert hwpde.getTimeSigmas() == [1.0, 5.0]
     assert hwpde.getSigmas() == [0.01, 0.012]
-    assert isinstance(hwpde.getR0(), float)
+    assert isinstance(hwpde.getInitialRate(), float)
     assert len(hwpde.getThetas()) > 0
 
 
@@ -114,29 +114,29 @@ def test_hwpde_calibration():
         kappa=0.05,
         timeSigmas=[1.0, 5.0],
         sigmas=[0.01, 0.012],
-        timeDF=[0.0, 1.0, 5.0, 10.0],
-        DF=[1.0, 0.95, 0.80, 0.65],
+        discount_factor_times=[0.0, 1.0, 5.0, 10.0],
+        discount_factors=[1.0, 0.95, 0.80, 0.65],
     )
 
     # Create swap quotes for calibration
     swaps = []
 
     s1 = n.DefSwap()
-    s1.Expiry = 1.0
-    s1.Tenor = 5.0
-    s1.Frequency = 0.5
-    s1.SwapRate = 0.03
-    s1.VolATM = 0.25
-    s1.Value = 0.0
+    s1.expiry = 1.0
+    s1.tenor = 5.0
+    s1.frequency = 0.5
+    s1.swap_rate = 0.03
+    s1.vol_atm = 0.25
+    s1.value = 0.0
     swaps.append(s1)
 
     s2 = n.DefSwap()
-    s2.Expiry = 5.0
-    s2.Tenor = 5.0
-    s2.Frequency = 0.5
-    s2.SwapRate = 0.04
-    s2.VolATM = 0.20
-    s2.Value = 0.0
+    s2.expiry = 5.0
+    s2.tenor = 5.0
+    s2.frequency = 0.5
+    s2.swap_rate = 0.04
+    s2.vol_atm = 0.20
+    s2.value = 0.0
     swaps.append(s2)
 
     time_dfs = [0.0, 1.0, 5.0, 10.0]
