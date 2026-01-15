@@ -3,9 +3,9 @@
 #include <cmath>
 #include <complex>
 #include <ql/quantlib.hpp>
+#include <velesquant/models/utility.h>
 #include <velesquant/volatility/lm.h>
 #include <velesquant/volatility/svolt.h>
-#include <velesquant/models/utility.h>
 
 using namespace std;
 using namespace QuantLib;
@@ -189,7 +189,7 @@ complex<double> sVolT::hestonCFTd(complex<double> k, double maturity) const {
 #pragma warning(disable : 4244)
 #endif
 double sVolT::hestonPriceTd(double maturity, double forward, double strike,
-                            string optType) const {
+                            OptionType optType) const {
   auto fcn1 = [this, maturity, forward, strike](double k) {
     return this->hestonIntegrandTd(k, maturity, forward, strike, 0);
   };
@@ -201,7 +201,7 @@ double sVolT::hestonPriceTd(double maturity, double forward, double strike,
   double integr2 = gLegInt(fcn2);
   double callPrice =
       forward * (0.5 + integr2 / PI) - strike * (0.5 + integr1 / PI);
-  if (optType == "Call" || optType == "call")
+  if (optType == OptionType::Call)
     return callPrice;
   else
     return callPrice + strike - forward;
@@ -217,7 +217,7 @@ double sVolT::intCFfun(double u, double ki, double X, double maturity) const {
 #endif
 
 double sVolT::hestonPriceTdCF(double maturity, double forward, double strike,
-                              string optType) const {
+                              OptionType optType) const {
   if (strike == 0.0)
     return forward;
   double X = log(forward / strike);
@@ -230,7 +230,7 @@ double sVolT::hestonPriceTdCF(double maturity, double forward, double strike,
   double callPrice = forward - sqrt(strike * forward) * integr1 / PI;
   if (callPrice <= 0.0)
     return 0;
-  if (optType == "Call" || optType == "call")
+  if (optType == OptionType::Call)
     return callPrice;
   else
     return callPrice + strike - forward;
@@ -262,13 +262,13 @@ void sVolT::objFcnTd(int m, int /*n*/, double *x, double *fvec,
   }
   for (int i = 0; i < m; i++)
     fvec[i] = (1.0 - hestonPriceTdCF(maturities_[i], forwards_[i], strikes_[i],
-                                     "call") /
+                                     OptionType::Call) /
                          marketQuotes_[i]) *
               100;
 };
 
 void sVolT::calibratorLM(Vdoub maturities, Vdoub forwards, Vdoub strikes,
-                         Vdoub marketQuotes, string quoteType) {
+                         Vdoub marketQuotes, CalibrationTarget quoteType) {
   int m = strikes.size(); // no. of observations
   maturities_.resize(m);
   maturities_ = maturities;
@@ -278,7 +278,7 @@ void sVolT::calibratorLM(Vdoub maturities, Vdoub forwards, Vdoub strikes,
   strikes_ = strikes;
   marketQuotes_.resize(m);
   marketQuotes_ = marketQuotes;
-  if (quoteType == "impliedVol") {
+  if (quoteType == CalibrationTarget::Volatility) {
     for (int i = 0; i < m; i++) {
       double vol = marketQuotes[i] * sqrt(maturities[i]);
       double d1 = std::log(forwards[i] / strikes[i]) / vol + 0.5 * vol;
@@ -345,6 +345,9 @@ void sVolT::calibratorLM(Vdoub maturities, Vdoub forwards, Vdoub strikes,
         diag.data(), mode, factor, nprint, &info, &nfev, fjac.data(), ldfjac,
         ipvt.data(), qtf.data(), wa1.data(), wa2.data(), wa3.data(), wa4.data(),
         fcnheston);
+  QL_ENSURE(info >= 1 && info <= 4,
+            "Heston Model Calibration Fails: " << getLmdifMessage(info)
+                                               << " (info=" << info << ")");
 
   // the below is output result
   setParameterVar0(x[0]);

@@ -70,12 +70,54 @@ class HWPDEModel(Model):
             expiry, tenor, exercises, strike, pay_freq
         )
 
+    def price_callable_swap(
+        self,
+        expiry: float,
+        tenor: float,
+        exercises: list[float],
+        coupon: float,
+        strike: float,
+        pay_freq: float = 0.5,
+        option_type: str = "Call",
+    ) -> float:
+        """Price a Callable Swap."""
+        native_type = (
+            native.OptionType.Call
+            if option_type.capitalize() == "Call"
+            else native.OptionType.Put
+        )
+        return self._cpp_model.pricingCallableSwap(
+            expiry, tenor, exercises, coupon, strike, pay_freq, native_type
+        )
+
     def price_zbo(
         self, expiry: float, maturity: float, strike: float, option_type: str = "Call"
     ) -> float:
         """Price a Zero Coupon Bond Option."""
-        return self._cpp_model.pricingZBO(
-            expiry, maturity, strike, option_type.capitalize()
+        native_type = (
+            native.OptionType.Call
+            if option_type.capitalize() == "Call"
+            else native.OptionType.Put
+        )
+        return self._cpp_model.pricingZBO(expiry, maturity, strike, native_type)
+
+    def price_cbo(
+        self,
+        expiry: float,
+        tenor: float,
+        coupon: float,
+        strike: float,
+        pay_freq: float = 0.5,
+        option_type: str = "Call",
+    ) -> float:
+        """Price a Coupon Bond Option."""
+        native_type = (
+            native.OptionType.Call
+            if option_type.capitalize() == "Call"
+            else native.OptionType.Put
+        )
+        return self._cpp_model.pricingCBO(
+            expiry, tenor, coupon, strike, pay_freq, native_type
         )
 
     def calibrate(
@@ -145,6 +187,36 @@ class ShortRate1FPDEModel(Model):
         self, expiry: float, tenor: float, strike: float, pay_freq: float = 0.5
     ) -> float:
         return self._cpp_model.pricingSwaption(expiry, tenor, strike, pay_freq)
+
+    def price_zbo(
+        self, expiry: float, maturity: float, strike: float, option_type: str = "Call"
+    ) -> float:
+        """Price a Zero Coupon Bond Option."""
+        native_type = (
+            native.OptionType.Call
+            if option_type.capitalize() == "Call"
+            else native.OptionType.Put
+        )
+        return self._cpp_model.pricingZBO(expiry, maturity, strike, native_type)
+
+    def price_cbo(
+        self,
+        expiry: float,
+        tenor: float,
+        coupon: float,
+        strike: float,
+        pay_freq: float = 0.5,
+        option_type: str = "Call",
+    ) -> float:
+        """Price a Coupon Bond Option."""
+        native_type = (
+            native.OptionType.Call
+            if option_type.capitalize() == "Call"
+            else native.OptionType.Put
+        )
+        return self._cpp_model.pricingCBO(
+            expiry, tenor, coupon, strike, pay_freq, native_type
+        )
 
     def calibrate(self, instruments, market_data) -> "ShortRate1FPDEModel":
         raise NotImplementedError

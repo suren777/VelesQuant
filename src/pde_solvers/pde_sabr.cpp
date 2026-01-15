@@ -164,7 +164,9 @@ void pdeSABR::calibrator(vector<volQuote> &quotes) {
   lmdif(m, n, x, fvec, ftol, xtol, gtol, maxfev, epsfcn, diag, mode, factor,
         nprint, &info, &nfev, fjac, ldfjac, ipvt, qtf, wa1, wa2, wa3, wa4, fcn);
 
-  QL_ENSURE(info != 4, "SABR Model Calibration Fails " << info);
+  QL_ENSURE(info >= 1 && info <= 4,
+            "SABR Model Calibration Fails: " << getLmdifMessage(info)
+                                             << " (info=" << info << ")");
   // the below is output result
 
   alpha_ = x[0];
@@ -377,11 +379,11 @@ void pdeSABR::setFbounds() {
   }
 };
 
-double pdeSABR::sabr_option(double strike, const string &type) {
+double pdeSABR::sabr_option(double strike, OptionType type) {
   double payoff = 0.0;
   if (Density_.size() <= 1)
     setDensity();
-  if (type == "Call") {
+  if (type == OptionType::Call) {
     if (strike < Fmin_)
       payoff = f_ - strike;
     else if ((strike <= Fmax_) && (strike >= Fmin_)) {

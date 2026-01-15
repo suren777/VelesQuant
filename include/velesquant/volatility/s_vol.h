@@ -5,6 +5,7 @@
 
 #include <complex>
 #include <vector>
+#include <velesquant/models/utility.h>
 
 namespace velesquant {
 
@@ -18,20 +19,22 @@ public:
   ~sVol() {};
 
   double hestonPrice(double maturity, double forward, double strike,
-                     std::string optType) const;
+                     OptionType optType) const;
   double hestonPriceCF(double maturity, double forward, double strike,
-                       std::string optType) const;
+                       OptionType optType) const;
   double hestonPriceNET(double maturity, double forward, double strike,
-                        std::string optType) const;
+                        OptionType optType) const;
   void calibrator(std::vector<double> maturitys, std::vector<double> forwards,
                   std::vector<double> strikes, std::vector<double> marketQuotes,
-                  std::string quoteType);
+                  CalibrationTarget quoteType);
   void IVcalibrator(std::vector<double> maturitys, std::vector<double> forwards,
                     std::vector<double> strikes,
-                    std::vector<double> marketQuotes, std::string quoteType);
+                    std::vector<double> marketQuotes,
+                    CalibrationTarget quoteType);
   void FXcalibrator(std::vector<double> maturitys, std::vector<double> forwards,
                     std::vector<double> strikes,
-                    std::vector<double> marketQuotes, std::string quoteType);
+                    std::vector<double> marketQuotes,
+                    CalibrationTarget quoteType);
   std::vector<double> simulationHeston(std::vector<double> times,
                                        std::vector<double> forwards) const;
   std::vector<double> simulationHestonDO(std::vector<double> times,

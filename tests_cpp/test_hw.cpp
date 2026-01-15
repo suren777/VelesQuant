@@ -49,23 +49,12 @@ TEST_F(HullWhiteTestFixture, ZCBondPricing) {
   HullWhite hw(kappa, timeSigmas, sigmas, timeDFs, DFs);
 
   // Price a bond maturing in 1 year
-  // For T=1, ZC bond price should be close to DF(1) = exp(-0.05) ~ 0.9512
+  // For T=1, ZC bond price should be exactly DF(1) = exp(-0.05) ~ 0.9512
   double price = hw.ZC(1.0);
   double expected = DFs[1]; // timeDFs[1] is 1.0
 
-  // Verify ZC consistency with its own implementation (approximating expected
-  // behavior) Current implementation of ZC in hw.cpp applies an extra discount
-  // factor exp(-B * r0) effectively double discounting if r0 comes from the
-  // curve. We strictly test that it returns a valid price (0 < p < 1)
-  EXPECT_GT(price, 0.0);
-  EXPECT_LT(price, 1.0);
-
-  // Check against formula explicitly to ensure code hasn't changed
-  // B(0, 1) approx (1 - exp(-0.1))/0.1 = 0.9516
-  // Factor = exp(-0.9516 * (0.05 + small_var)) ~ exp(-0.047) ~ 0.954
-  // P_model ~ 0.9512 * 0.954 ~ 0.907
-  // The failing value was 0.90699... so this hypothesis holds.
-  EXPECT_NEAR(price, 0.907, 1e-3);
+  // The ZC(T) should be exactly the discount factor from the curve
+  EXPECT_NEAR(price, expected, 1e-12);
 }
 
 TEST_F(HullWhiteTestFixture, OptionOnBond) {

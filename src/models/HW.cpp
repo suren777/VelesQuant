@@ -145,6 +145,9 @@ void HullWhite::calibrator(const std::vector<defSwap> &swapQuotes,
         diag.data(), mode, factor, nprint, &info, &nfev, fjac.data(), ldfjac,
         ipvt.data(), qtf.data(), wa1.data(), wa2.data(), wa3.data(), wa4.data(),
         fcn);
+  QL_ENSURE(info >= 1 && info <= 4,
+            "Hull-White Model Calibration Fails: " << getLmdifMessage(info)
+                                                   << " (info=" << info << ")");
   // the below is output result
   for (int i = 0; i < n - 1; i++)
     sigmas_[i] = fabs(x[i]); // sigmas final value

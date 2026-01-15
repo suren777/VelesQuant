@@ -5,9 +5,9 @@
 #include <cmath>
 #include <complex>
 #include <ql/quantlib.hpp>
+#include <velesquant/models/utility.h>
 #include <velesquant/volatility/lm.h>
 #include <velesquant/volatility/s_vol.h>
-#include <velesquant/models/utility.h>
 
 using namespace std;
 using namespace QuantLib;
@@ -108,7 +108,7 @@ double sVol::trapz(vector<double> x, vector<double> y) const {
 #endif
 
 double sVol::hestonPrice(double maturity, double forward, double strike,
-                         string optType) const {
+                         OptionType optType) const {
   // if ((forward/strike>1e5)||(strike==0.0)) return forward-strike;
   if (strike == 0.0)
     return forward;
@@ -128,7 +128,7 @@ double sVol::hestonPrice(double maturity, double forward, double strike,
     if (callPrice <= 0.0)
       return 0;
 
-    if (optType == "Call" || optType == "call")
+    if (optType == OptionType::Call)
       return callPrice;
     else
       return callPrice + strike - forward;
@@ -184,7 +184,7 @@ complex<double> sVol::hestonCF(complex<double> k, double maturity) const {
 }
 
 double sVol::hestonPriceCF(double maturity, double forward, double strike,
-                           string optType) const {
+                           OptionType optType) const {
   if (strike == 0.0)
     return forward;
   double X = log(forward / strike);
@@ -196,7 +196,7 @@ double sVol::hestonPriceCF(double maturity, double forward, double strike,
   double callPrice = forward - sqrt(strike * forward) * integr1 / PI;
   if (callPrice <= 0.0)
     return 0;
-  if (optType == "Call" || optType == "call")
+  if (optType == OptionType::Call)
     return callPrice;
   else
     return callPrice + strike - forward;
@@ -209,7 +209,7 @@ double sVol::intCFfun(double u, double ki, double X, double maturity) const {
 }
 void sVol::calibrator(vector<double> maturitys, vector<double> forwards,
                       vector<double> strikes, std::vector<double> marketQuotes,
-                      string quoteType) {
+                      CalibrationTarget quoteType) {
   int m = strikes.size(); // no. of observations
   weights_.resize(m);
   for (int i = 0; i < m; i++) {
@@ -228,7 +228,7 @@ void sVol::calibrator(vector<double> maturitys, vector<double> forwards,
   strikes_ = strikes;
   marketQuotes_.resize(m);
   marketQuotes_ = marketQuotes;
-  if (quoteType == "impliedVol") {
+  if (quoteType == CalibrationTarget::Volatility) {
     for (int i = 0; i < m; i++) {
       double vol = marketQuotes[i] * sqrt(maturitys[i]);
       double d1 = std::log(forwards[i] / strikes[i]) / vol + 0.5 * vol;
@@ -273,26 +273,9 @@ void sVol::calibrator(vector<double> maturitys, vector<double> forwards,
   lmdif(m, n, x, fvec, ftol, xtol, gtol, maxfev, epsfcn, diag, mode, factor,
         nprint, &info, &nfev, fjac, ldfjac, ipvt, qtf, wa1, wa2, wa3, wa4,
         fcnheston);
-  //*   info is an integer output variable. if the user has terminated
-  // execution, info is set to the (negative)
-  //*     value of iflag. see description of fcn. otherwise, info is set as
-  // follows.
-  //	*     info = 0  improper input parameters.
-  //	*     info = 1  both actual and predicted relative reductions in the sum
-  // of squares are at most ftol.
-  //	*     info = 2  relative error between two consecutive iterates is at
-  // most xtol.
-  //	*     info = 3  conditions for info = 1 and info = 2 both hold.
-  //	*     info = 4  the cosine of the angle between fvec and any column of
-  // the jacobian is at most gtol in absolute value.
-  //	*     info = 5  number of calls to fcn has reached or exceeded maxfev.
-  //	*     info = 6  ftol is too small. no further reduction in the sum of
-  // squares is possible.
-  //	*     info = 7  xtol is too small. no further improvement in the
-  // approximate solution x is possible.
-  //	*     info = 8  gtol is too small. fvec is orthogonal to the columns of
-  // the jacobian to machine precision.
-  QL_ENSURE(info != 4, "Heston Model Calibration Fails " << info);
+  QL_ENSURE(info >= 1 && info <= 4,
+            "Heston Model Calibration Fails: " << getLmdifMessage(info)
+                                               << " (info=" << info << ")");
   // the below is output result
   setParameterVar0(x[0]);
   setParameterKappa(x[1]);
@@ -313,7 +296,8 @@ void sVol::calibrator(vector<double> maturitys, vector<double> forwards,
 };
 void sVol::IVcalibrator(vector<double> maturitys, vector<double> forwards,
                         vector<double> strikes,
-                        std::vector<double> marketQuotes, string quoteType) {
+                        std::vector<double> marketQuotes,
+                        CalibrationTarget quoteType) {
   int m = strikes.size(); // no. of observations
   weights_.resize(m);
   for (int i = 0; i < m; i++) {
@@ -332,7 +316,7 @@ void sVol::IVcalibrator(vector<double> maturitys, vector<double> forwards,
   strikes_ = strikes;
   marketQuotes_.resize(m);
   marketQuotes_ = marketQuotes;
-  if (quoteType != "impliedVol")
+  if (quoteType != CalibrationTarget::Volatility)
     calibrator(maturitys, forwards, strikes, marketQuotes, quoteType);
   else {
     int n = 5;                 // no. of HESTON model paremeters
@@ -370,26 +354,9 @@ void sVol::IVcalibrator(vector<double> maturitys, vector<double> forwards,
     lmdif(m, n, x, fvec, ftol, xtol, gtol, maxfev, epsfcn, diag, mode, factor,
           nprint, &info, &nfev, fjac, ldfjac, ipvt, qtf, wa1, wa2, wa3, wa4,
           fcnheston);
-    //*   info is an integer output variable. if the user has terminated
-    // execution, info is set to the (negative)
-    //*     value of iflag. see description of fcn. otherwise, info is set as
-    // follows.
-    //	*     info = 0  improper input parameters.
-    //	*     info = 1  both actual and predicted relative reductions in the sum
-    // of squares are at most ftol.
-    //	*     info = 2  relative error between two consecutive iterates is at
-    // most xtol.
-    //	*     info = 3  conditions for info = 1 and info = 2 both hold.
-    //	*     info = 4  the cosine of the angle between fvec and any column of
-    // the jacobian is at most gtol in absolute value.
-    //	*     info = 5  number of calls to fcn has reached or exceeded maxfev.
-    //	*     info = 6  ftol is too small. no further reduction in the sum of
-    // squares is possible.
-    //	*     info = 7  xtol is too small. no further improvement in the
-    // approximate solution x is possible.
-    //	*     info = 8  gtol is too small. fvec is orthogonal to the columns of
-    // the jacobian to machine precision.
-    QL_ENSURE(info != 4, "Heston Model Calibration Fails " << info);
+    QL_ENSURE(info >= 1 && info <= 4,
+              "Heston Model Calibration Fails: " << getLmdifMessage(info)
+                                                 << " (info=" << info << ")");
     // the below is output result
     setParameterVar0(x[0]);
     setParameterKappa(x[1]);
@@ -413,7 +380,7 @@ void sVol::IVcalibrator(vector<double> maturitys, vector<double> forwards,
 void sVol::FXcalibrator(vector<double> maturitys, vector<double> forwards,
                         vector<double> strikes,
                         std::vector<double> marketQuotes,
-                        string /*quoteType*/) {
+                        CalibrationTarget /*quoteType*/) {
   int m = strikes.size(); // no. of observations
   // weights_.resize(m);
   // for (int i=0;i<m;i++)
@@ -472,26 +439,9 @@ void sVol::FXcalibrator(vector<double> maturitys, vector<double> forwards,
   lmdif(m, n, x, fvec, ftol, xtol, gtol, maxfev, epsfcn, diag, mode, factor,
         nprint, &info, &nfev, fjac, ldfjac, ipvt, qtf, wa1, wa2, wa3, wa4,
         fcnheston);
-  //*   info is an integer output variable. if the user has terminated
-  // execution, info is set to the (negative)
-  //*     value of iflag. see description of fcn. otherwise, info is set as
-  // follows.
-  //	*     info = 0  improper input parameters.
-  //	*     info = 1  both actual and predicted relative reductions in the sum
-  // of squares are at most ftol.
-  //	*     info = 2  relative error between two consecutive iterates is at
-  // most xtol.
-  //	*     info = 3  conditions for info = 1 and info = 2 both hold.
-  //	*     info = 4  the cosine of the angle between fvec and any column of
-  // the jacobian is at most gtol in absolute value.
-  //	*     info = 5  number of calls to fcn has reached or exceeded maxfev.
-  //	*     info = 6  ftol is too small. no further reduction in the sum of
-  // squares is possible.
-  //	*     info = 7  xtol is too small. no further improvement in the
-  // approximate solution x is possible.
-  //	*     info = 8  gtol is too small. fvec is orthogonal to the columns of
-  // the jacobian to machine precision.
-  QL_ENSURE(info != 4, "Heston Model FX Calibration Fails " << info);
+  QL_ENSURE(info >= 1 && info <= 4,
+            "Heston Model FX Calibration Fails: " << getLmdifMessage(info)
+                                                  << " (info=" << info << ")");
   // the below is output result
   setParameterVar0(x[0]);
   setParameterTheta(x[1]);
@@ -530,14 +480,16 @@ void sVol::FXcalibrator(vector<double> maturitys, vector<double> forwards,
 //			double vol = marketQuotes[i] * sqrt(maturitys[i]);
 //			double d1 = std::log(forwards[i]/strikes[i])/vol
 //+0.5*vol; 			double d2 = d1-vol;
-//marketQuotes_[i] = forwards[i]*cdf_normal(d1) - strikes[i]*cdf_normal(d2);
+// marketQuotes_[i] = forwards[i]*cdf_normal(d1) - strikes[i]*cdf_normal(d2);
 //			}
 //		}
 //
 //	int n = 5;					//no. of HESTON model
 // paremeters 	double* x = new double[n];	//initial estimate of parameters
-// vector 	x[0] = getParameterVar0(); 	x[1] = getParameterKappa(); 	x[2] =
-//getParameterTheta(); 	x[3] = getParameterXi(); 	x[4] = getParameterRho();
+// vector 	x[0] = getParameterVar0(); 	x[1] = getParameterKappa();
+// x[2] =
+// getParameterTheta(); 	x[3] = getParameterXi(); 	x[4] =
+// getParameterRho();
 //
 //	double* fvec = new double[m]; //no need to populate
 //	double ftol = 1e-08; //tolerance
@@ -562,8 +514,8 @@ void sVol::FXcalibrator(vector<double> maturitys, vector<double> forwards,
 //
 //	boost::function<void (sVol*, int,int,double*,double*,int*)> objheston =
 //&sVol::objFcn; 	lmfcn fcnheston = boost::bind(objheston, this,
-//_1,_2,_3,_4,_5); 	lmdif(m, n, x, fvec, ftol, xtol, gtol, maxfev, epsfcn, diag,
-//mode, factor, 		nprint, &info, &nfev, fjac, ldfjac, ipvt, qtf,
+//_1,_2,_3,_4,_5); 	lmdif(m, n, x, fvec, ftol, xtol, gtol, maxfev, epsfcn,
+// diag, mode, factor, 		nprint, &info, &nfev, fjac, ldfjac, ipvt, qtf,
 // wa1, wa2, wa3, wa4, fcnheston);
 //	//*   info is an integer output variable. if the user has terminated
 // execution, info is set to the (negative)
@@ -626,7 +578,8 @@ void sVol::objFcn(int m, int /*n*/, double *x, double *fvec, int * /*iflag*/) {
   for (int i = 0; i < m; i++)
     //	fvec[i] = (hestonPrice(maturitys_[i], forwards_[i], strikes_[i], "call")
     //- marketQuotes_[i])*weights_[i];
-    fvec[i] = (hestonPrice(maturitys_[i], forwards_[i], strikes_[i], "call") -
+    fvec[i] = (hestonPrice(maturitys_[i], forwards_[i], strikes_[i],
+                           OptionType::Call) -
                marketQuotes_[i]);
   // fvec[i] = (hestonPriceCF(maturitys_[i], forwards_[i], strikes_[i], "call")
   // - marketQuotes_[i]);
@@ -645,7 +598,7 @@ void sVol::objFcnIV(int m, int /*n*/, double *x, double *fvec,
   for (int i = 0; i < m; i++)
     fvec[i] = (implied_vol(maturitys_[i], forwards_[i], strikes_[i],
                            hestonPrice(maturitys_[i], forwards_[i], strikes_[i],
-                                       "call")) -
+                                       OptionType::Call)) -
                marketQuotes_[i]) +
               A;
 };
@@ -659,10 +612,10 @@ void sVol::objFcnFX(int m, int /*n*/, double *x, double *fvec,
   if (kappa_ * x[1] * 2.0 < x[2] * x[2])
     A = 10000;
   for (int i = 0; i < m; i++)
-    fvec[i] =
-        1.0 -
-        (hestonPrice(maturitys_[i], forwards_[i], strikes_[i], "call") + A) /
-            marketQuotes_[i];
+    fvec[i] = 1.0 - (hestonPrice(maturitys_[i], forwards_[i], strikes_[i],
+                                 OptionType::Call) +
+                     A) /
+                        marketQuotes_[i];
 };
 
 // NOT USED!!!
@@ -686,7 +639,7 @@ double sVol::hestonIntegrandNET(complex<double> k, double maturity,
     return real(integrand);
 }
 double sVol::hestonPriceNET(double maturity, double forward, double strike,
-                            string optType) const {
+                            OptionType optType) const {
   const double ki = 0.5;
   int kmax = std::max(1000.0, std::ceil(10.0 / std::sqrt(var0_ * maturity)));
   vector<double> int_x(kmax * 5), int_y(kmax * 5);
@@ -699,7 +652,7 @@ double sVol::hestonPriceNET(double maturity, double forward, double strike,
   }
   // computing the price
   double callPrice = forward - strike * trapz(int_x, int_y) / PI;
-  if (optType == "Call" || optType == "call")
+  if (optType == OptionType::Call)
     return callPrice;
   else
     return callPrice + strike - forward;

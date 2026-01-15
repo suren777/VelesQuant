@@ -5,10 +5,10 @@
 #include <cmath>
 #include <ql/quantlib.hpp>
 #include <velesquant/constants.h>
-#include <velesquant/volatility/lm.h>
-#include <velesquant/volatility/sabr.h>
 #include <velesquant/models/solver.h>
 #include <velesquant/models/utility.h>
+#include <velesquant/volatility/lm.h>
+#include <velesquant/volatility/sabr.h>
 
 using namespace std;
 #include <memory>
@@ -321,27 +321,9 @@ void Sabr::calibratorWithInitialATM(std::vector<double> strikes,
         ipvt.data(), qtf.data(), wa1.data(), wa2.data(), wa3.data(), wa4.data(),
         fcn);
 
-  //*   info is an integer output variable. if the user has terminated
-  // execution, info is set to the (negative)
-  //*     value of iflag. see description of fcn. otherwise, info is set as
-  // follows.
-  //	*     info = 0  improper input parameters.
-  //	*     info = 1  both actual and predicted relative reductions in the sum
-  // of squares are at most ftol.
-  //	*     info = 2  relative error between two consecutive iterates is at
-  // most xtol.
-  //	*     info = 3  conditions for info = 1 and info = 2 both hold.
-  //	*     info = 4  the cosine of the angle between fvec and any column of
-  // the jacobian is at most gtol in absolute value.
-  //	*     info = 5  number of calls to fcn has reached or exceeded maxfev.
-  //	*     info = 6  ftol is too small. no further reduction in the sum of
-  // squares is possible.
-  //	*     info = 7  xtol is too small. no further improvement in the
-  // approximate solution x is possible.
-  //	*     info = 8  gtol is too small. fvec is orthogonal to the columns of
-  // the jacobian to machine precision.
-
-  QL_ENSURE(info != 4, "SABR caliration fails with the info = " << info);
+  QL_ENSURE(info >= 1 && info <= 4,
+            "SABR Calibration Fails: " << getLmdifMessage(info)
+                                       << " (info=" << info << ")");
 
   // the below is output result
   setParameterNu(x[0]);

@@ -2,6 +2,7 @@
 #define HESTON_FACADE_H
 
 #include <string>
+#include <velesquant/models/utility.h>
 #include <velesquant/types.h>
 
 namespace velesquant {
@@ -15,7 +16,7 @@ double hestonPrice(std::string theName, double maturity, double forward,
 
 Matrix hestonCalibrator(const std::string &theName, Matrix theMaturitys,
                         Matrix theForwards, Matrix theStrikes, Matrix theQuotes,
-                        std::string quoteType);
+                        CalibrationTarget quoteType);
 
 Matrix hestonSimulation(const std::string &theName, Matrix theTimes,
                         Matrix theForwards, int NP);

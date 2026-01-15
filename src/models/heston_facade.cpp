@@ -1,7 +1,7 @@
-#include <velesquant/volatility/s_vol.h>
 #include <velesquant/models/heston_facade.h>
 #include <velesquant/models/object_cache.h>
 #include <velesquant/models/utility.h>
+#include <velesquant/volatility/s_vol.h>
 
 namespace velesquant {
 
@@ -17,12 +17,12 @@ std::string CreateHestonObj(const std::string &theObjName, double spot,
 double hestonPrice(std::string theName, double maturity, double forward,
                    double strike) {
   return getObject<sVol>(theName)->hestonPriceCF(maturity, forward, strike,
-                                                 "call");
+                                                 OptionType::Call);
 }
 
 Matrix hestonCalibrator(const std::string &theName, Matrix theMaturitys,
                         Matrix theForwards, Matrix theStrikes, Matrix theQuotes,
-                        string quoteType) {
+                        CalibrationTarget quoteType) {
   sVol *h = getObject<sVol>(theName);
   int m = theStrikes.rows();
   int k = theQuotes.rows();

@@ -47,17 +47,17 @@ public:
   double pricingZB(double Maturity);
   void discountBack(double Expiry, double Maturity, std::vector<double> &f);
   double pricingZBO(double Expiry, double Maturity, double Strike,
-                    const std::string &type);
+                    OptionType type);
   double pricingCouponBond(double Expiry, double Tenor, double Coupon,
                            double PayFrequency);
   double pricingCBO(double Expiry, double Tenor, double Coupon, double Strike,
-                    double PayFrequency, const std::string &type);
+                    double PayFrequency, OptionType type);
   double pricingSwap(double Expiry, double Tenor, double Strike,
                      double PayFrequency);
   double pricingCallableSwap(double Expiry, double Tenor,
                              std::vector<double> Exercises, double Coupon,
                              double Strike, double PayFrequency,
-                             const std::string &type);
+                             OptionType type);
   void pricingCouponBondt(double Expiry, double Tenor, double Coupon,
                           double PayFrequency, std::vector<double> &f);
   double pricingSwaption(double Expiry, double Tenor, double Strike,

@@ -6,9 +6,9 @@
 #include <omp.h>
 #include <ql/errors.hpp>
 #include <ql/math/interpolations/loginterpolation.hpp>
-#include <velesquant/volatility/lm.h>
 #include <velesquant/pde_solvers/cyclic_reduction.h>
 #include <velesquant/pde_solvers/short_rate_1f_pde.h>
+#include <velesquant/volatility/lm.h>
 using namespace std;
 #pragma warning(disable : 4715)
 #pragma warning(disable : 4018)
@@ -91,29 +91,29 @@ double ShortRate1FPDE::pricingCouponBond(double Expiry, double Tenor,
 
 double ShortRate1FPDE::pricingCBO(double Expiry, double Tenor, double Coupon,
                                   double Strike, double PayFrequency,
-                                  const std::string &type) {
+                                  OptionType type) {
   vector<double> f(MR, 1);
   int Nt = int(Expiry / delT + 1);
   pricingCouponBondt(Expiry, Expiry + Tenor, Coupon, PayFrequency,
                      f); // Price CB
   for (int i = 0; i < MR; i++)
-    f[i] = (type == "Call") ? max(0.0, f[i] - Strike)
-                            : max(0.0, Strike - f[i]); // Apply Payoff
+    f[i] = (type == OptionType::Call) ? max(0.0, f[i] - Strike)
+                                      : max(0.0, Strike - f[i]); // Apply Payoff
   if (Expiry > 0)
     discountBack(0, Expiry, f); // Discount to time t=0
   return f[iR0_];               // Find the correct value
 };
 
 double ShortRate1FPDE::pricingZBO(double Expiry, double Maturity, double Strike,
-                                  const std::string &type) {
+                                  OptionType type) {
   int Nt = int(Expiry / delT + 1); // working daily time grid?
   vector<double> f(MR, 1);
   // Price ZB from T to t
   discountBack(Expiry, Expiry + Maturity, f);
   // Apply Payoff to f: max(0,f-K) || max(0,K-f)
   for (int i = 0; i < MR; i++)
-    f[i] =
-        (type == "Call") ? max(0.0, f[i] - Strike) : max(0.0, -f[i] + Strike);
+    f[i] = (type == OptionType::Call) ? max(0.0, f[i] - Strike)
+                                      : max(0.0, -f[i] + Strike);
   if (Expiry > 0)
     discountBack(0, Expiry, f); // Discount to time t=0
   return f[iR0_];
@@ -135,7 +135,7 @@ double ShortRate1FPDE::pricingCallableSwap(double Expiry, double Tenor,
                                            vector<double> Exercises,
                                            double Coupon, double Strike,
                                            double PayFrequency,
-                                           const std::string &type) {
+                                           OptionType type) {
   vector<double> payoff(MR, -1), call_value(MR);
   Exercises.insert(Exercises.begin(), Expiry);
   Exercises.push_back(Expiry + Tenor);
@@ -146,14 +146,14 @@ double ShortRate1FPDE::pricingCallableSwap(double Expiry, double Tenor,
     if (e == Ne - 2) {
 #pragma omp parallel for
       for (int r = 0; r < MR; r++)
-        call_value[r] = (type == "Call")
+        call_value[r] = (type == OptionType::Call)
                             ? max(0.0, (payoff[r] + 1.0) - Strike)
                             : max(0.0, -(payoff[r] + 1.0) + Strike); // payoff
     } else {
       discountBack(Exercises[e], Exercises[e + 1], call_value);
 #pragma omp parallel for
       for (int r = 0; r < MR; r++)
-        call_value[r] = (type == "Call")
+        call_value[r] = (type == OptionType::Call)
                             ? max(0.0, (payoff[r] + 1.0) - Strike)
                             : max(0.0, -(payoff[r] + 1.0) + Strike); // payoff
     }
@@ -321,7 +321,9 @@ void ShortRate1FPDE::calibrator(vector<double> timeDFs, vector<double> DFs,
   //	*     info = 8  gtol is too small. fvec is orthogonal to the columns of
   // the jacobian to machine precision.
   in_calibration_ = false;
-  QL_ENSURE(info != 4, "Model Calibration Fails " << info);
+  QL_ENSURE(info >= 1 && info <= 4,
+            "Model Calibration Fails: " << getLmdifMessage(info)
+                                        << " (info=" << info << ")");
   // the below is output result
   for (int i = 0; i < ns; i++)
     sigmas_[i] = fabs(x[i]);                      // sigmas final value

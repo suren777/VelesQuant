@@ -6,9 +6,9 @@
 #include <omp.h>
 #include <ql/errors.hpp>
 #include <ql/math/interpolations/loginterpolation.hpp>
-#include <velesquant/volatility/lm.h>
 #include <velesquant/pde_solvers/cyclic_reduction.h>
 #include <velesquant/pde_solvers/hw_pde.h>
+#include <velesquant/volatility/lm.h>
 
 using namespace std;
 #pragma warning(disable : 4715)
@@ -91,15 +91,14 @@ double HWPDE::pricingCouponBond(double Expiry, double Tenor, double Coupon,
 };
 
 double HWPDE::pricingCBO(double Expiry, double Tenor, double Coupon,
-                         double Strike, double PayFrequency,
-                         const std::string &type) {
+                         double Strike, double PayFrequency, OptionType type) {
   vector<double> f(MR, 1);
   int Nt = int(Expiry / delT + 1);
   pricingCouponBondt(Expiry, Expiry + Tenor, Coupon, PayFrequency,
                      f); // Price CB
   for (int i = 0; i < MR; i++)
-    f[i] = (type == "Call") ? max(0.0, f[i] - Strike)
-                            : max(0.0, Strike - f[i]); // Apply Payoff
+    f[i] = (type == OptionType::Call) ? max(0.0, f[i] - Strike)
+                                      : max(0.0, Strike - f[i]); // Apply Payoff
   if (Expiry > 0)
     discountBack(0, Expiry, f); // Discount to time t=0
   return f[iR0_];               // Find the correct value
@@ -108,15 +107,15 @@ double HWPDE::pricingCBO(double Expiry, double Tenor, double Coupon,
 };
 
 double HWPDE::pricingZBO(double Expiry, double Maturity, double Strike,
-                         const std::string &type) {
+                         OptionType type) {
   int Nt = int(Expiry / delT + 1); // working daily time grid?
   vector<double> f(MR, 1);
   // Price ZB from T to t
   discountBack(Expiry, Expiry + Maturity, f);
   // Apply Payoff to f: max(0,f-K) || max(0,K-f)
   for (int i = 0; i < MR; i++)
-    f[i] =
-        (type == "Call") ? max(0.0, f[i] - Strike) : max(0.0, -f[i] + Strike);
+    f[i] = (type == OptionType::Call) ? max(0.0, f[i] - Strike)
+                                      : max(0.0, -f[i] + Strike);
   if (Expiry > 0)
     discountBack(0, Expiry, f); // Discount to time t=0
   return f[iR0_];
@@ -137,11 +136,11 @@ double HWPDE::pricingSwap(double Expiry, double Tenor, double Strike,
 double HWPDE::pricingCallableSwap(double Expiry, double Tenor,
                                   vector<double> Exercises, double Coupon,
                                   double Strike, double PayFrequency,
-                                  const std::string &type) {
+                                  OptionType type) {
   vector<double> payoff(MR, -1), call_value(MR);
   Exercises.push_back(Expiry + Tenor);
   int Ne = Exercises.size();
-  int itype = (type == "Call") ? 1 : -1;
+  int itype = (type == OptionType::Call) ? 1 : -1;
   for (int e = Ne - 2; e >= 0; e--) {
     pricingCouponBondt(Exercises[e], Exercises[e + 1], -Coupon, PayFrequency,
                        payoff);
@@ -388,7 +387,9 @@ void HWPDE::calibrator(vector<double> timeDFs, vector<double> DFs,
   // approximate solution x is possible.
   //	*     info = 8  gtol is too small. fvec is orthogonal to the columns of
   // the jacobian to machine precision.
-  QL_ENSURE(info != 4, "Hull-White Model Calibration Fails " << info);
+  QL_ENSURE(info >= 1 && info <= 4,
+            "Hull-White Model Calibration Fails: " << getLmdifMessage(info)
+                                                   << " (info=" << info << ")");
   // the below is output result
   for (int i = 0; i < n - 1; i++)
     sigmas_[i] = x[i]; // sigmas final value

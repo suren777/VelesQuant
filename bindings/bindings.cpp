@@ -196,7 +196,8 @@ PYBIND11_MODULE(native, m) {
            py::arg("spot"), py::arg("var0"), py::arg("kappa"), py::arg("theta"),
            py::arg("xi"), py::arg("rho"), py::arg("seed") = 42)
       .def("hestonPrice", &sVol::hestonPrice, py::arg("maturity"),
-           py::arg("forward"), py::arg("strike"), py::arg("optType") = "call")
+           py::arg("forward"), py::arg("strike"),
+           py::arg("optType") = velesquant::OptionType::Call)
       .def("simulationHeston", &sVol::simulationHeston, py::arg("times"),
            py::arg("forwards"))
       .def_property_readonly("var0", &sVol::getParameterVar0)
@@ -208,7 +209,7 @@ PYBIND11_MODULE(native, m) {
           "calibrate",
           [](sVol &self, const Eigen::MatrixXd &maturities,
              const Eigen::MatrixXd &forwards, const Eigen::MatrixXd &strikes,
-             const Eigen::MatrixXd &quotes, std::string quoteType) {
+             const Eigen::MatrixXd &quotes, CalibrationTarget quoteType) {
             std::vector<double> m_vec, f_vec, k_vec, q_vec;
             int m = strikes.rows();
             int k = quotes.rows();
@@ -244,7 +245,7 @@ PYBIND11_MODULE(native, m) {
                             "rho"_a = self.getParameterRho());
           },
           py::arg("maturities"), py::arg("forwards"), py::arg("strikes"),
-          py::arg("quotes"), py::arg("quote_type") = "Price");
+          py::arg("quotes"), py::arg("quote_type") = CalibrationTarget::Price);
 
   // Local Volatility (lVol)
   py::class_<lVol>(m, "LocalVol")
@@ -529,11 +530,11 @@ PYBIND11_MODULE(native, m) {
   py::class_<HWPDE>(m, "HWPDE")
       .def(py::init<double, double, std::vector<double>, std::vector<double>,
                     std::vector<double>, std::vector<double>>(),
-           py::arg("initial_rate"), py::arg("kappa"), py::arg("timeSigmas"),
-           py::arg("sigmas"), py::arg("timeThetas"), py::arg("thetas"))
+           py::arg("initial_rate"), py::arg("kappa"), py::arg("time_sigmas"),
+           py::arg("sigmas"), py::arg("time_thetas"), py::arg("thetas"))
       .def(py::init<double, std::vector<double>, std::vector<double>,
                     std::vector<double>, std::vector<double>>(),
-           py::arg("kappa"), py::arg("timeSigmas"), py::arg("sigmas"),
+           py::arg("kappa"), py::arg("time_sigmas"), py::arg("sigmas"),
            py::arg("discount_factor_times"), py::arg("discount_factors"))
       // Pricing methods
       .def("pricingSwaption", &HWPDE::pricingSwaption, py::arg("expiry"),
@@ -583,7 +584,12 @@ PYBIND11_MODULE(native, m) {
            py::arg("sigmas"), py::arg("time_thetas"), py::arg("thetas"))
       .def("pricingSwaption", &ShortRate1FPDE::pricingSwaption,
            py::arg("expiry"), py::arg("tenor"), py::arg("strike"),
-           py::arg("pay_frequency") = 0.5);
+           py::arg("pay_frequency") = 0.5)
+      .def("pricingZBO", &ShortRate1FPDE::pricingZBO, py::arg("expiry"),
+           py::arg("maturity"), py::arg("strike"), py::arg("type"))
+      .def("pricingCBO", &ShortRate1FPDE::pricingCBO, py::arg("expiry"),
+           py::arg("tenor"), py::arg("coupon"), py::arg("strike"),
+           py::arg("pay_frequency"), py::arg("type"));
 
   // ShortRate2FPDE
   py::class_<ShortRate2FPDE>(m, "ShortRate2FPDE")

@@ -39,7 +39,7 @@ public:
   double getRho() { return rho_; };
   double getShift() { return shift_; };
 
-  double sabr_option(double strike, const std::string &type = "Call");
+  double sabr_option(double strike, OptionType type = OptionType::Call);
   void calibrator(std::vector<volQuote> &quotes);
 
 private:

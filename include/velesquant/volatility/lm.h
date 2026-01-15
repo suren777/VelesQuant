@@ -23,6 +23,8 @@ void lmdif(int m, int n, double *x, double *fvec, double ftol, double xtol,
            int ldfjac, int *ipvt, double *qtf, double *wa1, double *wa2,
            double *wa3, double *wa4, const lmfcn &);
 
+const char *getLmdifMessage(int info);
+
 void qrsolv(int n, double *r, int ldr, int *ipvt, double *diag, double *qtb,
             double *x, double *sdiag, double *wa);
 

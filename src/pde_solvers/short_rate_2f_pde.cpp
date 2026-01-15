@@ -5,9 +5,9 @@
 #include <boost/math/distributions.hpp>
 #include <ql/errors.hpp>
 #include <ql/math/interpolations/loginterpolation.hpp>
-#include <velesquant/volatility/lm.h>
 #include <velesquant/numerics/tri_diag_matrix.h>
 #include <velesquant/pde_solvers/short_rate_2f_pde.h>
+#include <velesquant/volatility/lm.h>
 using namespace std;
 #pragma warning(disable : 4715)
 #pragma warning(disable : 4018)
@@ -565,26 +565,9 @@ void ShortRate2FPDE::calibrator(vector<double> timeDFs, vector<double> DFs,
   lmfcn fcn = boost::bind(obj, this, _1, _2, _3, _4, _5);
   lmdif(m, n, x, fvec, ftol, xtol, gtol, maxfev, epsfcn, diag, mode, factor,
         nprint, &info, &nfev, fjac, ldfjac, ipvt, qtf, wa1, wa2, wa3, wa4, fcn);
-  //*   info is an integer output variable. if the user has terminated
-  // execution, info is set to the (negative)
-  //*     value of iflag. see description of fcn. otherwise, info is set as
-  // follows.
-  //	*     info = 0  improper input parameters.
-  //	*     info = 1  both actual and predicted relative reductions in the sum
-  // of squares are at most ftol.
-  //	*     info = 2  relative error between two consecutive iterates is at
-  // most xtol.
-  //	*     info = 3  conditions for info = 1 and info = 2 both hold.
-  //	*     info = 4  the cosine of the angle between fvec and any column of
-  // the jacobian is at most gtol in absolute value.
-  //	*     info = 5  number of calls to fcn has reached or exceeded maxfev.
-  //	*     info = 6  ftol is too small. no further reduction in the sum of
-  // squares is possible.
-  //	*     info = 7  xtol is too small. no further improvement in the
-  // approximate solution x is possible.
-  //	*     info = 8  gtol is too small. fvec is orthogonal to the columns of
-  // the jacobian to machine precision.
-  QL_ENSURE(info != 4, "Model Calibration Fails " << info);
+  QL_ENSURE(info >= 1 && info <= 4,
+            "Model Calibration Fails: " << getLmdifMessage(info)
+                                        << " (info=" << info << ")");
   // the below is output result
   for (int i = 0; i < ns1; i++)
     sigma1s_[i] = fabs(x[i]); // sigmas1 final value

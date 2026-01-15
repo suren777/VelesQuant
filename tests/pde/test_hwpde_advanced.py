@@ -17,7 +17,7 @@ def test_hwpde_basic_pricing():
     # Create HWPDE with DF-based constructor
     hwpde = n.HWPDE(
         kappa=0.05,
-        timeSigmas=[1.0, 5.0, 10.0],
+        time_sigmas=[1.0, 5.0, 10.0],
         sigmas=[0.01, 0.012, 0.015],
         discount_factor_times=[0.0, 1.0, 5.0, 10.0, 30.0],
         discount_factors=[1.0, 0.95, 0.80, 0.65, 0.30],
@@ -36,7 +36,7 @@ def test_hwpde_basic_pricing():
     assert isinstance(swap, float)
 
     # Test pricingZBO
-    zbo = hwpde.pricingZBO(1.0, 5.0, 0.90, "Call")
+    zbo = hwpde.pricingZBO(1.0, 5.0, 0.90, n.OptionType.Call)
     assert zbo >= 0
 
     # Test pricingCouponBond
@@ -44,7 +44,7 @@ def test_hwpde_basic_pricing():
     assert coupon_bond > 0
 
     # Test pricingCBO
-    cbo = hwpde.pricingCBO(1.0, 5.0, 0.04, 1.0, 0.5, "Call")
+    cbo = hwpde.pricingCBO(1.0, 5.0, 0.04, 1.0, 0.5, n.OptionType.Call)
     assert cbo >= 0
 
 
@@ -52,7 +52,7 @@ def test_hwpde_exotic_pricing():
     """Test exotic pricing methods."""
     hwpde = n.HWPDE(
         kappa=0.05,
-        timeSigmas=[1.0, 5.0],
+        time_sigmas=[1.0, 5.0],
         sigmas=[0.01, 0.012],
         discount_factor_times=[0.0, 1.0, 5.0, 10.0],
         discount_factors=[1.0, 0.95, 0.80, 0.65],
@@ -65,7 +65,7 @@ def test_hwpde_exotic_pricing():
 
     # Test pricingCallableSwap
     callable_swap = hwpde.pricingCallableSwap(
-        1.0, 5.0, exercises, 0.04, 1.0, 0.5, "Call"
+        1.0, 5.0, exercises, 0.04, 1.0, 0.5, n.OptionType.Call
     )
     assert isinstance(callable_swap, float)
 
@@ -74,7 +74,7 @@ def test_hwpde_analysis():
     """Test analysis and getter methods."""
     hwpde = n.HWPDE(
         kappa=0.05,
-        timeSigmas=[1.0, 5.0],
+        time_sigmas=[1.0, 5.0],
         sigmas=[0.01, 0.012],
         discount_factor_times=[0.0, 1.0, 5.0, 10.0],
         discount_factors=[1.0, 0.95, 0.80, 0.65],
@@ -112,7 +112,7 @@ def test_hwpde_calibration():
     """Test calibration method."""
     hwpde = n.HWPDE(
         kappa=0.05,
-        timeSigmas=[1.0, 5.0],
+        time_sigmas=[1.0, 5.0],
         sigmas=[0.01, 0.012],
         discount_factor_times=[0.0, 1.0, 5.0, 10.0],
         discount_factors=[1.0, 0.95, 0.80, 0.65],

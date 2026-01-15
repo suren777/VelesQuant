@@ -3,9 +3,9 @@
 #include <cmath>
 #include <complex>
 #include <ql/quantlib.hpp>
+#include <velesquant/models/utility.h>
 #include <velesquant/volatility/lm.h>
 #include <velesquant/volatility/schobzhu.h>
-#include <velesquant/models/utility.h>
 
 using namespace std;
 using namespace QuantLib;
@@ -166,7 +166,9 @@ void SchobelZhu::calibrator(const Vdoub &maturitys, const Vdoub &forwards,
         ipvt.data(), qtf.data(), wa1.data(), wa2.data(), wa3.data(), wa4.data(),
         fcnSZ);
 
-  QL_ENSURE(info != 4, "Schob Zhu Model Calibration Fails " << info);
+  QL_ENSURE(info >= 1 && info <= 4,
+            "Schob Zhu Model Calibration Fails: " << getLmdifMessage(info)
+                                                  << " (info=" << info << ")");
   // the below is output result
   setParameterVar0(x[0]);
   setParameterKappa(x[1]);

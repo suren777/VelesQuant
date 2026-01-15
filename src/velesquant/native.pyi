@@ -150,7 +150,7 @@ class CMS:
         rho: typing.SupportsFloat = -0.75,
     ) -> None: ...
     def fairValue(
-        self, strike: typing.SupportsFloat, callORput: str = "call"
+        self, strike: typing.SupportsFloat, callORput: OptionType = OptionType.Call
     ) -> float: ...
     def getATMvol(self) -> float: ...
     def getDiscountCMS(self) -> float: ...
@@ -337,7 +337,7 @@ class CmsSpread:
         beta1: typing.SupportsFloat,
         strikes1: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, n]"],
         quotes1: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, n]"],
-        type1: str,
+        type1: CalibrationTarget,
         expiry2: typing.SupportsFloat,
         tenor2: typing.SupportsFloat,
         fwd2: typing.SupportsFloat,
@@ -347,7 +347,7 @@ class CmsSpread:
         beta2: typing.SupportsFloat,
         strikes2: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, n]"],
         quotes2: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, n]"],
-        type2: str,
+        type2: CalibrationTarget,
         corr: typing.SupportsFloat,
     ) -> None: ...
     def simulationCMSs(self) -> list[float]: ...
@@ -521,7 +521,7 @@ class HWPDE:
         expiry: typing.SupportsFloat,
         maturity: typing.SupportsFloat,
         strike: typing.SupportsFloat,
-        type: str,
+        type: OptionType,
     ) -> float: ...
     def pricingCBO(
         self,
@@ -590,8 +590,16 @@ class Heston:
         maturity: typing.SupportsFloat,
         forward: typing.SupportsFloat,
         strike: typing.SupportsFloat,
-        optType: str = "call",
+        optType: OptionType = OptionType.Call,
     ) -> float: ...
+    def calibrate(
+        self,
+        maturities: numpy.typing.ArrayLike,
+        forwards: numpy.typing.ArrayLike,
+        strikes: numpy.typing.ArrayLike,
+        quotes: numpy.typing.ArrayLike,
+        quote_type: CalibrationTarget = CalibrationTarget.Price,
+    ) -> dict[str, float]: ...
     def simulationHeston(
         self,
         times: collections.abc.Sequence[typing.SupportsFloat],
@@ -625,7 +633,7 @@ class HullWhite:
         expiry: typing.SupportsFloat,
         maturity: typing.SupportsFloat,
         strike: typing.SupportsFloat,
-        callORput: str,
+        callORput: OptionType,
     ) -> float: ...
     def simulationHW(
         self, times: collections.abc.Sequence[typing.SupportsFloat]
@@ -728,10 +736,10 @@ class QuantoedCMS:
         beta: typing.SupportsFloat,
         strikes: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, n]"],
         quotes: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, n]"],
-        type: str = "premium",
+        type: CalibrationTarget = CalibrationTarget.Price,
     ) -> None: ...
     def fairValue(
-        self, strike: typing.SupportsFloat, callORput: str = "call"
+        self, strike: typing.SupportsFloat, callORput: OptionType = OptionType.Call
     ) -> float: ...
     def getForward(self) -> float: ...
     def simulation(self, corrRN: typing.SupportsFloat) -> float: ...
@@ -750,7 +758,7 @@ class QuantoedCmsSpread:
         beta1: typing.SupportsFloat,
         strikes1: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, n]"],
         quotes1: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, n]"],
-        type1: str,
+        type1: CalibrationTarget,
         expiry2: typing.SupportsFloat,
         tenor2: typing.SupportsFloat,
         fwd2: typing.SupportsFloat,
@@ -762,7 +770,7 @@ class QuantoedCmsSpread:
         beta2: typing.SupportsFloat,
         strikes2: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, n]"],
         quotes2: typing.Annotated[numpy.typing.ArrayLike, numpy.float64, "[m, n]"],
-        type2: str,
+        type2: CalibrationTarget,
         corr: typing.SupportsFloat,
     ) -> None: ...
     def simulationQuantoedCMSs(
@@ -797,10 +805,10 @@ class Sabr:
     def localVol(self, spot: typing.SupportsFloat) -> float: ...
     def normalVol(self, K: typing.SupportsFloat) -> float: ...
     def premiumBachelier(
-        self, strike: typing.SupportsFloat, callORput: str = "call"
+        self, strike: typing.SupportsFloat, callORput: OptionType = OptionType.Call
     ) -> float: ...
     def premiumBlackScholes(
-        self, strike: typing.SupportsFloat, callORput: str = "call"
+        self, strike: typing.SupportsFloat, callORput: OptionType = OptionType.Call
     ) -> float: ...
     @property
     def alpha(self) -> float: ...
@@ -904,6 +912,22 @@ class ShortRate1FPDE:
         strike: typing.SupportsFloat,
         pay_frequency: typing.SupportsFloat = 0.5,
     ) -> float: ...
+    def pricingZBO(
+        self,
+        expiry: typing.SupportsFloat,
+        maturity: typing.SupportsFloat,
+        strike: typing.SupportsFloat,
+        type: OptionType,
+    ) -> float: ...
+    def pricingCBO(
+        self,
+        expiry: typing.SupportsFloat,
+        tenor: typing.SupportsFloat,
+        coupon: typing.SupportsFloat,
+        strike: typing.SupportsFloat,
+        pay_frequency: typing.SupportsFloat,
+        type: OptionType,
+    ) -> float: ...
 
 class ShortRate2FPDE:
     def __init__(
@@ -959,7 +983,7 @@ class Swaption:
     def getImpliedVol(self, strike: typing.SupportsFloat) -> float: ...
     def swapFairValue(self, strike: typing.SupportsFloat) -> float: ...
     def swaptionFairValue(
-        self, strike: typing.SupportsFloat, callORput: str = "call"
+        self, strike: typing.SupportsFloat, callORput: OptionType = OptionType.Call
     ) -> float: ...
     @property
     def alpha(self) -> float: ...
