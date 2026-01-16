@@ -59,7 +59,11 @@ public:
   [[nodiscard]] double A(double t, double T) const;
 
   // Variance of the accumulated short rate, used in option pricing
+  // Variance of the accumulated short rate, used in option pricing
   [[nodiscard]] double variance(double t, double T) const;
+
+  // Simulation
+  [[nodiscard]] std::vector<double> simulation(std::vector<double> times) const;
 
 private:
   double kappa_;

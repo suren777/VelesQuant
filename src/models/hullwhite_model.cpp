@@ -2,6 +2,7 @@
 #include <cmath>
 #include <velesquant/constants.h>
 #include <velesquant/models/hullwhite_model.h>
+#include <velesquant/models/utility.h>
 
 namespace velesquant {
 namespace models {
@@ -84,6 +85,56 @@ double HullWhiteModel::variance([[maybe_unused]] double t, double T) const {
   }
 
   return std::exp(-2 * kappa_ * T0) * var;
+}
+
+std::vector<double>
+HullWhiteModel::simulation(std::vector<double> times) const {
+  std::vector<double> r_path;
+  // r(0) = f(0,0) approx
+  double r0 = -std::log(getDiscountFactor(0.0001)) / 0.0001;
+
+  double x = 0.0;
+  double t_prev = 0.0;
+  // kappa_ is member
+  double kappa = kappa_;
+
+  for (double t : times) {
+    if (t <= 1e-6) {
+      r_path.push_back(r0);
+      t_prev = t;
+      continue;
+    }
+
+    double dt = t - t_prev;
+    if (dt < 1e-8) {
+      // Duplicate time handling
+      if (r_path.empty())
+        r_path.push_back(r0);
+      else
+        r_path.push_back(r_path.back());
+      continue;
+    }
+
+    double sigma = getSigma(t_prev);
+
+    double mean = x * std::exp(-kappa * dt);
+    double var =
+        (sigma * sigma) / (2 * kappa) * (1.0 - std::exp(-2 * kappa * dt));
+    double std_dev = std::sqrt(var);
+
+    x = mean + std_dev * random_normal();
+
+    double P_t = getDiscountFactor(t);
+    double P_t_dt = getDiscountFactor(t + 0.0001);
+    double f_0_t = -std::log(P_t_dt / P_t) / 0.0001;
+
+    double alpha = f_0_t + (sigma * sigma) / (2 * kappa * kappa) *
+                               std::pow(1.0 - std::exp(-kappa * t), 2.0);
+
+    r_path.push_back(x + alpha);
+    t_prev = t;
+  }
+  return r_path;
 }
 
 } // namespace models

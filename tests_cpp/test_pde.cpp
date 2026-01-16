@@ -1,8 +1,10 @@
 #include <cmath>
 #include <gtest/gtest.h>
 #include <iostream>
+#include <memory>
 #include <vector>
-#include <velesquant/models/hw.h>
+#include <velesquant/engines/hullwhite_analytic_engine.h>
+#include <velesquant/models/hullwhite_model.h>
 #include <velesquant/pde_solvers/hw_pde.h>
 
 using namespace velesquant;
@@ -32,17 +34,14 @@ protected:
     for (int i = 0; i <= 20; ++i) {
       timeDFs.push_back(static_cast<double>(i) * 0.5);
     }
-    // Ensure first point is > 0 if PDE requires it?
-    // HWPDE constructor seems to expect timeDFs to enable theta calculation.
-    // It uses timeDFs_[timeDFs_.size()-1] for grid.
-
     DFs = generateDFs(timeDFs, r0);
   }
 };
 
 TEST_F(HWPDETestFixture, ZCBondPricingComparison) {
   // Analytical Model
-  HullWhite hw_analytical(kappa, timeSigmas, sigmas, timeDFs, DFs);
+  auto model = std::make_shared<models::HullWhiteModel>(kappa, timeSigmas,
+                                                        sigmas, timeDFs, DFs);
 
   // PDE Model
   // Constructor: kappa, timeSigmas, sigmas, timeDF, DF
@@ -50,7 +49,7 @@ TEST_F(HWPDETestFixture, ZCBondPricingComparison) {
 
   double maturity = 2.0; // 2 year bond
 
-  double priceAnalytical = hw_analytical.ZC(maturity);
+  double priceAnalytical = model->getDiscountFactor(maturity);
   double pricePDE = hw_pde.pricingZB(maturity);
 
   // They should be close. PDE discretization error expected.
@@ -74,11 +73,13 @@ TEST_F(HWPDETestFixture, SwaptionPricingComparison) {
   double strike = 0.05; // ATM approx
   double payFreq = 0.5; // Semiannual
 
-  HullWhite hw_analytical(kappa, timeSigmas, sigmas, timeDFs, DFs);
+  auto model = std::make_shared<models::HullWhiteModel>(kappa, timeSigmas,
+                                                        sigmas, timeDFs, DFs);
+  auto engine = std::make_shared<engines::HullWhiteAnalyticEngine>(model);
+
   HWPDE hw_pde(kappa, timeSigmas, sigmas, timeDFs, DFs);
 
-  double priceAnalytical =
-      hw_analytical.swaption(expiry, tenor, strike, payFreq);
+  double priceAnalytical = engine->swaption(expiry, tenor, strike, payFreq);
   double pricePDE = hw_pde.pricingSwaption(expiry, tenor, strike, payFreq);
 
   // Expect reasonable agreement

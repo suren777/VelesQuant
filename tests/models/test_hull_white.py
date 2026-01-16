@@ -69,3 +69,41 @@ def test_hhw_pricing_scenario():
     # Volatility impact can be complex in HHW depending on regimes/calibration.
     # For now, we verified the price changes (sensitivity exists).
     assert price_vol != price_base
+
+
+def test_python_swaption_utils():
+    # Test bindings for get_swap_rate and swaption_implied_vol via Python wrapper
+    # which now implements them using HullWhiteModel Core and local logic.
+
+    kappa = 0.03
+    sigma = 0.01
+
+    timeDFs = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
+    # Simple discount factors: exp(-r*t) with r=0.05
+    r = 0.05
+    import math
+
+    DFs = [math.exp(-r * t) for t in timeDFs]
+    curve = DiscountCurve(timeDFs, DFs)
+
+    hw = HullWhiteModel(kappa, sigma)
+
+    expiry = 1.0
+    tenor = 2.0
+
+    # 1. Test get_swap_rate
+    sr = hw.get_swap_rate(expiry, tenor, curve)
+    # Expected approx par swap rate ~ 5%
+    assert 0.04 < sr < 0.06
+
+    # 2. Test swaption_implied_vol
+    # Calculate a price first using price method
+    swaption = Swaption(expiry=expiry, tenor=tenor, strike=sr)
+    price = hw.price(swaption, curve)
+
+    # Get implied vol
+    vol = hw.swaption_implied_vol(expiry, tenor, price, curve)
+
+    # The model generated price corresponds to some vol.
+    # In HW model, the implied Black vol isn't constant but should be reasonable.
+    assert 0.0 < vol < 1.0
