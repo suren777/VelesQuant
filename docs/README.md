@@ -64,14 +64,17 @@ paths = hw.simulate(times, curve)
 
 | Model | Class | Description |
 |-------|-------|-------------|
-| SABR | `SabrModel` | Stochastic Alpha Beta Rho volatility model |
-| Heston | `HestonModel` | Stochastic variance model |
-| Local Vol | `LocalVolModel` | Local volatility from SABR slices |
-| Hull-White | `HullWhiteModel` | 1-Factor short rate model |
+| SABR | [`SabrModel`](models/sabr.md) | Stochastic Alpha Beta Rho volatility model |
+| Heston | [`HestonModel`](models/heston.md) | Stochastic variance model |
+| Local Vol | [`LocalVolModel`](models/localvol.md) | Local volatility from SABR slices |
+| Hull-White | [`HullWhiteModel`](models/hullwhite.md) | 1-Factor short rate model |
 | ShortRate2F | `ShortRate2FPDEModel` | 2-Factor G2++ short rate model |
-| CMS | `CMSModel` | Constant Maturity Swap pricing |
-| CMS Spread | `CMSSpreadModel` | CMS Spread Option pricing (Copula) |
-| Basket | `LogNormalBasketModel` | Multi-asset Log-Normal Basket |
+| CMS | [`CMSModel`](models/cms.md) | Constant Maturity Swap pricing |
+| CMS Spread | [`CMSSpreadModel`](models/cms_spread.md) | CMS Spread Option pricing (Copula) |
+| Basket | [`LogNormalBasketModel`](models/basket.md) | Multi-asset Log-Normal Basket |
+| Quantoed CMS | [`QuantoedCMSModel`](models/quantoed.md) | Quantoed Constant Maturity Swap |
+| Quantoed Spread | [`QuantoedCMSSpreadModel`](models/quantoed.md) | Quantoed CMS Spread Option |
+| Heston Hull-White | [`HybridHWModel`](models/hybrid_hw.md) | Hybrid Equity-Interest Rate Model |
 
 ## Calibration Example
 

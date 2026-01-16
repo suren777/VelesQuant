@@ -84,6 +84,14 @@ Classes for solving the SABR PDE directly.
     *   `getDensity()`: Returns the probability density vector.
     *   `getFgrid()`: Returns the forward grid coordinates.
 
+### `SabrPDE` Class
+*Use cases: [`tests/pde/test_sabr_pde.py`](../tests/pde/test_sabr_pde.py)*
+Base or generic SABR PDE solver class.
+*   **Methods**:
+    *   `get_density()`: Returns density.
+    *   `get_f_grid()`: Returns grid.
+    *   `get_alpha()`, `get_beta()`, `get_nu()`, `get_rho()`: Getters.
+
 ---
 
 ## Interest Rate & Hybrid Models
@@ -140,6 +148,20 @@ A wrapper around QuantLib term structures.
 *   **Methods**:
     *   `discount(date_serial)`: Returns the discount factor for a given date serial.
     *   `rate(date_serial, tenor_days)`: Returns the forward rate.
+
+### `QuantoedCMS` Class
+*Use cases: [`tests/models/test_quantoed_cms.py`](../tests/models/test_quantoed_cms.py)*
+Quantoed Constant Maturity Swap pricing.
+*   **Methods**:
+    *   `fair_value(strike, type)`: Returns fair value.
+    *   `get_forward()`: Returns the forward rate.
+    *   `simulate(times)`: Returns simulation path.
+
+### `QuantoedCmsSpread` Class
+*Use cases: [`tests/models/test_quantoed_cms_spread.py`](../tests/models/test_quantoed_cms_spread.py)*
+Quantoed CMS Spread option pricing.
+*   **Methods**:
+    *   `simulate()`: Simulate spread paths.
 
 ---
 
