@@ -101,10 +101,16 @@ pybind11_add_module(native
     bindings/module.cpp
     bindings/bind_enums.cpp
     bindings/bind_exceptions.cpp
-    bindings/bind_remaining.cpp
-    bindings/models/bind_sabr.cpp
+    bindings/bind_utility.cpp
     bindings/models/bind_heston.cpp
     bindings/models/bind_hull_white.cpp
+    bindings/models/bind_sabr.cpp
+    bindings/models/bind_local_vol.cpp
+    bindings/models/bind_swaption.cpp
+    bindings/models/bind_cms.cpp
+    bindings/models/bind_basket.cpp
+    bindings/models/bind_hybrid.cpp
+    bindings/models/bind_trees.cpp
     bindings/pde_solvers/bind_pde_solvers.cpp
 )
 

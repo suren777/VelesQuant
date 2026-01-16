@@ -45,7 +45,7 @@ packages = [{include = "velesquant", from = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.12"
-numpy = "^1.26.0"
+numpy = "^2.4.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"
