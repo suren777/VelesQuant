@@ -19,7 +19,7 @@ double cdf_normal(double x) {
 
 HullWhiteCalibrator::HullWhiteCalibrator(
     std::shared_ptr<HullWhiteModel> model,
-    std::shared_ptr<engines::HullWhiteAnalyticEngine> engine)
+    std::shared_ptr<engines::HullWhiteAnalyticEngine<HullWhiteModel>> engine)
     : model_(std::move(model)), engine_(std::move(engine)) {}
 
 void HullWhiteCalibrator::calibrate(const std::vector<defSwap> &swapQuotes,

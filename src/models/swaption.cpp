@@ -21,7 +21,7 @@ swaption::swaption(double expiry, double tenor, double forward, double annuity,
   instrument_ = std::make_shared<instruments::Swaption>(expiry, tenor, forward,
                                                         annuity, forward);
   model_ = std::make_shared<Sabr>(expiry, forward, beta, alpha, nu, rho);
-  engine_ = std::make_shared<engines::SwaptionAnalyticEngine>(model_);
+  engine_ = std::make_shared<engines::SwaptionAnalyticEngine<Sabr>>(model_);
 };
 
 swaption::swaption(double expiry, double tenor, double forward, double annuity,
@@ -40,7 +40,7 @@ swaption::swaption(double expiry, double tenor, double forward, double annuity,
   }
   model_->calibrator(theStrikes, theQuotes, quoteType);
 
-  engine_ = std::make_shared<engines::SwaptionAnalyticEngine>(model_);
+  engine_ = std::make_shared<engines::SwaptionAnalyticEngine<Sabr>>(model_);
 };
 
 swaption::swaption(double expiry, double tenor, double forward, double annuity,
@@ -60,7 +60,7 @@ swaption::swaption(double expiry, double tenor, double forward, double annuity,
   // Legacy code handled 'initialParams' variable but didn't use it in the
   // final calibrator call. We replicate that behavior here.
   model_->calibratorWithInitial(theStrikes, theQuotes, quoteType);
-  engine_ = std::make_shared<engines::SwaptionAnalyticEngine>(model_);
+  engine_ = std::make_shared<engines::SwaptionAnalyticEngine<Sabr>>(model_);
 };
 
 double swaption::swaptionFairValue(double strike, OptionType callORput) const {

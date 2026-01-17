@@ -12,8 +12,9 @@ namespace models {
 
 class HullWhiteCalibrator {
 public:
-  HullWhiteCalibrator(std::shared_ptr<HullWhiteModel> model,
-                      std::shared_ptr<engines::HullWhiteAnalyticEngine> engine);
+  HullWhiteCalibrator(
+      std::shared_ptr<HullWhiteModel> model,
+      std::shared_ptr<engines::HullWhiteAnalyticEngine<HullWhiteModel>> engine);
 
   void calibrate(const std::vector<defSwap> &swapQuotes,
                  CalibrationTarget target);
@@ -22,7 +23,7 @@ public:
 
 private:
   std::shared_ptr<HullWhiteModel> model_;
-  std::shared_ptr<engines::HullWhiteAnalyticEngine> engine_;
+  std::shared_ptr<engines::HullWhiteAnalyticEngine<HullWhiteModel>> engine_;
 
   // Internal state for optimization callbacks
   std::vector<defSwap> quoteSwap_;

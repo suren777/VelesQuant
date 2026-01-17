@@ -1,5 +1,6 @@
 // bindings/pde_solvers/bind_pde_solvers.cpp - PDE solver bindings
 #include "../bind_common.h"
+#include <velesquant/models/hullwhite_model.h>
 #include <velesquant/models/utility.h>
 #include <velesquant/pde_solvers/hw_pde.h>
 #include <velesquant/pde_solvers/sabr_pde.h>
@@ -10,85 +11,80 @@ namespace velesquant {
 namespace bindings {
 
 void bind_pde_solvers(py::module_ &m) {
-  // HWPDE - Hull-White PDE Solver
-  py::class_<HWPDE, std::shared_ptr<HWPDE>>(m, "HWPDE")
-      .def(py::init<double, double, std::vector<double>, std::vector<double>,
-                    std::vector<double>, std::vector<double>, int, double>(),
-           py::arg("initial_rate"), py::arg("kappa"), py::arg("time_sigmas"),
-           py::arg("sigmas"), py::arg("time_thetas"), py::arg("thetas"),
-           py::arg("grid_points") = 512, py::arg("time_step") = 0.001)
-      .def(py::init<double, std::vector<double>, std::vector<double>,
-                    std::vector<double>, std::vector<double>, int, double>(),
-           py::arg("kappa"), py::arg("time_sigmas"), py::arg("sigmas"),
-           py::arg("discount_factor_times"), py::arg("discount_factors"),
-           py::arg("grid_points") = 512, py::arg("time_step") = 0.001)
+  // HWPDE - Hull-White PDE Solver (Template Instantiation)
+  using HWPDE_HW = HWPDE<models::HullWhiteModel>;
+
+  py::class_<HWPDE_HW, std::shared_ptr<HWPDE_HW>>(m, "HWPDE")
+      .def(py::init<std::shared_ptr<models::HullWhiteModel>, int, double>(),
+           py::arg("model"), py::arg("grid_points") = 512,
+           py::arg("time_step") = 0.001)
       // Pricing methods (snake_case)
-      .def("price_swaption", &HWPDE::pricingSwaption, py::arg("expiry"),
+      .def("price_swaption", &HWPDE_HW::pricingSwaption, py::arg("expiry"),
            py::arg("tenor"), py::arg("strike"), py::arg("pay_frequency"))
-      .def("price_bermudan", &HWPDE::pricingBermudan, py::arg("expiry"),
+      .def("price_bermudan", &HWPDE_HW::pricingBermudan, py::arg("expiry"),
            py::arg("tenor"), py::arg("exercises"), py::arg("strike"),
            py::arg("pay_frequency"))
-      .def("price_callable_swap", &HWPDE::pricingCallableSwap,
+      .def("price_callable_swap", &HWPDE_HW::pricingCallableSwap,
            py::arg("expiry"), py::arg("tenor"), py::arg("exercises"),
            py::arg("coupon"), py::arg("strike"), py::arg("pay_frequency"),
            py::arg("type"))
-      .def("price_swap", &HWPDE::pricingSwap, py::arg("expiry"),
+      .def("price_swap", &HWPDE_HW::pricingSwap, py::arg("expiry"),
            py::arg("tenor"), py::arg("strike"), py::arg("pay_frequency"))
-      .def("price_zero_bond_option", &HWPDE::pricingZBO, py::arg("expiry"),
+      .def("price_zero_bond_option", &HWPDE_HW::pricingZBO, py::arg("expiry"),
            py::arg("maturity"), py::arg("strike"), py::arg("type"))
-      .def("price_zero_bond", &HWPDE::pricingZB, py::arg("maturity"))
-      .def("price_coupon_bond_option", &HWPDE::pricingCBO, py::arg("expiry"),
+      .def("price_zero_bond", &HWPDE_HW::pricingZB, py::arg("maturity"))
+      .def("price_coupon_bond_option", &HWPDE_HW::pricingCBO, py::arg("expiry"),
            py::arg("tenor"), py::arg("coupon"), py::arg("strike"),
            py::arg("pay_frequency"), py::arg("type"))
-      .def("price_coupon_bond", &HWPDE::pricingCouponBond, py::arg("expiry"),
+      .def("price_coupon_bond", &HWPDE_HW::pricingCouponBond, py::arg("expiry"),
            py::arg("tenor"), py::arg("coupon"), py::arg("pay_frequency"))
       // Analysis methods
-      .def("get_swap_rate", &HWPDE::getSwapRate, py::arg("expiry"),
+      .def("get_swap_rate", &HWPDE_HW::getSwapRate, py::arg("expiry"),
            py::arg("tenor"), py::arg("pay_frequency"))
-      .def("get_implied_vol_atm", &HWPDE::getImpVolATM, py::arg("expiry"),
+      .def("get_implied_vol_atm", &HWPDE_HW::getImpVolATM, py::arg("expiry"),
            py::arg("tenor"), py::arg("pay_frequency"))
-      .def("get_discount_factors", &HWPDE::getDFs, py::arg("time_points"))
-      .def("simulate", &HWPDE::simulationPDE, py::arg("times"))
+      .def("get_discount_factors", &HWPDE_HW::getDFs, py::arg("time_points"))
+      .def("simulate", &HWPDE_HW::simulationPDE, py::arg("times"))
       // Calibration
-      .def("calibrate", &HWPDE::calibrator, py::arg("discount_factor_times"),
+      .def("calibrate", &HWPDE_HW::calibrator, py::arg("discount_factor_times"),
            py::arg("discount_factors"), py::arg("swap_quotes"))
       // Getters
-      .def("get_kappa", &HWPDE::getKappa)
-      .def("get_initial_rate", &HWPDE::getR0)
-      .def("get_time_sigmas", &HWPDE::getTimeSigmas)
-      .def("get_sigmas", &HWPDE::getSigmas)
-      .def("get_time_thetas", &HWPDE::getTimeThetas)
-      .def("get_thetas", &HWPDE::getThetas)
+      .def("get_kappa", &HWPDE_HW::getKappa)
+      .def("get_initial_rate", &HWPDE_HW::getR0)
+      .def("get_time_sigmas", &HWPDE_HW::getTimeSigmas)
+      .def("get_sigmas", &HWPDE_HW::getSigmas)
+      .def("get_time_thetas", &HWPDE_HW::getTimeThetas)
+      .def("get_thetas", &HWPDE_HW::getThetas)
       // __repr__
       .def("__repr__",
-           [](HWPDE &p) {
+           [](HWPDE_HW &p) {
              return "<HWPDE kappa=" + std::to_string(p.getKappa()) + ">";
            })
       // NumPy array returns for zero-copy performance
       .def(
           "get_sigmas_array",
-          [](HWPDE &p) {
+          [](HWPDE_HW &p) {
             auto vec = p.getSigmas();
             return py::array_t<double>(vec.size(), vec.data());
           },
           py::return_value_policy::move)
       .def(
           "get_thetas_array",
-          [](HWPDE &p) {
+          [](HWPDE_HW &p) {
             auto vec = p.getThetas();
             return py::array_t<double>(vec.size(), vec.data());
           },
           py::return_value_policy::move)
       .def(
           "get_discount_factors_array",
-          [](HWPDE &p, std::vector<double> time_points) {
+          [](HWPDE_HW &p, std::vector<double> time_points) {
             auto vec = p.getDFs(time_points);
             return py::array_t<double>(vec.size(), vec.data());
           },
           py::arg("time_points"), py::return_value_policy::move)
       .def(
           "simulate_array",
-          [](HWPDE &p, const std::vector<double> &times) {
+          [](HWPDE_HW &p, const std::vector<double> &times) {
             auto vec = p.simulationPDE(times);
             return py::array_t<double>(vec.size(), vec.data());
           },

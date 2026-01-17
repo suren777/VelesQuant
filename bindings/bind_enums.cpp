@@ -1,7 +1,7 @@
 // bindings/bind_enums.cpp - Enum bindings
 #include "bind_common.h"
 #include <velesquant/models/utility.h>
-#include <velesquant/pde_solvers/hw_pde.h>
+
 #include <velesquant/volatility/c_tree.h>
 #include <velesquant/volatility/termstructure.h>
 

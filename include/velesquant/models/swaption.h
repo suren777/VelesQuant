@@ -46,7 +46,7 @@ public:
 private:
   std::shared_ptr<instruments::Swaption> instrument_;
   std::shared_ptr<Sabr> model_;
-  std::shared_ptr<engines::SwaptionAnalyticEngine> engine_;
+  std::shared_ptr<engines::SwaptionAnalyticEngine<Sabr>> engine_;
 };
 
 } // namespace velesquant

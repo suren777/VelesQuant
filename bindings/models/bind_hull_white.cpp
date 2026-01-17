@@ -30,17 +30,17 @@ void bind_hull_white(py::module_ &m) {
       .def("B", &models::HullWhiteModel::B, py::arg("t"), py::arg("T"));
 
   // Bind HullWhiteAnalyticEngine
-  py::class_<engines::HullWhiteAnalyticEngine,
-             std::shared_ptr<engines::HullWhiteAnalyticEngine>>(
-      m, "HullWhiteAnalyticEngine")
+  using HWEngine = engines::HullWhiteAnalyticEngine<models::HullWhiteModel>;
+
+  py::class_<HWEngine, std::shared_ptr<HWEngine>>(m, "HullWhiteAnalyticEngine")
       .def(py::init<std::shared_ptr<models::HullWhiteModel>>(),
            py::arg("model"))
-      .def("option_bond", &engines::HullWhiteAnalyticEngine::optionBond,
-           py::arg("expiry"), py::arg("maturity"), py::arg("strike"),
-           py::arg("type"), "Price a bond option")
-      .def("swaption", &engines::HullWhiteAnalyticEngine::swaption,
-           py::arg("expiry"), py::arg("tenor"), py::arg("strike"),
-           py::arg("pay_frequency") = 0.5, "Price a swaption");
+      .def("option_bond", &HWEngine::optionBond, py::arg("expiry"),
+           py::arg("maturity"), py::arg("strike"), py::arg("type"),
+           "Price a bond option")
+      .def("swaption", &HWEngine::swaption, py::arg("expiry"), py::arg("tenor"),
+           py::arg("strike"), py::arg("pay_frequency") = 0.5,
+           "Price a swaption");
 }
 
 } // namespace bindings

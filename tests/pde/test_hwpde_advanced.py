@@ -8,19 +8,25 @@ Verifies the newly exposed methods:
 """
 
 import pytest
-
 import velesquant.native as n
+
+
+def create_hwpde_model(
+    kappa, time_sigmas, sigmas, time_dfs, dfs, grid_points=100, time_step=0.01
+):
+    """Helper to create HWPDE with a HullWhiteModel."""
+    model = n.HullWhiteModel(kappa, time_sigmas, sigmas, time_dfs, dfs)
+    return n.HWPDE(model, grid_points, time_step)
 
 
 def test_hwpde_basic_pricing():
     """Test basic HWPDE pricing methods."""
-    # Create HWPDE with DF-based constructor
-    hwpde = n.HWPDE(
+    hwpde = create_hwpde_model(
         kappa=0.05,
         time_sigmas=[1.0, 5.0, 10.0],
         sigmas=[0.01, 0.012, 0.015],
-        discount_factor_times=[0.0, 1.0, 5.0, 10.0, 30.0],
-        discount_factors=[1.0, 0.95, 0.80, 0.65, 0.30],
+        time_dfs=[0.0, 1.0, 5.0, 10.0, 30.0],
+        dfs=[1.0, 0.95, 0.80, 0.65, 0.30],
         grid_points=100,
         time_step=0.01,
     )
@@ -52,12 +58,12 @@ def test_hwpde_basic_pricing():
 
 def test_hwpde_exotic_pricing():
     """Test exotic pricing methods."""
-    hwpde = n.HWPDE(
+    hwpde = create_hwpde_model(
         kappa=0.05,
         time_sigmas=[1.0, 5.0],
         sigmas=[0.01, 0.012],
-        discount_factor_times=[0.0, 1.0, 5.0, 10.0],
-        discount_factors=[1.0, 0.95, 0.80, 0.65],
+        time_dfs=[0.0, 1.0, 5.0, 10.0],
+        dfs=[1.0, 0.95, 0.80, 0.65],
         grid_points=100,
         time_step=0.01,
     )
@@ -76,12 +82,12 @@ def test_hwpde_exotic_pricing():
 
 def test_hwpde_analysis():
     """Test analysis and getter methods."""
-    hwpde = n.HWPDE(
+    hwpde = create_hwpde_model(
         kappa=0.05,
         time_sigmas=[1.0, 5.0],
         sigmas=[0.01, 0.012],
-        discount_factor_times=[0.0, 1.0, 5.0, 10.0],
-        discount_factors=[1.0, 0.95, 0.80, 0.65],
+        time_dfs=[0.0, 1.0, 5.0, 10.0],
+        dfs=[1.0, 0.95, 0.80, 0.65],
         grid_points=100,
         time_step=0.01,
     )
@@ -116,12 +122,12 @@ def test_hwpde_analysis():
 
 def test_hwpde_calibration():
     """Test calibration method."""
-    hwpde = n.HWPDE(
+    hwpde = create_hwpde_model(
         kappa=0.05,
         time_sigmas=[1.0, 5.0],
         sigmas=[0.01, 0.012],
-        discount_factor_times=[0.0, 1.0, 5.0, 10.0],
-        discount_factors=[1.0, 0.95, 0.80, 0.65],
+        time_dfs=[0.0, 1.0, 5.0, 10.0],
+        dfs=[1.0, 0.95, 0.80, 0.65],
         grid_points=100,
         time_step=0.01,
     )
@@ -157,7 +163,6 @@ def test_hwpde_calibration():
     except RuntimeError:
         # We expect a RuntimeError with "too much freedom" or similar
         # because the input data is dummy data and might not converge/be valid
-        # This confirms the binding is reachable and throws the expected C++ exception
         pass
     except Exception as e:
         pytest.fail(f"Unexpected exception during calibration binding call: {e}")
