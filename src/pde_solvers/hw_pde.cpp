@@ -14,25 +14,22 @@ using namespace std;
 
 namespace velesquant {
 
-#define MR 512 // int(std::pow(2.0,9));
-static const int DAYS_A_YEAR = 10001;
-static const double delT = 10.0 / (DAYS_A_YEAR - 1.0);
 const int nt = omp_get_max_threads();
 
 void HWPDE::buildGrid(double Rmax, double factor) {
-  gridR_ = grMesh(MR - 1, Rmax, factor);
-  a_.resize(MR);
-  b_.resize(MR);
-  c_.resize(MR);
-  e_.resize(MR);
-  f_.resize(MR);
-  g_.resize(MR);
+  gridR_ = grMesh(MR_ - 1, Rmax, factor);
+  a_.resize(MR_);
+  b_.resize(MR_);
+  c_.resize(MR_);
+  e_.resize(MR_);
+  f_.resize(MR_);
+  g_.resize(MR_);
 
 #pragma omp parallel for
-  for (int i = 0; i < MR; i++) {
+  for (int i = 0; i < MR_; i++) {
 
     double R = gridR_[i];
-    double Ru = (i == MR - 1) ? vright_ : gridR_[i + 1];
+    double Ru = (i == MR_ - 1) ? vright_ : gridR_[i + 1];
     double Rl = (i == 0) ? vleft_ : gridR_[i - 1];
     a_[i] = 2.0 / (R - Rl) / (Ru - Rl);
     b_[i] = -2.0 / (R - Rl) / (Ru - R);
@@ -41,7 +38,7 @@ void HWPDE::buildGrid(double Rmax, double factor) {
     f_[i] = (Ru - 2 * R + Rl) / (R - Rl) / (Ru - R);
     g_[i] = (R - Rl) / (Ru - Rl) / (Ru - R);
   }
-  for (int r = 0; r < MR; r++) {
+  for (int r = 0; r < MR_; r++) {
     if (gridR_[r] >= R0_) {
       iR0_ = r;
       break;
@@ -50,28 +47,28 @@ void HWPDE::buildGrid(double Rmax, double factor) {
 };
 
 void HWPDE::discountBack(double t0, double Tn, vector<double> &f) {
-  int Nt = int(Tn / delT + 1);
-  int N0 = int(t0 / delT + 1);
+  int Nt = int(Tn / delT_ + 1);
+  int N0 = int(t0 / delT_ + 1);
   for (int t = Nt - 2; t >= N0; t--)
     oneStepBackward(t, f);
 };
 
 double HWPDE::pricingZB(double Maturity) {
-  vector<double> payoff(MR, 1.0);
+  vector<double> payoff(MR_, 1.0);
   discountBack(0, Maturity, payoff);
   return payoff[iR0_];
 };
 
 void HWPDE::pricingCouponBondt(double t0, double Tn, double Coupon,
                                double PayFrequency, vector<double> &f) {
-  int Nt = int(Tn / delT + 1); // working daily time grid
-  int iExpiry = int(t0 / delT + 1);
+  int Nt = int(Tn / delT_ + 1); // working daily time grid
+  int iExpiry = int(t0 / delT_ + 1);
   int Ncoupon = int((Tn - t0) / PayFrequency + 0.5);
   for (int t = Nt - 2; t >= iExpiry; t--) // swap
   {
     double couponTime = t0 + Ncoupon * PayFrequency;
-    if (couponTime > t * delT && couponTime <= (t + 1) * delT) {
-      for (int r = 0; r < MR; r++)
+    if (couponTime > t * delT_ && couponTime <= (t + 1) * delT_) {
+      for (int r = 0; r < MR_; r++)
         f[r] += PayFrequency * Coupon;
       Ncoupon--;
     }
@@ -81,7 +78,7 @@ void HWPDE::pricingCouponBondt(double t0, double Tn, double Coupon,
 
 double HWPDE::pricingCouponBond(double Expiry, double Tenor, double Coupon,
                                 double PayFrequency) {
-  vector<double> payoff(MR, 1);
+  vector<double> payoff(MR_, 1);
   pricingCouponBondt(Expiry, Expiry + Tenor, Coupon, PayFrequency, payoff);
   if (Expiry > 0)
     discountBack(0, Expiry, payoff);
@@ -90,11 +87,11 @@ double HWPDE::pricingCouponBond(double Expiry, double Tenor, double Coupon,
 
 double HWPDE::pricingCBO(double Expiry, double Tenor, double Coupon,
                          double Strike, double PayFrequency, OptionType type) {
-  vector<double> f(MR, 1);
-  int Nt = int(Expiry / delT + 1);
+  vector<double> f(MR_, 1);
+  int Nt = int(Expiry / delT_ + 1);
   pricingCouponBondt(Expiry, Expiry + Tenor, Coupon, PayFrequency,
                      f); // Price CB
-  for (int i = 0; i < MR; i++)
+  for (int i = 0; i < MR_; i++)
     f[i] = (type == OptionType::Call) ? max(0.0, f[i] - Strike)
                                       : max(0.0, Strike - f[i]); // Apply Payoff
   if (Expiry > 0)
@@ -106,12 +103,12 @@ double HWPDE::pricingCBO(double Expiry, double Tenor, double Coupon,
 
 double HWPDE::pricingZBO(double Expiry, double Maturity, double Strike,
                          OptionType type) {
-  int Nt = int(Expiry / delT + 1); // working daily time grid?
-  vector<double> f(MR, 1);
+  int Nt = int(Expiry / delT_ + 1); // working daily time grid?
+  vector<double> f(MR_, 1);
   // Price ZB from T to t
   discountBack(Expiry, Expiry + Maturity, f);
   // Apply Payoff to f: max(0,f-K) || max(0,K-f)
-  for (int i = 0; i < MR; i++)
+  for (int i = 0; i < MR_; i++)
     f[i] = (type == OptionType::Call) ? max(0.0, f[i] - Strike)
                                       : max(0.0, -f[i] + Strike);
   if (Expiry > 0)
@@ -121,10 +118,10 @@ double HWPDE::pricingZBO(double Expiry, double Maturity, double Strike,
 
 double HWPDE::pricingSwap(double Expiry, double Tenor, double Strike,
                           double PayFrequency) {
-  vector<double> payoff(MR, -1);
+  vector<double> payoff(MR_, -1);
   pricingCouponBondt(Expiry, Expiry + Tenor, -Strike, PayFrequency, payoff);
 #pragma omp parallel for
-  for (int r = 0; r < MR; r++)
+  for (int r = 0; r < MR_; r++)
     payoff[r] += 1.0; // swap payoff
   if (Expiry > 0)
     discountBack(0, Expiry, payoff);
@@ -135,7 +132,7 @@ double HWPDE::pricingCallableSwap(double Expiry, double Tenor,
                                   vector<double> Exercises, double Coupon,
                                   double Strike, double PayFrequency,
                                   OptionType type) {
-  vector<double> payoff(MR, -1), call_value(MR);
+  vector<double> payoff(MR_, -1), call_value(MR_);
   Exercises.push_back(Expiry + Tenor);
   int Ne = Exercises.size();
   int itype = (type == OptionType::Call) ? 1 : -1;
@@ -144,13 +141,13 @@ double HWPDE::pricingCallableSwap(double Expiry, double Tenor,
                        payoff);
     if (e == Ne - 2) {
 #pragma omp parallel for
-      for (int r = 0; r < MR; r++)
+      for (int r = 0; r < MR_; r++)
         call_value[r] =
             max(0.0, ((payoff[r] + 1.0) - Strike) * itype); // payoff
     } else {
       discountBack(Exercises[e], Exercises[e + 1], call_value);
 #pragma omp parallel for
-      for (int r = 0; r < MR; r++)
+      for (int r = 0; r < MR_; r++)
         call_value[r] =
             max(call_value[r], ((payoff[r] + 1.0) - Strike) * itype); // payoff
     }
@@ -162,9 +159,9 @@ double HWPDE::pricingCallableSwap(double Expiry, double Tenor,
 
 double HWPDE::pricingSwaption(double Expiry, double Tenor, double Strike,
                               double PayFrequency) {
-  vector<double> payoff(MR, -1.0);
+  vector<double> payoff(MR_, -1.0);
   pricingCouponBondt(Expiry, Expiry + Tenor, -Strike, PayFrequency, payoff);
-  for (int r = 0; r < MR; r++)
+  for (int r = 0; r < MR_; r++)
     payoff[r] = max(0.0, payoff[r] + 1.0); // swaption payoff
   if (Expiry > 0)
     discountBack(0, Expiry, payoff);
@@ -174,7 +171,7 @@ double HWPDE::pricingSwaption(double Expiry, double Tenor, double Strike,
 double HWPDE::pricingBermudan(double Expiry, double Tenor,
                               vector<double> Exercises, double Strike,
                               double PayFrequency) {
-  std::vector<double> payoff(MR, -1.0), swaption(MR);
+  std::vector<double> payoff(MR_, -1.0), swaption(MR_);
   Exercises.insert(Exercises.begin(), Expiry);
   Exercises.push_back(Expiry + Tenor);
   int Ne = Exercises.size();
@@ -183,12 +180,12 @@ double HWPDE::pricingBermudan(double Expiry, double Tenor,
                        payoff);
     if (e == Ne - 2) {
 #pragma omp parallel for
-      for (int r = 0; r < MR; r++)
+      for (int r = 0; r < MR_; r++)
         swaption[r] = max(0.0, payoff[r] + 1.0); // swaption payoff
     } else {
       discountBack(Exercises[e], Exercises[e + 1], swaption);
 #pragma omp parallel for
-      for (int r = 0; r < MR; r++)
+      for (int r = 0; r < MR_; r++)
         swaption[r] =
             max(swaption[r], payoff[r] + 1.0); // bermudan swaption payoff
     }
@@ -201,9 +198,9 @@ double HWPDE::pricingBermudan(double Expiry, double Tenor,
 vector<double> HWPDE::getDFs(vector<double> &timePoints) {
   int N = timePoints.size();
   vector<int> iTs(N);
-  vector<double> inV(MR, 0.0), DFs(N, 0.0);
+  vector<double> inV(MR_, 0.0), DFs(N, 0.0);
   for (int i = 0; i < N; i++)
-    iTs[i] = int(timePoints[i] / delT + 1);
+    iTs[i] = int(timePoints[i] / delT_ + 1);
 
   inV[iR0_] = 2.0 / (gridR_[iR0_ + 1] - gridR_[iR0_ - 1]);
 
@@ -434,19 +431,19 @@ void HWPDE::termStructureCalibrator() {
   int N = timeThetas_.size();
   std::vector<int> iTs(N);
   for (int i = 0; i < N; i++)
-    iTs[i] = int(timeThetas_[i] / delT + 1);
+    iTs[i] = int(timeThetas_[i] / delT_ + 1);
   std::vector<double> DFinterp(N);
   for (int i = 0; i < N; i++)
     DFinterp[i] = getDFinterp(timeThetas_[i]);
   // buildGrid(timeThetas_[N-1], iTs[N-1]);
-  std::vector<double> inV(MR, 0.0), lastV(MR, 0);
-  for (int r = 0; r < MR; r++)
+  std::vector<double> inV(MR_, 0.0), lastV(MR_, 0);
+  for (int r = 0; r < MR_; r++)
     if (gridR_[r] >= R0_) { // Dirac delta as initial distribution
       inV[r] = 2.0 / (gridR_[r + 1] - gridR_[r - 1]);
       break;
     }
 #pragma omp parallel for
-  for (int r = 0; r < MR; r++)
+  for (int r = 0; r < MR_; r++)
     lastV[r] = inV[r]; // remember the starting density
   for (int i_p = 0; i_p < N; i_p++) {
     int sT = 0;
@@ -457,7 +454,7 @@ void HWPDE::termStructureCalibrator() {
     do {
       niter++;
 #pragma omp parallel for
-      for (int r = 0; r < MR; r++)
+      for (int r = 0; r < MR_; r++)
         inV[r] = lastV[r]; // reset to the starting density
 
       if (thetas_[i_p] == 0.0)
@@ -468,7 +465,7 @@ void HWPDE::termStructureCalibrator() {
       double dfUP = trapezoidal(inV);
 
 #pragma omp parallel for
-      for (int r = 0; r < MR; r++)
+      for (int r = 0; r < MR_; r++)
         inV[r] = lastV[r]; // reset to the starting density
 
       thetas_[i_p] /= 1.001; // back to theta
@@ -481,12 +478,12 @@ void HWPDE::termStructureCalibrator() {
           max(-0.0050, thetas_[i_p]); // Cutoff the nagative value (BETTER)
     } while (fabs(1.0 - df / DFinterp[i_p]) >= 1.0E-6 && niter < 10);
 #pragma omp parallel for
-    for (int r = 0; r < MR; r++)
+    for (int r = 0; r < MR_; r++)
       inV[r] = lastV[r]; // reset to the starting density
     for (int t = sT; t < iTs[i_p] - 1; t++)
       oneStepForward(t, inV);
 #pragma omp parallel for
-    for (int r = 0; r < MR; r++)
+    for (int r = 0; r < MR_; r++)
       lastV[r] = inV[r]; // remember the starting density
   };
   return;
@@ -495,7 +492,7 @@ void HWPDE::termStructureCalibrator() {
 double HWPDE::trapezoidal(std::vector<double> &inV) {
   double value = 0.0;
 #pragma omp parallel for reduction(+ : value)
-  for (int r = 1; r < MR; r++)
+  for (int r = 1; r < MR_; r++)
     value += 0.5 * (gridR_[r] - gridR_[r - 1]) * (inV[r] + inV[r - 1]);
   return value;
 };
@@ -544,25 +541,25 @@ vector<double> HWPDE::simulationPDE(vector<double> times) const {
 };
 
 void HWPDE::oneStepBackward(const int t, vector<double> &inV) {
-  // std::vector<double> l(MR-2), c(MR-2), u(MR-2), d(MR-2), V(MR-2);
-  array<double, MR> l, c, u, d;
-  double tm = (t + .5) * delT;
+  // std::vector<double> l(MR_-2), c(MR_-2), u(MR_-2), d(MR_-2), V(MR_-2);
+  std::vector<double> l(MR_), c(MR_), u(MR_), d(MR_);
+  double tm = (t + .5) * delT_;
   double sigma = whichSigma(tm);
   double f2 = sigma * sigma / 4;
   double theta = whichTheta(tm);
-  double ndt = 1.0 / delT;
+  double ndt = 1.0 / delT_;
 
 #pragma omp parallel for
-  for (int r = 0; r < MR; r++) {
+  for (int r = 0; r < MR_; r++) {
     double f1 =
-        ((r == 0) || (r == MR - 1)) ? 0 : 0.5 * (theta - kappa_ * gridR_[r]);
+        ((r == 0) || (r == MR_ - 1)) ? 0 : 0.5 * (theta - kappa_ * gridR_[r]);
     l[r] = f1 * e_[r] + f2 * a_[r];
     c[r] = -ndt + f1 * f_[r] + f2 * b_[r] - gridR_[r] / 2;
     u[r] = f1 * g_[r] + f2 * c_[r];
     if (r == 0) {
       u[r] += l[r];
       d[r] = -((2 * ndt + c[r]) * inV[r] + u[r] * inV[r + 1]);
-    } else if (r == MR - 1) {
+    } else if (r == MR_ - 1) {
       l[r] += u[r];
       d[r] = -(l[r] * inV[r - 1] + (2.0 * ndt + c[r]) * inV[r]);
     } else
@@ -570,24 +567,24 @@ void HWPDE::oneStepBackward(const int t, vector<double> &inV) {
                u[r] * inV[r + 1]);
   }
   l[0] = 0.0;
-  u[MR - 1] = 0.0;
-  TriDiagonalSolve(MR, l, c, u, d, inV);
+  u[MR_ - 1] = 0.0;
+  TriDiagonalSolve(MR_, l, c, u, d, inV);
 };
 
 void HWPDE::oneStepForward(const int T, vector<double> &inV) {
-  // std::vector<double> l(MR-2), c(MR-2), u(MR-2), d(MR-2), V(MR-2);
-  array<double, MR> l, c, u, d;
-  double Tm = (T + .5) * delT;
+  // std::vector<double> l(MR_-2), c(MR_-2), u(MR_-2), d(MR_-2), V(MR_-2);
+  std::vector<double> l(MR_), c(MR_), u(MR_), d(MR_);
+  double Tm = (T + .5) * delT_;
   double sigma = whichSigma(Tm);
   double f2 = -sigma * sigma / 4;
   double theta = whichTheta(Tm);
-  double ndt = 1.0 / delT;
+  double ndt = 1.0 / delT_;
 
 #pragma omp parallel for
 
-  for (int r = 0; r < MR; r++) {
+  for (int r = 0; r < MR_; r++) {
     double f1 =
-        ((r == 0) || (r == MR - 1)) ? 0 : 0.5 * (theta - kappa_ * gridR_[r]);
+        ((r == 0) || (r == MR_ - 1)) ? 0 : 0.5 * (theta - kappa_ * gridR_[r]);
     double f3 = (gridR_[r] - kappa_) / 2;
     l[r] = f1 * e_[r] + f2 * a_[r];
     c[r] = ndt + f1 * f_[r] + f2 * b_[r] + f3;
@@ -595,7 +592,7 @@ void HWPDE::oneStepForward(const int T, vector<double> &inV) {
     if (r == 0) {
       u[r] += l[r];
       d[r] = -((-2 * ndt + c[r]) * inV[r] + u[r] * inV[r + 1]);
-    } else if (r == MR - 1) {
+    } else if (r == MR_ - 1) {
       l[r] += u[r];
       d[r] = -(l[r] * inV[r - 1] + (-2.0 * ndt + c[r]) * inV[r]);
     } else
@@ -603,8 +600,8 @@ void HWPDE::oneStepForward(const int T, vector<double> &inV) {
                u[r] * inV[r + 1]);
   }
   l[0] = 0.0;
-  u[MR - 1] = 0.0;
-  TriDiagonalSolve(MR, l, c, u, d, inV);
+  u[MR_ - 1] = 0.0;
+  TriDiagonalSolve(MR_, l, c, u, d, inV);
 };
 
 vector<double> HWPDE::grMesh(int Mv, double Rmax, double factor) {
@@ -906,10 +903,10 @@ void HWPDE::termStructureCalibratorBtstrp(double max_maturity) {
       }
   std::vector<int> iTs(N);
   for (int i = 0; i < N; i++)
-    iTs[i] = int(timeThetas_[i] / delT + 1);
+    iTs[i] = int(timeThetas_[i] / delT_ + 1);
   // buildGrid(timeThetas_[N-1], iTs[N-1]);
-  std::vector<double> inV(MR, 0.0), lastV(MR);
-  for (int r = 0; r < MR; r++)
+  std::vector<double> inV(MR_, 0.0), lastV(MR_);
+  for (int r = 0; r < MR_; r++)
     if (gridR_[r] >= R0_) { // Dirac delta as initial distribution
       inV[r] = 2.0 / (gridR_[r + 1] - gridR_[r - 1]);
       break;

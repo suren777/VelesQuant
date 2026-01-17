@@ -21,6 +21,8 @@ def test_hwpde_basic_pricing():
         sigmas=[0.01, 0.012, 0.015],
         discount_factor_times=[0.0, 1.0, 5.0, 10.0, 30.0],
         discount_factors=[1.0, 0.95, 0.80, 0.65, 0.30],
+        grid_points=100,
+        time_step=0.01,
     )
 
     # Test pricingZB
@@ -56,6 +58,8 @@ def test_hwpde_exotic_pricing():
         sigmas=[0.01, 0.012],
         discount_factor_times=[0.0, 1.0, 5.0, 10.0],
         discount_factors=[1.0, 0.95, 0.80, 0.65],
+        grid_points=100,
+        time_step=0.01,
     )
 
     # Test pricingBermudan
@@ -78,6 +82,8 @@ def test_hwpde_analysis():
         sigmas=[0.01, 0.012],
         discount_factor_times=[0.0, 1.0, 5.0, 10.0],
         discount_factors=[1.0, 0.95, 0.80, 0.65],
+        grid_points=100,
+        time_step=0.01,
     )
 
     # Test getSwapRate
@@ -116,6 +122,8 @@ def test_hwpde_calibration():
         sigmas=[0.01, 0.012],
         discount_factor_times=[0.0, 1.0, 5.0, 10.0],
         discount_factors=[1.0, 0.95, 0.80, 0.65],
+        grid_points=100,
+        time_step=0.01,
     )
 
     # Create swap quotes for calibration

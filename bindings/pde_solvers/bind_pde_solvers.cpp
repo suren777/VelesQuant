@@ -13,13 +13,15 @@ void bind_pde_solvers(py::module_ &m) {
   // HWPDE - Hull-White PDE Solver
   py::class_<HWPDE, std::shared_ptr<HWPDE>>(m, "HWPDE")
       .def(py::init<double, double, std::vector<double>, std::vector<double>,
-                    std::vector<double>, std::vector<double>>(),
+                    std::vector<double>, std::vector<double>, int, double>(),
            py::arg("initial_rate"), py::arg("kappa"), py::arg("time_sigmas"),
-           py::arg("sigmas"), py::arg("time_thetas"), py::arg("thetas"))
+           py::arg("sigmas"), py::arg("time_thetas"), py::arg("thetas"),
+           py::arg("grid_points") = 512, py::arg("time_step") = 0.001)
       .def(py::init<double, std::vector<double>, std::vector<double>,
-                    std::vector<double>, std::vector<double>>(),
+                    std::vector<double>, std::vector<double>, int, double>(),
            py::arg("kappa"), py::arg("time_sigmas"), py::arg("sigmas"),
-           py::arg("discount_factor_times"), py::arg("discount_factors"))
+           py::arg("discount_factor_times"), py::arg("discount_factors"),
+           py::arg("grid_points") = 512, py::arg("time_step") = 0.001)
       // Pricing methods (snake_case)
       .def("price_swaption", &HWPDE::pricingSwaption, py::arg("expiry"),
            py::arg("tenor"), py::arg("strike"), py::arg("pay_frequency"))

@@ -17,9 +17,11 @@ class HWPDE {
 public:
   HWPDE(double R0, double kappa, std::vector<double> timeSigmas,
         std::vector<double> sigmas, std::vector<double> timeThetas,
-        std::vector<double> thetas)
+        std::vector<double> thetas, int grid_points = 512,
+        double time_step = 0.001)
       : R0_(R0), kappa_(kappa), timeSigmas_(timeSigmas), sigmas_(sigmas),
-        timeThetas_(timeThetas), thetas_(thetas) {
+        timeThetas_(timeThetas), thetas_(thetas), MR_(grid_points),
+        delT_(time_step) {
     buildGrid();
     sigmas0_ = sigmas_;
     kappa0_ = kappa_;
@@ -27,9 +29,9 @@ public:
 
   HWPDE(double kappa, std::vector<double> timeSigmas,
         std::vector<double> sigmas, std::vector<double> timeDF,
-        std::vector<double> DF)
+        std::vector<double> DF, int grid_points = 512, double time_step = 0.001)
       : kappa_(kappa), timeSigmas_(timeSigmas), sigmas_(sigmas),
-        timeDFs_(timeDF), DFs_(DF) {
+        timeDFs_(timeDF), DFs_(DF), MR_(grid_points), delT_(time_step) {
     timeThetas_.push_back(0.5);
     double dt = (timeDFs_[timeDFs_.size() - 1] - timeThetas_[0]) / 20;
     for (double i = timeThetas_[0] + dt; i <= timeDFs_[timeDFs_.size() - 1];
@@ -45,8 +47,10 @@ public:
   };
 
   HWPDE(std::vector<double> timeDFs, std::vector<double> DFs,
-        std::vector<defSwap> quoteSwap)
-      : timeDFs_(timeDFs), DFs_(DFs), quoteSwap_(quoteSwap) {
+        std::vector<defSwap> quoteSwap, int grid_points = 512,
+        double time_step = 0.001)
+      : timeDFs_(timeDFs), DFs_(DFs), quoteSwap_(quoteSwap), MR_(grid_points),
+        delT_(time_step) {
     R0_ = -log(DFs_[0]) / timeDFs_[0];
     kappa_ = 0.03;
     timeThetas_ = timeDFs_;
@@ -115,6 +119,8 @@ public:
 
 private:
   double R0_, kappa_, kappa0_, cal_time_;
+  int MR_;
+  double delT_;
   double vleft_, vright_;
   mutable std::vector<double> timeSigmas_, sigmas_, sigmas0_;
   mutable std::vector<double> timeThetas_, thetas_; // time_[0] first point
