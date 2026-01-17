@@ -21,7 +21,8 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 find_package(QuantLib REQUIRED)
 find_package(Boost REQUIRED)
-find_package(pybind11 REQUIRED)
+find_package(Python3 COMPONENTS Interpreter Development.Module REQUIRED)
+find_package(pybind11 CONFIG REQUIRED)
 find_package(Eigen3 QUIET)
 # If find_package didn't set EIGEN3_INCLUDE_DIR, use fallback
 if(NOT EIGEN3_INCLUDE_DIR OR EIGEN3_INCLUDE_DIR STREQUAL "")

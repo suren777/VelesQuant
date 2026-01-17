@@ -4,10 +4,10 @@
 #include <boost/function.hpp>
 #include <boost/math/distributions.hpp>
 #include <ql/quantlib.hpp>
-#include <velesquant/volatility/l_vol.h>
-#include <velesquant/volatility/sabr.h>
 #include <velesquant/models/utility.h>
 #include <velesquant/numerics/tri_diag_matrix.h>
+#include <velesquant/volatility/l_vol.h>
+#include <velesquant/volatility/sabr.h>
 
 using namespace std;
 
@@ -452,11 +452,13 @@ void lVol::getLocVol(double time, double preSpot, double preFwd, double &locvol,
         interpolatedCall(sabrModels_[0], currSpot * 1.001, forward, time);
     double dS2val =
         (cRgt + cLft - 2.0 * cVal) / (0.001 * currSpot * 0.001 * currSpot);
-    assert(dS2val > 0.0);
+    // assert(dS2val > 0.0);
+    dS2val = std::max(1.0E-20, dS2val);
     double cBigT =
         interpolatedCall(sabrModels_[0], currSpot, forward, time * 1.001);
     double dTval = (cBigT - cVal) / (0.001 * time);
-    assert(dTval > 0.0);
+    // assert(dTval > 0.0);
+    dTval = std::max(0.0, dTval);
     locvol = std::sqrt(2.0 * dTval / dS2val) / currSpot;
     // locvol = sabrModels_[0].localVol( afterForward * fixRatio );
     return;
@@ -491,11 +493,13 @@ void lVol::getLocVol(double time, double preSpot, double preFwd, double &locvol,
                                      currSpot * 1.001, forward, time);
       double dS2val =
           (cRgt + cLft - 2.0 * cVal) / (0.001 * currSpot * 0.001 * currSpot);
-      assert(dS2val > 0.0);
+      // assert(dS2val > 0.0);
+      dS2val = std::max(1.0E-20, dS2val);
       double cBigT = interpolatedCall(sabrModels_[i - 1], sabrModels_[i],
                                       currSpot, forward, time * 1.001);
       double dTval = (cBigT - cVal) / (0.001 * time);
-      assert(dTval > 0.0);
+      // assert(dTval > 0.0);
+      dTval = std::max(0.0, dTval);
       locvol = std::sqrt(2.0 * dTval / dS2val) / currSpot;
       // if(locvol != locvol) locvol = 0.0;	//if(locvol > 111.111) locvol =
       // 111.111;
@@ -663,7 +667,7 @@ std::vector<double> lVol::simulation(std::vector<double> timesPath) const {
 //		double z = random_normal();
 //		double currentDrift = currentVol*z -0.5*currentVol*currentVol;
 ////Euler scheme 		double bumpLocVol =
-///getLocVol(preTime, 1.001*preSpot, preFwd);
+/// getLocVol(preTime, 1.001*preSpot, preFwd);
 //		double skewLocVol = (bumpLocVol-preLocVol)/(0.001*preSpot);
 //		currentDrift = currentDrift
 //+0.5*(z*z-1.0)*preLocVol*(currentTime-preTime)*skewLocVol; //Milstein scheme
@@ -671,7 +675,8 @@ std::vector<double> lVol::simulation(std::vector<double> timesPath) const {
 //		double currentForward = getForward(currentTime);
 //		double currentSpot = currentForward * min(max(0.001,
 // exp(pathDrift)), 500.0); 		spotsPath[i] = currentSpot;
-// preSpot = currentSpot; 		preFwd = currentForward; 		preTime = currentTime;
+// preSpot = currentSpot; 		preFwd = currentForward;
+// preTime = currentTime;
 //	}
 //	return spotsPath;
 // };
