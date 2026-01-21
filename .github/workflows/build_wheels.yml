@@ -15,8 +15,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        # macos-13 is x86_64, macos-14 is arm64 (M1/M2)
-        os: [macos-13, macos-14, ubuntu-latest]
+        # macos-13 is x86_64 (deprecated), macos-14 is arm64 (M1/M2)
+        # using macos-15-intel for x86_64 support
+        os: [macos-15-intel, macos-14, ubuntu-latest]
 
     steps:
       - uses: actions/checkout@v4
@@ -52,11 +53,18 @@ jobs:
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
           CIBW_BEFORE_ALL_LINUX: >
             yum install -y epel-release &&
-            yum install -y boost-devel eigen3-devel wget tar gzip gcc-c++ make &&
+            (yum install -y boost-devel eigen3-devel wget tar gzip gcc-c++ make || ( \
+              wget https://boostorg.jfrog.io/artifactory/main/release/1.83.0/source/boost_1_83_0.tar.gz && \
+              tar xzf boost_1_83_0.tar.gz && \
+              cd boost_1_83_0 && \
+              ./bootstrap.sh && \
+              ./b2 install --prefix=/usr/local \
+            )) &&
+            yum install -y eigen3-devel wget tar gzip gcc-c++ make &&
             wget https://github.com/lballabio/QuantLib/releases/download/v1.41/QuantLib-1.41.tar.gz &&
             tar xzf QuantLib-1.41.tar.gz &&
             cd QuantLib-1.41 &&
-            ./configure --disable-shared --prefix=/usr/local --with-boost-include=/usr/include --with-boost-lib=/usr/lib64 &&
+            ./configure --disable-shared --prefix=/usr/local &&
             make -j4 &&
             make install
           CMAKE_ARGS: ${{ env.CMAKE_ARGS }}
