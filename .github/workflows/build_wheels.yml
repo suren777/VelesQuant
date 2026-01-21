@@ -17,7 +17,7 @@ jobs:
       matrix:
         # macos-13 is x86_64 (deprecated), macos-14 is arm64 (M1/M2)
         # using macos-15-intel for x86_64 support
-        os: [macos-15-intel, macos-14] #, ubuntu-latest]
+        os: [macos-15-intel, macos-14, ubuntu-latest]
 
     steps:
       - uses: actions/checkout@v4
