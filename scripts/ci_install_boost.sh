@@ -6,8 +6,7 @@ BOOST_VERSION="1.83.0"
 BOOST_VERSION_UNDERSCORE="1_83_0"
 BOOST_FILENAME="boost_${BOOST_VERSION_UNDERSCORE}.tar.gz"
 BOOST_URL="https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION}/source/${BOOST_FILENAME}"
-# Fallback URL if needed
-# BOOST_URL_BACKUP="https://archives.boost.io/release/${BOOST_VERSION}/source/${BOOST_FILENAME}"
+BOOST_URL_BACKUP="https://archives.boost.io/release/${BOOST_VERSION}/source/${BOOST_FILENAME}"
 
 CACHE_DIR="/host/boost-cache"
 
@@ -27,8 +26,17 @@ attempts=0
 success=0
 
 while [ $attempts -lt $MAX_ATTEMPTS ]; do
-    echo "Downloading Boost from ${BOOST_URL} (Attempt $((attempts + 1))/${MAX_ATTEMPTS})..."
+    echo "Downloading Boost (Attempt $((attempts + 1))/${MAX_ATTEMPTS})..."
+    
+    # Try primary URL
     wget -q -O "${BOOST_FILENAME}" "${BOOST_URL}"
+
+    # Check if primary is valid
+    if ! gzip -t "${BOOST_FILENAME}" 2>/dev/null; then
+        echo "Primary URL download invalid or failed. Trying backup..."
+        rm -f "${BOOST_FILENAME}"
+        wget -q -O "${BOOST_FILENAME}" "${BOOST_URL_BACKUP}"
+    fi
     
     # Verify the download is a valid gzip file
     if gzip -t "${BOOST_FILENAME}" 2>/dev/null; then
