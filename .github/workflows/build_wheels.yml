@@ -14,7 +14,7 @@ jobs:
     strategy:
       matrix:
         # macos-13 is x86_64, macos-14 is arm64 (M1/M2)
-        os: [macos-13, macos-14]
+        os: [macos-13, macos-14, ubuntu-latest]
 
     steps:
       - uses: actions/checkout@v4
@@ -39,15 +39,25 @@ jobs:
           # Provide CMake args so FindOpenMP can pick up the flags on macOS
           echo "CMAKE_ARGS=-DOpenMP_C_FLAGS='-Xpreprocessor -fopenmp -I$LIBOMP_DIR/include' -DOpenMP_CXX_FLAGS='-Xpreprocessor -fopenmp -I$LIBOMP_DIR/include' -DOpenMP_C_LIB_NAMES='omp' -DOpenMP_CXX_LIB_NAMES='omp'" >> $GITHUB_ENV
 
-
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.16.5
         env:
           CIBW_BUILD: cp310-* cp311-* cp312-*
           # Skip PyPy for now as it can be tricky with C++ extensions
           CIBW_SKIP: "pp*"
-          CIBW_ARCHS_MACOS: "x86_64 arm64"
+          CIBW_ARCHS_MACOS: "auto"
+          # Use manylinux_2_28 for C++20 support (modern GCC)
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
+          CIBW_BEFORE_ALL_LINUX: >
+            yum install -y boost-devel eigen3-devel wget tar gzip gcc-c++ make &&
+            wget https://github.com/lballabio/QuantLib/releases/download/QuantLib-v1.32/QuantLib-1.32.tar.gz &&
+            tar xzf QuantLib-1.32.tar.gz &&
+            cd QuantLib-1.32 &&
+            ./configure --disable-shared --prefix=/usr/local --with-boost-include=/usr/include --with-boost-lib=/usr/lib64 &&
+            make -j4 &&
+            make install
           CMAKE_ARGS: ${{ env.CMAKE_ARGS }}
+
 
       - uses: actions/upload-artifact@v4
         with:
