@@ -42,9 +42,29 @@ jobs:
           # Provide CMake args so FindOpenMP can pick up the flags on macOS
           echo "CMAKE_ARGS=-DOpenMP_C_FLAGS='-Xpreprocessor -fopenmp -I$LIBOMP_DIR/include' -DOpenMP_CXX_FLAGS='-Xpreprocessor -fopenmp -I$LIBOMP_DIR/include' -DOpenMP_C_LIB_NAMES='omp' -DOpenMP_CXX_LIB_NAMES='omp'" >> $GITHUB_ENV
 
+      - name: Create Cache Directory
+        run: |
+          mkdir -p ci_cache/quantlib
+          mkdir -p ci_cache/boost
+
+      - name: Cache QuantLib
+        id: cache-quantlib
+        uses: actions/cache@v4
+        with:
+          path: ci_cache/quantlib
+          key: quantlib-v1.41-manylinux2014-${{ hashFiles('.github/workflows/build_wheels.yml') }}
+
+      - name: Cache Boost
+        id: cache-boost
+        uses: actions/cache@v4
+        with:
+          path: ci_cache/boost
+          key: boost-1.83.0-manylinux2014-${{ hashFiles('.github/workflows/build_wheels.yml') }}
+
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.16.5
         env:
+          CIBW_CONTAINER_OPTIONS: "-v ${{ github.workspace }}/ci_cache/quantlib:/host/quantlib-cache -v ${{ github.workspace }}/ci_cache/boost:/host/boost-cache"
           CIBW_BUILD: cp310-* cp311-* cp312-*
           # Skip PyPy for now as it can be tricky with C++ extensions
           CIBW_SKIP: "pp*"
@@ -53,20 +73,42 @@ jobs:
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
           CIBW_BEFORE_ALL_LINUX: >
             yum install -y epel-release &&
-            (yum install -y boost-devel eigen3-devel wget tar gzip gcc-c++ make || ( \
-              wget https://boostorg.jfrog.io/artifactory/main/release/1.83.0/source/boost_1_83_0.tar.gz && \
-              tar xzf boost_1_83_0.tar.gz && \
-              cd boost_1_83_0 && \
-              ./bootstrap.sh && \
-              ./b2 install --prefix=/usr/local \
-            )) &&
-            yum install -y eigen3-devel wget tar gzip gcc-c++ make &&
-            wget https://github.com/lballabio/QuantLib/releases/download/v1.41/QuantLib-1.41.tar.gz &&
-            tar xzf QuantLib-1.41.tar.gz &&
-            cd QuantLib-1.41 &&
-            ./configure --disable-shared --prefix=/usr/local &&
-            make -j4 &&
-            make install
+            yum install -y wget tar gzip gcc-c++ make &&
+            if [ -f "/host/boost-cache/include/boost/version.hpp" ]; then
+                echo "Restoring Boost from cache..." &&
+                cp -r /host/boost-cache/* /usr/local/
+            else
+                echo "Boost cache not found. Trying yum..." &&
+                if yum install -y boost-devel; then
+                    echo "Boost installed via yum."
+                else
+                    echo "Yum failed. Building Boost from source..." &&
+                    wget https://boostorg.jfrog.io/artifactory/main/release/1.83.0/source/boost_1_83_0.tar.gz &&
+                    tar xzf boost_1_83_0.tar.gz &&
+                    cd boost_1_83_0 &&
+                    ./bootstrap.sh &&
+                    ./b2 install --prefix=/usr/local &&
+                    echo "Saving Boost to cache..." &&
+                    mkdir -p /host/boost-cache/include /host/boost-cache/lib &&
+                    cp -r /usr/local/include/boost /host/boost-cache/include/ &&
+                    cp -r /usr/local/lib/libboost* /host/boost-cache/lib/ &&
+                    cd ..
+                fi
+            fi &&
+            yum install -y eigen3-devel &&
+            if [ -f "/host/quantlib-cache/lib/libQuantLib.a" ]; then
+                echo "Restoring QuantLib from cache..." &&
+                cp -r /host/quantlib-cache/* /usr/local/
+            else
+                wget https://github.com/lballabio/QuantLib/releases/download/v1.41/QuantLib-1.41.tar.gz &&
+                tar xzf QuantLib-1.41.tar.gz &&
+                cd QuantLib-1.41 &&
+                ./configure --disable-shared --prefix=/usr/local &&
+                make -j4 &&
+                make install &&
+                echo "Saving QuantLib to cache..." &&
+                cp -r /usr/local/lib /usr/local/include /host/quantlib-cache/
+            fi
           CMAKE_ARGS: ${{ env.CMAKE_ARGS }}
 
 
