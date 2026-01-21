@@ -52,20 +52,20 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ci_cache/quantlib
-          key: quantlib-v1.41-manylinux2014-${{ hashFiles('.github/workflows/build_wheels.yml') }}
+          key: quantlib-v1.41-manylinux2014-v1-${{ hashFiles('.github/workflows/build_wheels.yml') }}
 
       - name: Cache Boost
         id: cache-boost
         uses: actions/cache@v4
         with:
           path: ci_cache/boost
-          key: boost-1.83.0-manylinux2014-${{ hashFiles('.github/workflows/build_wheels.yml') }}
+          key: boost-1.83.0-manylinux2014-v1-${{ hashFiles('.github/workflows/build_wheels.yml') }}
 
       - name: Cache ccache
         uses: actions/cache@v4
         with:
           path: ci_cache/ccache
-          key: ccache-${{ runner.os }}-${{ hashFiles('.github/workflows/build_wheels.yml') }}
+          key: ccache-${{ runner.os }}-v1-${{ hashFiles('.github/workflows/build_wheels.yml') }}
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.16.5
