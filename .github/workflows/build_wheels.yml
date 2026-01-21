@@ -81,22 +81,7 @@ jobs:
             yum install -y epel-release &&
             yum install -y ccache &&
             yum install -y wget tar gzip gcc-c++ make &&
-            if [ -f "/host/boost-cache/include/boost/version.hpp" ]; then
-                echo "Restoring Boost from cache..." &&
-                cp -r /host/boost-cache/* /usr/local/
-            else
-                echo "Boost cache not found. Building Boost from source..." &&
-                wget -q https://boostorg.jfrog.io/artifactory/main/release/1.83.0/source/boost_1_83_0.tar.gz || exit 1 &&
-                tar xzf boost_1_83_0.tar.gz || { echo "Failed to extract Boost archive"; exit 1; } &&
-                cd boost_1_83_0 &&
-                ./bootstrap.sh &&
-                ./b2 install --prefix=/usr/local &&
-                echo "Saving Boost to cache..." &&
-                mkdir -p /host/boost-cache/include /host/boost-cache/lib &&
-                cp -r /usr/local/include/boost /host/boost-cache/include/ &&
-                cp -r /usr/local/lib/libboost* /host/boost-cache/lib/ &&
-                cd ..
-            fi &&
+            sh /project/scripts/ci_install_boost.sh &&
             yum install -y eigen3-devel &&
             if [ -f "/host/quantlib-cache/lib/libQuantLib.a" ]; then
                 echo "Restoring QuantLib from cache..." &&
