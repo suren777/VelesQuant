@@ -39,8 +39,8 @@ class HWPDEModel(Model):
         """
         Initialize HWPDE model.
         Supports two constructor variants:
-        1. (kappa, timeSigmas, sigmas, discount_factor_times, discount_factors)
-        2. (initial_rate, kappa, timeSigmas, sigmas, timeThetas, thetas)
+        1. (kappa, time_sigmas, sigmas, discount_factor_times, discount_factors)
+        2. (initial_rate, kappa, time_sigmas, sigmas, time_thetas, thetas)
 
         Optional `discount_curve` can be passed as a list of (time, discount_factor) tuples
         instead of separate lists.

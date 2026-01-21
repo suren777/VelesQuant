@@ -6,6 +6,7 @@ import numpy as np
 # We import the C++ native module.
 # Depending on installation, it might be velesquant.native
 from velesquant import native
+from velesquant.native import implied_vol
 
 from ..instruments.bonds import Bond, CouponBond, ZeroCouponBond
 from ..instruments.portfolio import Portfolio
@@ -13,49 +14,6 @@ from ..instruments.rates import Swaption
 from ..market.container import Market
 from ..market.curves import DiscountCurve
 from .base import Model
-
-
-def _norm_cdf(x):
-    """Cumulative distribution function for the standard normal distribution"""
-    return (1.0 + math.erf(x / math.sqrt(2.0))) / 2.0
-
-
-def _norm_pdf(x):
-    """Probability density function for the standard normal distribution"""
-    return math.exp(-0.5 * x * x) / math.sqrt(2.0 * math.pi)
-
-
-def _black_formula(cp, f, k, t, vol):
-    """Black's formula for option pricing"""
-    if t <= 0:
-        return max(0.0, cp * (f - k))
-
-    d1 = (math.log(f / k) + 0.5 * vol * vol * t) / (vol * math.sqrt(t))
-    d2 = d1 - vol * math.sqrt(t)
-
-    return cp * (f * _norm_cdf(cp * d1) - k * _norm_cdf(cp * d2))
-
-
-def _implied_vol(price, f, k, t, cp=1):
-    """
-    Implied volatility using simple bisection.
-    cp: 1 for Call, -1 for Put (not used for straddles, assumes payer/receiver ~ call/put)
-    """
-    low = 1e-4
-    high = 5.0
-
-    for _ in range(50):
-        mid = (low + high) / 2.0
-        p = _black_formula(cp, f, k, t, mid)
-        if p > price:
-            high = mid
-        else:
-            low = mid
-
-        if abs(high - low) < 1e-6:
-            break
-
-    return (low + high) / 2.0
 
 
 class HullWhiteModel(Model):
@@ -68,6 +26,7 @@ class HullWhiteModel(Model):
         self.kappa = kappa
         self.sigma = sigma
         self._cpp_model = None
+        self._cached_native_objects = None
 
     def calibrate(self, instruments: list[Any], market_data: Any) -> "HullWhiteModel":
         # TODO: Implement calibration logic
@@ -81,7 +40,22 @@ class HullWhiteModel(Model):
         return cls(kappa=data["kappa"], sigma=data["sigma"])
 
     def _create_native_objects(self, curve: DiscountCurve):
-        """Helper to create native Model and Engine"""
+        """Helper to create native Model"""
+        # Check cache validity
+        if self._cached_native_objects:
+            model, engine, cached_curve_id, cached_kappa, cached_sigma = (
+                self._cached_native_objects
+            )
+            # We use id(curve) as a simple check, assuming curve doesn't mutate in place without id change
+            # or simply check logic.
+            # Ideally we check parameters.
+            if (
+                id(curve) == cached_curve_id
+                and self.kappa == cached_kappa
+                and self.sigma == cached_sigma
+            ):
+                return model, engine
+
         max_time = curve.times[-1] + 10.0  # Ensure coverage
         time_sigmas = [0.0, max_time]
         sigmas = [self.sigma, self.sigma]
@@ -91,7 +65,17 @@ class HullWhiteModel(Model):
             self.kappa, time_sigmas, sigmas, curve.times, curve.dfs
         )
         # Analytic Engine
-        engine = native.HullWhiteAnalyticEngine(model)
+        # pylint: disable=no-member
+        engine = native.HullWhiteAnalyticEngine(model)  # type: ignore
+
+        # Update cache
+        self._cached_native_objects = (
+            model,
+            engine,
+            id(curve),
+            self.kappa,
+            self.sigma,
+        )
         return model, engine
 
     def simulate(self, times: List[float], curve: DiscountCurve) -> List[float]:
@@ -137,7 +121,8 @@ class HullWhiteModel(Model):
         start_time = expiry
         end_time = expiry + tenor
 
-        p_start = model.get_discount_factor(start_time)
+        # pylint: disable=no-member
+        p_start = model.get_discount_factor(start_time)  # type: ignore
         p_end = model.get_discount_factor(end_time)
 
         # Annuity
@@ -174,7 +159,8 @@ class HullWhiteModel(Model):
         annuity = 0.0
         for i in range(1, n_periods + 1):
             t = start_time + i * pay_frequency
-            annuity += pay_frequency * model.get_discount_factor(t)
+            # pylint: disable=no-member
+            annuity += pay_frequency * model.get_discount_factor(t)  # type: ignore
 
         if annuity < 1e-12:
             return 0.0
@@ -182,7 +168,10 @@ class HullWhiteModel(Model):
         normalized_price = price / annuity
 
         # Assuming ATM Strike = Forward Swap Rate
-        return _implied_vol(normalized_price, swap_rate, swap_rate, expiry, cp=1)
+        try:
+            return implied_vol(expiry, swap_rate, swap_rate, normalized_price)
+        except Exception:
+            return 0.0
 
     def price(
         self,
@@ -273,21 +262,22 @@ class HullWhiteModel(Model):
         model, _ = self._create_native_objects(curve)
 
         if isinstance(instrument, ZeroCouponBond):
-            return model.get_discount_factor(maturity)
+            # pylint: disable=no-member
+            return model.get_discount_factor(maturity)  # type: ignore
         # CouponBond vectorization not fully supported in this simple scalar helper yet
         return 0.0
 
     def _price_bond(self, instrument: Bond, curve: DiscountCurve) -> float:
-        model, _ = self._create_native_objects(curve)
+        model = self._create_native_objects(curve)
 
         if isinstance(instrument, ZeroCouponBond):
-            return model.get_discount_factor(instrument.maturity)
+            return model.zero_coupon(instrument.maturity)
 
         elif isinstance(instrument, CouponBond):
             value = 0.0
             t = instrument.pay_frequency
             while t <= instrument.maturity + 1e-9:
-                df = model.get_discount_factor(t)
+                df = model.zero_coupon(t)
                 coupon = (
                     instrument.face_value
                     * instrument.coupon_rate
@@ -295,9 +285,7 @@ class HullWhiteModel(Model):
                 )
                 value += coupon * df
                 t += instrument.pay_frequency
-            value += instrument.face_value * model.get_discount_factor(
-                instrument.maturity
-            )
+            value += instrument.face_value * model.zero_coupon(instrument.maturity)
             return value
         else:
             raise TypeError(f"Unsupported bond type: {type(instrument)}")
