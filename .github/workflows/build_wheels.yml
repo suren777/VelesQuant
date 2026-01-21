@@ -24,6 +24,22 @@ jobs:
         run: |
           brew install boost quantlib eigen
 
+      - name: Install OpenMP on macOS
+        if: runner.os == 'macOS'
+        run: |
+          brew update
+          brew install libomp
+          LIBOMP_DIR=$(brew --prefix libomp)
+          echo "LIBOMP_DIR=$LIBOMP_DIR" >> $GITHUB_ENV
+          # Make compiler and CMake find the headers and libs
+          echo "CPPFLAGS=-I$LIBOMP_DIR/include" >> $GITHUB_ENV
+          echo "CFLAGS=-I$LIBOMP_DIR/include" >> $GITHUB_ENV
+          echo "CXXFLAGS=-I$LIBOMP_DIR/include" >> $GITHUB_ENV
+          echo "LDFLAGS=-L$LIBOMP_DIR/lib" >> $GITHUB_ENV
+          # Provide CMake args so FindOpenMP can pick up the flags on macOS
+          echo "CMAKE_ARGS=-DOpenMP_C_FLAGS='-Xpreprocessor -fopenmp -I$LIBOMP_DIR/include' -DOpenMP_CXX_FLAGS='-Xpreprocessor -fopenmp -I$LIBOMP_DIR/include' -DOpenMP_C_LIB_NAMES='omp' -DOpenMP_CXX_LIB_NAMES='omp'" >> $GITHUB_ENV
+
+
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.16.5
         env:
@@ -31,6 +47,7 @@ jobs:
           # Skip PyPy for now as it can be tricky with C++ extensions
           CIBW_SKIP: "pp*"
           CIBW_ARCHS_MACOS: "x86_64 arm64"
+          CMAKE_ARGS: ${{ env.CMAKE_ARGS }}
 
       - uses: actions/upload-artifact@v4
         with:
