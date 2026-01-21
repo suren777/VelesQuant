@@ -5,6 +5,8 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  release:
+    types: [published]
   workflow_dispatch:
 
 jobs:
@@ -50,9 +52,9 @@ jobs:
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
           CIBW_BEFORE_ALL_LINUX: >
             yum install -y boost-devel eigen3-devel wget tar gzip gcc-c++ make &&
-            wget https://github.com/lballabio/QuantLib/releases/download/QuantLib-v1.32/QuantLib-1.32.tar.gz &&
-            tar xzf QuantLib-1.32.tar.gz &&
-            cd QuantLib-1.32 &&
+            wget https://github.com/lballabio/QuantLib/releases/download/v1.41/QuantLib-1.41.tar.gz &&
+            tar xzf QuantLib-1.41.tar.gz &&
+            cd QuantLib-1.41 &&
             ./configure --disable-shared --prefix=/usr/local --with-boost-include=/usr/include --with-boost-lib=/usr/lib64 &&
             make -j4 &&
             make install
@@ -63,3 +65,35 @@ jobs:
         with:
           name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
           path: ./wheelhouse/*.whl
+
+  make_sdist:
+    name: Make SDist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build SDist
+        run: pipx run build --sdist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cibw-sdist
+          path: dist/*.tar.gz
+
+  publish_to_pypi:
+    needs: [build_wheels, make_sdist]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/VelesQuant
+    permissions:
+      id-token: write
+    if: github.event_name == 'release' && github.event.action == 'published'
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: cibw-*
+          path: dist
+          merge-multiple: true
+
+      - uses: pypa/gh-action-pypi-publish@release/v1

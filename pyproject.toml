@@ -3,7 +3,7 @@ requires = ["scikit-build-core", "pybind11"]
 build-backend = "scikit_build_core.build"
 
 [project]
-name = "velesquant"
+name = "VelesQuant"
 version = "0.1.0"
 description = "A high-performance financial valuation library"
 readme = "README.md"

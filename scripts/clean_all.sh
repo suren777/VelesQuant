@@ -10,6 +10,15 @@ rm -f CTestTestfile.cmake
 rm -rf Testing
 rm -rf _deps
 
+# Remove CMake in-source build artifacts (tests_cpp)
+rm -rf tests_cpp/CMakeFiles
+rm -rf tests_cpp/Testing
+rm -f tests_cpp/Makefile
+rm -f tests_cpp/cmake_install.cmake
+rm -f tests_cpp/CTestTestfile.cmake
+rm -f tests_cpp/*_include.cmake
+rm -f tests_cpp/cmake_test_discovery_*.json
+
 # Remove build directories
 rm -rf build
 rm -rf build_core
