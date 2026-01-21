@@ -17,7 +17,7 @@ jobs:
       matrix:
         # macos-13 is x86_64 (deprecated), macos-14 is arm64 (M1/M2)
         # using macos-15-intel for x86_64 support
-        os: [macos-15-intel, macos-14, ubuntu-latest]
+        os: [macos-15-intel] #, macos-14, ubuntu-latest]
 
     steps:
       - uses: actions/checkout@v4
@@ -52,20 +52,20 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ci_cache/quantlib
-          key: quantlib-v1.41-manylinux2014-v2-${{ hashFiles('.github/workflows/build_wheels.yml') }}
+          key: quantlib-v1.41-manylinux2014-v3-${{ hashFiles('.github/workflows/build_wheels.yml') }}
 
       - name: Cache Boost
         id: cache-boost
         uses: actions/cache@v4
         with:
           path: ci_cache/boost
-          key: boost-1.83.0-manylinux2014-v2-${{ hashFiles('.github/workflows/build_wheels.yml') }}
+          key: boost-1.83.0-manylinux2014-v3-${{ hashFiles('.github/workflows/build_wheels.yml') }}
 
       - name: Cache ccache
         uses: actions/cache@v4
         with:
           path: ci_cache/ccache
-          key: ccache-${{ runner.os }}-v2-${{ hashFiles('.github/workflows/build_wheels.yml') }}
+          key: ccache-${{ runner.os }}-v3-${{ hashFiles('.github/workflows/build_wheels.yml') }}
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.16.5
@@ -86,8 +86,8 @@ jobs:
                 cp -r /host/boost-cache/* /usr/local/
             else
                 echo "Boost cache not found. Building Boost from source..." &&
-                wget https://boostorg.jfrog.io/artifactory/main/release/1.83.0/source/boost_1_83_0.tar.gz &&
-                tar xzf boost_1_83_0.tar.gz &&
+                wget -q https://boostorg.jfrog.io/artifactory/main/release/1.83.0/source/boost_1_83_0.tar.gz || exit 1 &&
+                tar xzf boost_1_83_0.tar.gz || { echo "Failed to extract Boost archive"; exit 1; } &&
                 cd boost_1_83_0 &&
                 ./bootstrap.sh &&
                 ./b2 install --prefix=/usr/local &&
@@ -102,8 +102,8 @@ jobs:
                 echo "Restoring QuantLib from cache..." &&
                 cp -r /host/quantlib-cache/* /usr/local/
             else
-                wget https://github.com/lballabio/QuantLib/releases/download/v1.41/QuantLib-1.41.tar.gz &&
-                tar xzf QuantLib-1.41.tar.gz &&
+                wget -q https://github.com/lballabio/QuantLib/releases/download/v1.41/QuantLib-1.41.tar.gz || exit 1 &&
+                tar xzf QuantLib-1.41.tar.gz || { echo "Failed to extract QuantLib archive"; exit 1; } &&
                 cd QuantLib-1.41 &&
                 ./configure --disable-shared --prefix=/usr/local &&
                 make -j4 &&
