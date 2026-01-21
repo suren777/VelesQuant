@@ -101,6 +101,7 @@ jobs:
                 make -j4 &&
                 make install &&
                 echo "Saving QuantLib to cache..." &&
+                mkdir -p /host/quantlib-cache &&
                 cp -r /usr/local/lib /usr/local/include /host/quantlib-cache/
             fi
           CMAKE_ARGS: ${{ env.CMAKE_ARGS }} -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
