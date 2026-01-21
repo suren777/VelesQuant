@@ -61,10 +61,16 @@ jobs:
           path: ci_cache/boost
           key: boost-1.83.0-manylinux2014-${{ hashFiles('.github/workflows/build_wheels.yml') }}
 
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ci_cache/ccache
+          key: ccache-${{ runner.os }}-${{ hashFiles('.github/workflows/build_wheels.yml') }}
+
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.16.5
         env:
-          CIBW_CONTAINER_OPTIONS: "-v ${{ github.workspace }}/ci_cache/quantlib:/host/quantlib-cache -v ${{ github.workspace }}/ci_cache/boost:/host/boost-cache"
+          CIBW_CONTAINER_OPTIONS: "-v ${{ github.workspace }}/ci_cache/quantlib:/host/quantlib-cache -v ${{ github.workspace }}/ci_cache/boost:/host/boost-cache -v ${{ github.workspace }}/ci_cache/ccache:/host/ccache -e CCACHE_DIR=/host/ccache"
           CIBW_BUILD: cp310-* cp311-* cp312-*
           # Skip PyPy for now as it can be tricky with C++ extensions
           CIBW_SKIP: "pp*"
@@ -73,27 +79,22 @@ jobs:
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
           CIBW_BEFORE_ALL_LINUX: >
             yum install -y epel-release &&
-            yum install -y wget tar gzip gcc-c++ make &&
+            yum install -y ccache wget tar gzip gcc-c++ make &&
             if [ -f "/host/boost-cache/include/boost/version.hpp" ]; then
                 echo "Restoring Boost from cache..." &&
                 cp -r /host/boost-cache/* /usr/local/
             else
-                echo "Boost cache not found. Trying yum..." &&
-                if yum install -y boost-devel; then
-                    echo "Boost installed via yum."
-                else
-                    echo "Yum failed. Building Boost from source..." &&
-                    wget https://boostorg.jfrog.io/artifactory/main/release/1.83.0/source/boost_1_83_0.tar.gz &&
-                    tar xzf boost_1_83_0.tar.gz &&
-                    cd boost_1_83_0 &&
-                    ./bootstrap.sh &&
-                    ./b2 install --prefix=/usr/local &&
-                    echo "Saving Boost to cache..." &&
-                    mkdir -p /host/boost-cache/include /host/boost-cache/lib &&
-                    cp -r /usr/local/include/boost /host/boost-cache/include/ &&
-                    cp -r /usr/local/lib/libboost* /host/boost-cache/lib/ &&
-                    cd ..
-                fi
+                echo "Boost cache not found. Building Boost from source..." &&
+                wget https://boostorg.jfrog.io/artifactory/main/release/1.83.0/source/boost_1_83_0.tar.gz &&
+                tar xzf boost_1_83_0.tar.gz &&
+                cd boost_1_83_0 &&
+                ./bootstrap.sh &&
+                ./b2 install --prefix=/usr/local &&
+                echo "Saving Boost to cache..." &&
+                mkdir -p /host/boost-cache/include /host/boost-cache/lib &&
+                cp -r /usr/local/include/boost /host/boost-cache/include/ &&
+                cp -r /usr/local/lib/libboost* /host/boost-cache/lib/ &&
+                cd ..
             fi &&
             yum install -y eigen3-devel &&
             if [ -f "/host/quantlib-cache/lib/libQuantLib.a" ]; then
@@ -109,7 +110,7 @@ jobs:
                 echo "Saving QuantLib to cache..." &&
                 cp -r /usr/local/lib /usr/local/include /host/quantlib-cache/
             fi
-          CMAKE_ARGS: ${{ env.CMAKE_ARGS }}
+          CMAKE_ARGS: ${{ env.CMAKE_ARGS }} -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
 
       - uses: actions/upload-artifact@v4
