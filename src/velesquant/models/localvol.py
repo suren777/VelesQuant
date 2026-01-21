@@ -1,4 +1,5 @@
-from typing import List
+from typing import List, Optional, Union
+import numpy as np
 
 from velesquant import native
 
@@ -12,24 +13,80 @@ class LocalVolModel(Model):
     Local Volatility Model Wrapper.
 
     Constructs a local volatility surface from a list of SABR models
-    (one per maturity slice).
+    (one per maturity slice) OR from direct vectors of SABR parameters.
     """
 
-    def __init__(self, sabr_models: List[SabrModel], spot: float = 100.0):
+    def __init__(
+        self,
+        sabr_models: Optional[List[SabrModel]] = None,
+        spot: float = 100.0,
+        maturities: Optional[Union[List[float], np.ndarray]] = None,
+        forwards: Optional[Union[List[float], np.ndarray]] = None,
+        betas: Optional[Union[List[float], np.ndarray]] = None,
+        alphas: Optional[Union[List[float], np.ndarray]] = None,
+        nus: Optional[Union[List[float], np.ndarray]] = None,
+        rhos: Optional[Union[List[float], np.ndarray]] = None,
+    ):
         """
-        Initialize LocalVolModel from SABR model slices.
+        Initialize LocalVolModel.
 
         Args:
             sabr_models: List of SabrModel instances (one per maturity).
             spot: Initial spot price.
+            maturities: List of maturities (if sabr_models not provided).
+            forwards: List of forwards.
+            betas: List of betas.
+            alphas: List of alphas.
+            nus: List of nus.
+            rhos: List of rhos.
         """
         self._spot = spot
         self._sabr_models = sabr_models
 
-        # Extract native SABR objects for C++ construction
-        native_sabrs = [s._cpp_model for s in sabr_models]
-        self._cpp_model = native.LocalVol(native_sabrs)
-        self._cpp_model.spot = spot
+        if sabr_models is not None:
+            # Extract native SABR objects for C++ construction
+            native_sabrs = [s._cpp_model for s in sabr_models]
+            self._cpp_model = native.LocalVol(native_sabrs)
+            self._cpp_model.spot = spot
+        elif maturities is not None:
+            # Vector based construction
+            self.maturities = self._to_flat_list(maturities)
+            self.forwards = self._to_flat_list(forwards) if forwards is not None else []
+            self.betas = self._to_flat_list(betas) if betas is not None else []
+            self.alphas = self._to_flat_list(alphas) if alphas is not None else []
+            self.nus = self._to_flat_list(nus) if nus is not None else []
+            self.rhos = self._to_flat_list(rhos) if rhos is not None else []
+
+            # Basic validation of lengths?
+            # Pybind11 will throw if vector sizes mismatch in lVol constructor potentially?
+            # Or lVol constructor assumes them.
+
+            self._cpp_model = native.LocalVol(
+                self.maturities,
+                self.forwards,
+                self.betas,
+                self.alphas,
+                self.nus,
+                self.rhos,
+                self._spot,
+            )
+        else:
+            # Default empty constructor?
+            self._cpp_model = native.LocalVol()
+            self._cpp_model.spot = spot
+
+    @staticmethod
+    def _to_flat_list(
+        data: Union[List[float], np.ndarray, List[List[float]]],
+    ) -> List[float]:
+        if isinstance(data, np.ndarray):
+            return data.flatten().tolist()
+        if isinstance(data, list):
+            # Check if it's a list of lists (matrix)
+            if data and isinstance(data[0], list):
+                return [item for sublist in data for item in sublist]
+            return data
+        return list(data)
 
     @property
     def spot(self) -> float:
@@ -49,45 +106,75 @@ class LocalVolModel(Model):
         raise NotImplementedError("LocalVol calibration not yet implemented")
 
     def call_pde(self, maturity: float, strike: float, num_steps: int = 50) -> float:
-        """
-        Price a European call option using PDE method.
-
-        Args:
-            maturity: Time to expiry in years.
-            strike: Strike price.
-            num_steps: Number of time steps for PDE solver.
-
-        Returns:
-            Call option price.
-        """
-        return self._cpp_model.callPDE(maturity, strike, num_steps)
+        """Helper for call option price."""
+        return self._cpp_model.call_pde(maturity, strike, num_steps)
 
     def put_pde(self, maturity: float, strike: float, num_steps: int = 50) -> float:
-        """
-        Price a European put option using PDE method.
+        """Helper for put option price."""
+        return self._cpp_model.put_pde(maturity, strike, num_steps)
 
-        Args:
-            maturity: Time to expiry in years.
-            strike: Strike price.
-            num_steps: Number of time steps for PDE solver.
-
-        Returns:
-            Put option price.
+    def price_european(
+        self,
+        maturity: float,
+        strike: float,
+        option_type: str = "Call",
+        n_steps: int = 100,
+    ) -> float:
         """
-        return self._cpp_model.putPDE(maturity, strike, num_steps)
+        Price a European option using PDE.
+        Matches facade wrapper style.
+        """
+        if option_type.lower() == "call":
+            return self._cpp_model.call_pde(maturity, strike, n_steps)
+        elif option_type.lower() == "put":
+            return self._cpp_model.put_pde(maturity, strike, n_steps)
+        else:
+            raise ValueError(f"Unknown option type: {option_type}")
+
+    def price_barrier(
+        self,
+        maturity: float,
+        upper_barrier: float,
+        lower_barrier: float,
+        n_steps: int = 100,
+    ) -> float:
+        """
+        Price a Double-No-Touch (DNT) option using PDE.
+        """
+        return self._cpp_model.dnt_pde(maturity, upper_barrier, lower_barrier, n_steps)
 
     def density(self, maturity: float, num_steps: int = 50) -> List[float]:
-        """
-        Compute risk-neutral density at maturity.
-
-        Args:
-            maturity: Time to maturity.
-            num_steps: Number of steps for density computation.
-
-        Returns:
-            List of density values.
-        """
+        """Compute risk-neutral density."""
         return self._cpp_model.density(maturity, num_steps)
+
+    def get_density(self, maturity: float, n_points: int = 100) -> List[float]:
+        """Alias for density to match facade wrapper."""
+        return self.density(maturity, n_points)
+
+    def export_local_vol_surface(
+        self, times: Union[List[float], np.ndarray]
+    ) -> List[List[float]]:
+        """
+        Export the local volatility surface for the given time points.
+        Returns a matrix (list of lists) of local volatilities.
+        """
+        flat_times = self._to_flat_list(times)
+        return self._cpp_model.export_lv(flat_times)
+
+    def simulate(
+        self,
+        times: Union[List[float], np.ndarray],
+        rands: Optional[Union[List[float], np.ndarray]] = None,
+    ) -> List[float]:
+        """
+        Simulate a path using the local volatility model.
+        """
+        flat_times = self._to_flat_list(times)
+        if rands is not None:
+            flat_rands = self._to_flat_list(rands)
+            return self._cpp_model.simulate(flat_times, flat_rands)
+        else:
+            return self._cpp_model.simulate_paths(flat_times)
 
     def to_dict(self) -> dict:
         """Serialize model state."""
@@ -95,6 +182,7 @@ class LocalVolModel(Model):
             "type": "LocalVolModel",
             "spot": self._spot,
             "sabr_models": [
-                s.to_dict() if hasattr(s, "to_dict") else {} for s in self._sabr_models
+                s.to_dict() if hasattr(s, "to_dict") else {}
+                for s in (self._sabr_models or [])
             ],
         }

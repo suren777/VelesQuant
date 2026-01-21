@@ -6,7 +6,6 @@
 namespace velesquant {
 
 #ifdef _MSC_VER
-#pragma warning(disable : 4244)
 #endif
 
 typedef std::vector<double> Vdoub;

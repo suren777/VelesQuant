@@ -32,7 +32,6 @@ struct defSwap {
   double Value;
 };
 
-#pragma warning(disable : 4996)
 boost::mt19937 erng;
 boost::normal_distribution<> ndist(0.0, 1.0);
 double random_normal() { return ndist(erng); }

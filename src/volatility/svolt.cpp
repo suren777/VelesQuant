@@ -3,12 +3,12 @@
 #include <cmath>
 #include <complex>
 #include <ql/quantlib.hpp>
+#include <velesquant/models/utility.h>
 #include <velesquant/volatility/lm.h>
 #include <velesquant/volatility/svolt.h>
-#include <velesquant/models/utility.h>
 
-using namespace std;
-using namespace QuantLib;
+// using namespace std;
+// using namespace QuantLib;
 
 namespace velesquant {
 
@@ -17,9 +17,10 @@ typedef std::complex<double> Cdoub;
 
 const double PI = 3.14159265358979323846264338327950288;
 const double DT = 0.0001;
-const double SDT = sqrt(DT);
+const double SDT = std::sqrt(DT);
 
-double sVolT::interpolateF(vector<double> T, vector<double> F, double t) const {
+double sVolT::interpolateF(std::vector<double> T, std::vector<double> F,
+                           double t) const {
   if (t < T.front())
     return spot_ + (F.front() - spot_) / T.front() * t;
 
@@ -122,28 +123,29 @@ double sVolT::hestonIntegrandTd(Cdoub k, double maturity, double forward,
 
     fl = (t_[j] >= maturity) ? 1 : 0;
     b = kappa_ - rho_ * xi * (k * i + I);
-    d = sqrt(b * b + 2.0 * a * xi2); // change
-    r1 = (b + d) / (xi * xi);        //
-    r2 = (b - d) / (xi * xi);        //
+    d = std::sqrt(b * b + 2.0 * a * xi2); // change
+    r1 = (b + d) / (xi * xi);             //
+    r2 = (b - d) / (xi * xi);             //
     g = r2 / r1;
     gn = (b - d - F2 * xi2) / (b + d - F2 * xi2);
-    Y = exp(-d * dT);
+    Y = std::exp(-d * dT);
     F1 += kappa_ * theta / xi2 *
-          ((b - d) * dT - 2.0 * log((1.0 - gn * Y) / (1.0 - gn)));
+          ((b - d) * dT - 2.0 * std::log((1.0 - gn * Y) / (1.0 - gn)));
     F2 = r1 * (g - gn * Y) / (1.0 - gn * Y);
     if (fl == 1)
       break;
   }
 
-  Cdoub CF = exp(F1 + F2 * var0_);
-  Cdoub integrand = exp(i * k * log(forward / strike)) * CF / (k * i);
-  if (real(integrand) != real(integrand))
+  Cdoub CF = std::exp(F1 + F2 * var0_);
+  Cdoub integrand = std::exp(i * k * std::log(forward / strike)) * CF / (k * i);
+  if (std::real(integrand) != std::real(integrand))
     return 0.0;
   else
-    return real(integrand);
+    return std::real(integrand);
 }
 
-complex<double> sVolT::hestonCFTd(complex<double> k, double maturity) const {
+std::complex<double> sVolT::hestonCFTd(std::complex<double> k,
+                                       double maturity) const {
   Cdoub i(0.0, 1.0);
   Cdoub a, b;
   Cdoub d, r1, r2, g, Y, F1(0, 0), F2(0, 0), gn;
@@ -165,20 +167,20 @@ complex<double> sVolT::hestonCFTd(complex<double> k, double maturity) const {
 
     fl = (t_[j] >= maturity) ? 1 : 0;
     b = kappa_ - rho_ * xi * (k * i + I);
-    d = sqrt(b * b + 2.0 * a * xi2); // change
-    r1 = (b + d) / (xi * xi);        //
-    r2 = (b - d) / (xi * xi);        //
+    d = std::sqrt(b * b + 2.0 * a * xi2); // change
+    r1 = (b + d) / (xi * xi);             //
+    r2 = (b - d) / (xi * xi);             //
     g = r2 / r1;
     gn = (b - d - F2 * xi2) / (b + d - F2 * xi2);
-    Y = exp(-d * dT);
+    Y = std::exp(-d * dT);
     F1 += kappa_ * theta / xi2 *
-          ((b - d) * dT - 2.0 * log((1.0 - gn * Y) / (1.0 - gn)));
+          ((b - d) * dT - 2.0 * std::log((1.0 - gn * Y) / (1.0 - gn)));
     F2 = r1 * (g - gn * Y) / (1.0 - gn * Y);
     if (fl == 1)
       break;
   }
 
-  Cdoub CF = exp(F1 + F2 * var0_);
+  Cdoub CF = std::exp(F1 + F2 * var0_);
   if (CF != CF)
     return 0.0;
   else
@@ -186,38 +188,37 @@ complex<double> sVolT::hestonCFTd(complex<double> k, double maturity) const {
 }
 
 #ifdef _MSC_VER
-#pragma warning(disable : 4244)
 #endif
 double sVolT::hestonPriceTd(double maturity, double forward, double strike,
-                            string optType) const {
+                            OptionType optType) const {
   auto fcn1 = [this, maturity, forward, strike](double k) {
     return this->hestonIntegrandTd(k, maturity, forward, strike, 0);
   };
   auto fcn2 = [this, maturity, forward, strike](double k) {
     return this->hestonIntegrandTd(k, maturity, forward, strike, 1);
   };
-  GaussLaguerreIntegration gLegInt(128);
+  QuantLib::GaussLaguerreIntegration gLegInt(128);
   double integr1 = gLegInt(fcn1);
   double integr2 = gLegInt(fcn2);
   double callPrice =
       forward * (0.5 + integr2 / PI) - strike * (0.5 + integr1 / PI);
-  if (optType == "Call" || optType == "call")
+  if (optType == OptionType::Call)
     return callPrice;
   else
     return callPrice + strike - forward;
 }
 
 double sVolT::intCFfun(double u, double ki, double X, double maturity) const {
-  Cdoub ret = exp(Cdoub(0.0, 1.0) * u * X) * hestonCFTd(Cdoub(u, ki), maturity);
+  Cdoub ret =
+      std::exp(Cdoub(0.0, 1.0) * u * X) * hestonCFTd(Cdoub(u, ki), maturity);
   return ret.real() / (u * u + ki * ki);
 }
 
 #ifdef _MSC_VER
-#pragma warning(disable : 4244)
 #endif
 
 double sVolT::hestonPriceTdCF(double maturity, double forward, double strike,
-                              string optType) const {
+                              OptionType optType) const {
   if (strike == 0.0)
     return forward;
   double X = log(forward / strike);
@@ -225,12 +226,12 @@ double sVolT::hestonPriceTdCF(double maturity, double forward, double strike,
   auto fcn1 = [this, ki, X, maturity](double u) {
     return this->intCFfun(u, ki, X, maturity);
   };
-  GaussLaguerreIntegration gLegInt(64);
+  QuantLib::GaussLaguerreIntegration gLegInt(64);
   double integr1 = gLegInt(fcn1);
   double callPrice = forward - sqrt(strike * forward) * integr1 / PI;
   if (callPrice <= 0.0)
     return 0;
-  if (optType == "Call" || optType == "call")
+  if (optType == OptionType::Call)
     return callPrice;
   else
     return callPrice + strike - forward;
@@ -262,13 +263,13 @@ void sVolT::objFcnTd(int m, int /*n*/, double *x, double *fvec,
   }
   for (int i = 0; i < m; i++)
     fvec[i] = (1.0 - hestonPriceTdCF(maturities_[i], forwards_[i], strikes_[i],
-                                     "call") /
+                                     OptionType::Call) /
                          marketQuotes_[i]) *
               100;
 };
 
 void sVolT::calibratorLM(Vdoub maturities, Vdoub forwards, Vdoub strikes,
-                         Vdoub marketQuotes, string quoteType) {
+                         Vdoub marketQuotes, CalibrationTarget quoteType) {
   int m = strikes.size(); // no. of observations
   maturities_.resize(m);
   maturities_ = maturities;
@@ -278,9 +279,9 @@ void sVolT::calibratorLM(Vdoub maturities, Vdoub forwards, Vdoub strikes,
   strikes_ = strikes;
   marketQuotes_.resize(m);
   marketQuotes_ = marketQuotes;
-  if (quoteType == "impliedVol") {
+  if (quoteType == CalibrationTarget::Volatility) {
     for (int i = 0; i < m; i++) {
-      double vol = marketQuotes[i] * sqrt(maturities[i]);
+      double vol = marketQuotes[i] * std::sqrt(maturities[i]);
       double d1 = std::log(forwards[i] / strikes[i]) / vol + 0.5 * vol;
       double d2 = d1 - vol;
       marketQuotes_[i] =
@@ -345,6 +346,9 @@ void sVolT::calibratorLM(Vdoub maturities, Vdoub forwards, Vdoub strikes,
         diag.data(), mode, factor, nprint, &info, &nfev, fjac.data(), ldfjac,
         ipvt.data(), qtf.data(), wa1.data(), wa2.data(), wa3.data(), wa4.data(),
         fcnheston);
+  QL_ENSURE(info >= 1 && info <= 4,
+            "Heston Model Calibration Fails: " << getLmdifMessage(info)
+                                               << " (info=" << info << ")");
 
   // the below is output result
   setParameterVar0(x[0]);
@@ -391,10 +395,10 @@ Vdoub sVolT::simulationHestonTd(Vdoub times, Vdoub forwards) const {
     accT += DT;
     double z1 = random_normal();
     double z2 = rho_ * z1 + rho2 * random_normal();
-    S += S * sqrt(abs(V)) * SDT *
+    S += S * std::sqrt(std::abs(V)) * SDT *
          z1; // This line (S) must put BEFORE line (V)!!!
     V += kappa_ * (theta - V) * DT +
-         xin * sqrt(abs(V)) * SDT * z2; // Euler scheme
+         xin * std::sqrt(std::abs(V)) * SDT * z2; // Euler scheme
     if ((i * DT <= times[T]) && ((i + 1) * DT > times[T])) {
       pathF[T] = forwards[T] * S / spot_;
       T++;
@@ -424,10 +428,10 @@ Vdoub sVolT::simulationHestonTdMax(Vdoub times, Vdoub forwards) const {
     accT += DT;
     double z1 = random_normal();
     double z2 = rho_ * z1 + rho2 * random_normal();
-    S += S * sqrt(abs(V)) * SDT *
+    S += S * std::sqrt(std::abs(V)) * SDT *
          z1; // This line (S) must put BEFORE line (V)!!!
     V += kappa_ * (theta - V) * DT +
-         xin * sqrt(abs(V)) * SDT * z2; // Euler scheme
+         xin * std::sqrt(std::abs(V)) * SDT * z2; // Euler scheme
     Smax = (Smax < S) ? S : Smax;
     if ((i * DT <= times[T]) && ((i + 1) * DT > times[T])) {
       pathF[T] = forwards[T] * Smax / spot_;
@@ -463,10 +467,10 @@ Vdoub sVolT::simulationHestonTdCliq(Vdoub times, Vdoub forwards, double gcap,
     accT += DT;
     double z1 = random_normal();
     double z2 = rho_ * z1 + rho2 * random_normal();
-    S += S * sqrt(abs(V)) * SDT *
+    S += S * std::sqrt(std::abs(V)) * SDT *
          z1; // This line (S) must put BEFORE line (V)!!!
     V += kappa_ * (theta - V) * DT +
-         xin * sqrt(abs(V)) * SDT * z2; // Euler scheme
+         xin * std::sqrt(std::abs(V)) * SDT * z2; // Euler scheme
     if (accT > Day * dt) {
       Day++;
       S1 = interpolateF(times, forwards, Day * dt) * S / spot_;
@@ -482,12 +486,10 @@ Vdoub sVolT::simulationHestonTdCliq(Vdoub times, Vdoub forwards, double gcap,
   return pathF;
 };
 
-vector<double> sVolT::simulationHestonTdCliq(vector<double> times,
-                                             vector<double> /*forwards*/,
-                                             double gcap, double gfloor,
-                                             double lcap, double lfloor,
-                                             double alpha, int tDay,
-                                             Termstructure *mycurve) const {
+std::vector<double> sVolT::simulationHestonTdCliq(
+    std::vector<double> times, std::vector<double> /*forwards*/, double gcap,
+    double gfloor, double lcap, double lfloor, double alpha, int tDay,
+    Termstructure *mycurve) const {
   int T = 0, N = times.size(), j = 0;
   Vdoub pathF(N);
 
@@ -515,10 +517,10 @@ vector<double> sVolT::simulationHestonTdCliq(vector<double> times,
     accT += DT;
     double z1 = random_normal();
     double z2 = rho_ * z1 + rho2 * random_normal();
-    S += S * sqrt(abs(V)) * SDT *
+    S += S * std::sqrt(std::abs(V)) * SDT *
          z1; // This line (S) must put BEFORE line (V)!!!
     V += kappa_ * (theta - V) * DT +
-         xin * sqrt(abs(V)) * SDT * z2; // Euler scheme
+         xin * std::sqrt(std::abs(V)) * SDT * z2; // Euler scheme
     if (accT > Day * dt) {
       Day++;
       cRet += std::max(lfloor, std::min(S / (alpha * S0) - 1.0, lcap));
@@ -526,7 +528,7 @@ vector<double> sVolT::simulationHestonTdCliq(vector<double> times,
     }
     if ((i * DT <= times[T]) && ((i + 1) * DT > times[T])) {
       pathF[T] = std::min(std::max(cRet, gfloor), gcap) *
-                 exp((r - q) * (times[T + 1] - times[T]));
+                 std::exp((r - q) * (times[T + 1] - times[T]));
       /* S01 = S; */
       T++;
       r = mycurve->rate(tDay, (times[T] - times[T - 1]) / dt);

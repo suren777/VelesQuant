@@ -8,9 +8,9 @@ version = "0.1.0"
 description = "A high-performance financial valuation library"
 readme = "README.md"
 authors = [
-  { name = "Valuation Lib Team", email = "info@valuationlib.com" },
+  { name = "Suren Islyaev", email = "suren.islyaev@gmail.com" },
 ]
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 dependencies = [
     "numpy",
 ]
@@ -21,6 +21,8 @@ classifiers = [
     "Intended Audience :: Financial and Insurance Industry",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Operating System :: MacOS",
     "Operating System :: POSIX :: Linux",
@@ -28,8 +30,8 @@ classifiers = [
 ]
 
 [project.urls]
-Repository = "https://github.com/valuationlib/velesquant"
-Issues = "https://github.com/valuationlib/velesquant/issues"
+Repository = "https://github.com/suren777/VelesQuant"
+Issues = "https://github.com/suren777/VelesQuant/issues"
 
 [project.optional-dependencies]
 test = ["pytest"]
@@ -39,13 +41,13 @@ dev = ["pytest"]
 name = "velesquant"
 version = "0.1.0"
 description = "A high-performance financial valuation library"
-authors = ["Valuation Lib Team <info@valuationlib.com>"]
+authors = ["Suren Islyaev <suren.islyaev@gmail.com>"]
 readme = "README.md"
 packages = [{include = "velesquant", from = "src"}]
 
 [tool.poetry.dependencies]
-python = "^3.12"
-numpy = "^1.26.0"
+python = "^3.11"
+numpy = "^2.4.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"
@@ -54,6 +56,7 @@ black = "^25.12.0"
 isort = "^7.0.0"
 pybind11 = "^3.0.1"
 pybind11-stubgen = "^2.5.5"
+pytest-cov = "^7.0.0"
 
 [tool.isort]
 profile = "black"
@@ -68,7 +71,7 @@ wheel.packages = ["src/velesquant"]
 velesquant = ["py.typed", "*.pyi"]
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.11"
 warn_return_any = true
 warn_unused_configs = true
 

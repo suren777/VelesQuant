@@ -5,21 +5,22 @@
 #include <cmath>
 #include <complex>
 #include <ql/quantlib.hpp>
+#include <velesquant/models/utility.h>
 #include <velesquant/volatility/lm.h>
 #include <velesquant/volatility/s_vol.h>
-#include <velesquant/models/utility.h>
 
-using namespace std;
-using namespace QuantLib;
+// using namespace std;
+// using namespace QuantLib;
 using namespace boost::placeholders;
 
 namespace velesquant {
 
 const double PI = 3.14159265358979323846264338327950288;
 const double DT = .001;
-const double SDT = sqrt(DT);
+const double SDT = std::sqrt(DT);
 
-double sVol::interpolateF(vector<double> T, vector<double> F, double t) const {
+double sVol::interpolateF(std::vector<double> T, std::vector<double> F,
+                          double t) const {
   int i, N = T.size();
   if (t == 0.0)
     return spot_;
@@ -35,18 +36,18 @@ double sVol::interpolateF(vector<double> T, vector<double> F, double t) const {
            (t - T[N - 2]) / (T[N - 1] - T[N - 2]) * (F[N - 1] - F[N - 2]);
 }
 
-vector<double> sVol::simulationHeston(vector<double> times,
-                                      vector<double> forwards) const {
+std::vector<double> sVol::simulationHeston(std::vector<double> times,
+                                           std::vector<double> forwards) const {
   int N = times.size();
-  vector<double> pathF(N);
+  std::vector<double> pathF(N);
   int T = 0;
-  double V = var0_, S = spot_, rho2 = sqrt(1 - rho_ * rho_);
+  double V = var0_, S = spot_, rho2 = std::sqrt(1 - rho_ * rho_);
   for (int i = 0; i <= int(times[N - 1] / DT); i++) {
     double z1 = random_normal();
     double z2 = rho_ * z1 + rho2 * random_normal();
-    S += S * sqrt(abs(V)) * SDT *
+    S += S * std::sqrt(std::abs(V)) * SDT *
          z1; // This line (S) must put BEFORE line (V)!!!
-    V += kappa_ * (theta_ - V) * DT + xi_ * sqrt(abs(V)) * SDT * z2 +
+    V += kappa_ * (theta_ - V) * DT + xi_ * std::sqrt(std::abs(V)) * SDT * z2 +
          0.25 * xi_ * xi_ * DT * (z2 * z2 - 1); // Milstein scheme
     // V += kappa_*(theta_-V)*DT +xi_*sqrt(abs(V))*SDT*z2;  //Euler scheme
     if (i * DT <= times[T] && (i + 1) * DT > times[T]) {
@@ -57,21 +58,22 @@ vector<double> sVol::simulationHeston(vector<double> times,
   return pathF;
 }
 
-vector<double> sVol::simulationHestonDO(vector<double> times,
-                                        vector<double> forwards,
-                                        double barrier) const {
+std::vector<double> sVol::simulationHestonDO(std::vector<double> times,
+                                             std::vector<double> forwards,
+                                             double barrier) const {
   int N = times.size();
-  vector<double> pathF(2);
+  std::vector<double> pathF(2);
   int T = 0;
-  double V = var0_, S = spot_, rho2 = sqrt(1 - rho_ * rho_);
+  double V = var0_, S = spot_, rho2 = std::sqrt(1 - rho_ * rho_);
   double flag = 1.0;
   for (int i = 0; i <= int(times[N - 1] / DT); i++) {
     double z1 = random_normal();
     double z2 = rho_ * z1 + rho2 * random_normal();
     if (flag > 0.0) {
-      S += S * sqrt(abs(V)) * SDT *
+      S += S * std::sqrt(std::abs(V)) * SDT *
            z1; // This line (S) must put BEFORE line (V)!!!
-      V += kappa_ * (theta_ - V) * DT + xi_ * sqrt(abs(V)) * SDT * z2 +
+      V += kappa_ * (theta_ - V) * DT +
+           xi_ * std::sqrt(std::abs(V)) * SDT * z2 +
            0.25 * xi_ * xi_ * DT * (z2 * z2 - 1); // Milstein scheme
       // V += kappa_*(theta_-V)*DT +xi_*sqrt(abs(V))*SDT*z2;  //Euler scheme
       if ((i * DT <= times[T]) && ((i + 1) * DT > times[T]) && (S <= barrier))
@@ -95,7 +97,7 @@ sVol::sVol(double spot, double var0, double kappa, double theta, double xi,
     update_seed(seed);
 };
 
-double sVol::trapz(vector<double> x, vector<double> y) const {
+double sVol::trapz(std::vector<double> x, std::vector<double> y) const {
   int n = x.size();
   double sum = 0;
   for (int i = 1; i <= n - 1; i++)
@@ -104,11 +106,10 @@ double sVol::trapz(vector<double> x, vector<double> y) const {
 }
 
 #ifdef _MSC_VER
-#pragma warning(disable : 4244)
 #endif
 
 double sVol::hestonPrice(double maturity, double forward, double strike,
-                         string optType) const {
+                         OptionType optType) const {
   // if ((forward/strike>1e5)||(strike==0.0)) return forward-strike;
   if (strike == 0.0)
     return forward;
@@ -119,7 +120,7 @@ double sVol::hestonPrice(double maturity, double forward, double strike,
                        strike, 0);
     fcn2 = boost::bind(&sVol::hestonIntegrand, this, _1, maturity, forward,
                        strike, 1);
-    GaussLaguerreIntegration gLegInt(32);
+    QuantLib::GaussLaguerreIntegration gLegInt(32);
     double integr1 = gLegInt(fcn1);
     double integr2 = gLegInt(fcn2);
     double callPrice =
@@ -128,17 +129,17 @@ double sVol::hestonPrice(double maturity, double forward, double strike,
     if (callPrice <= 0.0)
       return 0;
 
-    if (optType == "Call" || optType == "call")
+    if (optType == OptionType::Call)
       return callPrice;
     else
       return callPrice + strike - forward;
   }
 }
 
-double sVol::hestonIntegrand(complex<double> k, double maturity, double forward,
-                             double strike, int choice) const {
-  complex<double> i(0.0, 1.0);
-  complex<double> a, b;
+double sVol::hestonIntegrand(std::complex<double> k, double maturity,
+                             double forward, double strike, int choice) const {
+  std::complex<double> i(0.0, 1.0);
+  std::complex<double> a, b;
   if (choice == 0) {
     a = 0.5 * k * (k + i);
     b = kappa_ - rho_ * xi_ * k * i;
@@ -146,37 +147,39 @@ double sVol::hestonIntegrand(complex<double> k, double maturity, double forward,
     a = 0.5 * k * (k - i);
     b = kappa_ - rho_ * xi_ * (k * i + 1.0);
   }
-  complex<double> d = sqrt(b * b + 2.0 * a * xi_ * xi_);
-  complex<double> r1 = (b + d) / (xi_ * xi_);
-  complex<double> r2 = (b - d) / (xi_ * xi_);
-  complex<double> g = r2 / r1;
-  complex<double> Y = exp(-d * maturity);
-  complex<double> F1 =
+  std::complex<double> d = std::sqrt(b * b + 2.0 * a * xi_ * xi_);
+  std::complex<double> r1 = (b + d) / (xi_ * xi_);
+  std::complex<double> r2 = (b - d) / (xi_ * xi_);
+  std::complex<double> g = r2 / r1;
+  std::complex<double> Y = std::exp(-d * maturity);
+  std::complex<double> F1 =
       kappa_ *
-      (r2 * maturity - 2.0 / (xi_ * xi_) * log((1.0 - g * Y) / (1.0 - g)));
-  complex<double> F2 = r2 * (1.0 - Y) / (1.0 - g * Y);
-  complex<double> CF = exp(F1 * theta_ + F2 * var0_);
-  complex<double> integrand = exp(i * k * log(forward / strike)) * CF / (k * i);
-  if (real(integrand) != real(integrand))
+      (r2 * maturity - 2.0 / (xi_ * xi_) * std::log((1.0 - g * Y) / (1.0 - g)));
+  std::complex<double> F2 = r2 * (1.0 - Y) / (1.0 - g * Y);
+  std::complex<double> CF = std::exp(F1 * theta_ + F2 * var0_);
+  std::complex<double> integrand =
+      std::exp(i * k * std::log(forward / strike)) * CF / (k * i);
+  if (std::real(integrand) != std::real(integrand))
     return 0.0;
   else
-    return real(integrand);
+    return std::real(integrand);
 }
 
-complex<double> sVol::hestonCF(complex<double> k, double maturity) const {
-  complex<double> i(0.0, 1.0);
-  complex<double> a = 0.5 * k * (k + i);
-  complex<double> b = kappa_ - rho_ * xi_ * k * i;
-  complex<double> d = sqrt(b * b + 2.0 * a * xi_ * xi_);
-  complex<double> r1 = (b + d) / (xi_ * xi_);
-  complex<double> r2 = (b - d) / (xi_ * xi_);
-  complex<double> g = r2 / r1;
-  complex<double> Y = exp(-d * maturity);
-  complex<double> F1 =
+std::complex<double> sVol::hestonCF(std::complex<double> k,
+                                    double maturity) const {
+  std::complex<double> i(0.0, 1.0);
+  std::complex<double> a = 0.5 * k * (k + i);
+  std::complex<double> b = kappa_ - rho_ * xi_ * k * i;
+  std::complex<double> d = std::sqrt(b * b + 2.0 * a * xi_ * xi_);
+  std::complex<double> r1 = (b + d) / (xi_ * xi_);
+  std::complex<double> r2 = (b - d) / (xi_ * xi_);
+  std::complex<double> g = r2 / r1;
+  std::complex<double> Y = std::exp(-d * maturity);
+  std::complex<double> F1 =
       kappa_ *
-      (r2 * maturity - 2.0 / (xi_ * xi_) * log((1.0 - g * Y) / (1.0 - g)));
-  complex<double> F2 = r2 * (1.0 - Y) / (1.0 - g * Y);
-  complex<double> CF = exp(F1 * theta_ + F2 * var0_);
+      (r2 * maturity - 2.0 / (xi_ * xi_) * std::log((1.0 - g * Y) / (1.0 - g)));
+  std::complex<double> F2 = r2 * (1.0 - Y) / (1.0 - g * Y);
+  std::complex<double> CF = std::exp(F1 * theta_ + F2 * var0_);
   if (CF != CF)
     return 0.0;
   else
@@ -184,32 +187,33 @@ complex<double> sVol::hestonCF(complex<double> k, double maturity) const {
 }
 
 double sVol::hestonPriceCF(double maturity, double forward, double strike,
-                           string optType) const {
+                           OptionType optType) const {
   if (strike == 0.0)
     return forward;
-  double X = log(forward / strike);
+  double X = std::log(forward / strike);
   double ki = -0.5;
   boost::function<double(double)> fcn1;
   fcn1 = boost::bind(&sVol::intCFfun, this, _1, ki, X, maturity);
-  GaussLaguerreIntegration gLegInt(32);
+  QuantLib::GaussLaguerreIntegration gLegInt(32);
   double integr1 = gLegInt(fcn1);
-  double callPrice = forward - sqrt(strike * forward) * integr1 / PI;
+  double callPrice = forward - std::sqrt(strike * forward) * integr1 / PI;
   if (callPrice <= 0.0)
     return 0;
-  if (optType == "Call" || optType == "call")
+  if (optType == OptionType::Call)
     return callPrice;
   else
     return callPrice + strike - forward;
 }
 
 double sVol::intCFfun(double u, double ki, double X, double maturity) const {
-  complex<double> ret = exp(complex<double>(0.0, 1.0) * u * X) *
-                        hestonCF(complex<double>(u, ki), maturity);
+  std::complex<double> ret = std::exp(std::complex<double>(0.0, 1.0) * u * X) *
+                             hestonCF(std::complex<double>(u, ki), maturity);
   return ret.real() / (u * u + ki * ki);
 }
-void sVol::calibrator(vector<double> maturitys, vector<double> forwards,
-                      vector<double> strikes, std::vector<double> marketQuotes,
-                      string quoteType) {
+void sVol::calibrator(std::vector<double> maturitys,
+                      std::vector<double> forwards, std::vector<double> strikes,
+                      std::vector<double> marketQuotes,
+                      CalibrationTarget quoteType) {
   int m = strikes.size(); // no. of observations
   weights_.resize(m);
   for (int i = 0; i < m; i++) {
@@ -228,9 +232,9 @@ void sVol::calibrator(vector<double> maturitys, vector<double> forwards,
   strikes_ = strikes;
   marketQuotes_.resize(m);
   marketQuotes_ = marketQuotes;
-  if (quoteType == "impliedVol") {
+  if (quoteType == CalibrationTarget::Volatility) {
     for (int i = 0; i < m; i++) {
-      double vol = marketQuotes[i] * sqrt(maturitys[i]);
+      double vol = marketQuotes[i] * std::sqrt(maturitys[i]);
       double d1 = std::log(forwards[i] / strikes[i]) / vol + 0.5 * vol;
       double d2 = d1 - vol;
       marketQuotes_[i] =
@@ -273,26 +277,9 @@ void sVol::calibrator(vector<double> maturitys, vector<double> forwards,
   lmdif(m, n, x, fvec, ftol, xtol, gtol, maxfev, epsfcn, diag, mode, factor,
         nprint, &info, &nfev, fjac, ldfjac, ipvt, qtf, wa1, wa2, wa3, wa4,
         fcnheston);
-  //*   info is an integer output variable. if the user has terminated
-  // execution, info is set to the (negative)
-  //*     value of iflag. see description of fcn. otherwise, info is set as
-  // follows.
-  //	*     info = 0  improper input parameters.
-  //	*     info = 1  both actual and predicted relative reductions in the sum
-  // of squares are at most ftol.
-  //	*     info = 2  relative error between two consecutive iterates is at
-  // most xtol.
-  //	*     info = 3  conditions for info = 1 and info = 2 both hold.
-  //	*     info = 4  the cosine of the angle between fvec and any column of
-  // the jacobian is at most gtol in absolute value.
-  //	*     info = 5  number of calls to fcn has reached or exceeded maxfev.
-  //	*     info = 6  ftol is too small. no further reduction in the sum of
-  // squares is possible.
-  //	*     info = 7  xtol is too small. no further improvement in the
-  // approximate solution x is possible.
-  //	*     info = 8  gtol is too small. fvec is orthogonal to the columns of
-  // the jacobian to machine precision.
-  QL_ENSURE(info != 4, "Heston Model Calibration Fails " << info);
+  QL_ENSURE(info >= 1 && info <= 4,
+            "Heston Model Calibration Fails: " << getLmdifMessage(info)
+                                               << " (info=" << info << ")");
   // the below is output result
   setParameterVar0(x[0]);
   setParameterKappa(x[1]);
@@ -311,13 +298,16 @@ void sVol::calibrator(vector<double> maturitys, vector<double> forwards,
   delete[] wa3;
   delete[] wa4;
 };
-void sVol::IVcalibrator(vector<double> maturitys, vector<double> forwards,
-                        vector<double> strikes,
-                        std::vector<double> marketQuotes, string quoteType) {
+void sVol::IVcalibrator(std::vector<double> maturitys,
+                        std::vector<double> forwards,
+                        std::vector<double> strikes,
+                        std::vector<double> marketQuotes,
+                        CalibrationTarget quoteType) {
   int m = strikes.size(); // no. of observations
   weights_.resize(m);
   for (int i = 0; i < m; i++) {
-    weights_[i] = exp(-abs(spot_ - strikes[i]) / spot_ * 100 * maturitys[i]);
+    weights_[i] =
+        std::exp(-std::abs(spot_ - strikes[i]) / spot_ * 100 * maturitys[i]);
   }
   double sum = 0;
   for (int i = 0; i < m; i++)
@@ -332,7 +322,7 @@ void sVol::IVcalibrator(vector<double> maturitys, vector<double> forwards,
   strikes_ = strikes;
   marketQuotes_.resize(m);
   marketQuotes_ = marketQuotes;
-  if (quoteType != "impliedVol")
+  if (quoteType != CalibrationTarget::Volatility)
     calibrator(maturitys, forwards, strikes, marketQuotes, quoteType);
   else {
     int n = 5;                 // no. of HESTON model paremeters
@@ -370,26 +360,9 @@ void sVol::IVcalibrator(vector<double> maturitys, vector<double> forwards,
     lmdif(m, n, x, fvec, ftol, xtol, gtol, maxfev, epsfcn, diag, mode, factor,
           nprint, &info, &nfev, fjac, ldfjac, ipvt, qtf, wa1, wa2, wa3, wa4,
           fcnheston);
-    //*   info is an integer output variable. if the user has terminated
-    // execution, info is set to the (negative)
-    //*     value of iflag. see description of fcn. otherwise, info is set as
-    // follows.
-    //	*     info = 0  improper input parameters.
-    //	*     info = 1  both actual and predicted relative reductions in the sum
-    // of squares are at most ftol.
-    //	*     info = 2  relative error between two consecutive iterates is at
-    // most xtol.
-    //	*     info = 3  conditions for info = 1 and info = 2 both hold.
-    //	*     info = 4  the cosine of the angle between fvec and any column of
-    // the jacobian is at most gtol in absolute value.
-    //	*     info = 5  number of calls to fcn has reached or exceeded maxfev.
-    //	*     info = 6  ftol is too small. no further reduction in the sum of
-    // squares is possible.
-    //	*     info = 7  xtol is too small. no further improvement in the
-    // approximate solution x is possible.
-    //	*     info = 8  gtol is too small. fvec is orthogonal to the columns of
-    // the jacobian to machine precision.
-    QL_ENSURE(info != 4, "Heston Model Calibration Fails " << info);
+    QL_ENSURE(info >= 1 && info <= 4,
+              "Heston Model Calibration Fails: " << getLmdifMessage(info)
+                                                 << " (info=" << info << ")");
     // the below is output result
     setParameterVar0(x[0]);
     setParameterKappa(x[1]);
@@ -410,10 +383,11 @@ void sVol::IVcalibrator(vector<double> maturitys, vector<double> forwards,
   }
 };
 
-void sVol::FXcalibrator(vector<double> maturitys, vector<double> forwards,
-                        vector<double> strikes,
+void sVol::FXcalibrator(std::vector<double> maturitys,
+                        std::vector<double> forwards,
+                        std::vector<double> strikes,
                         std::vector<double> marketQuotes,
-                        string /*quoteType*/) {
+                        CalibrationTarget /*quoteType*/) {
   int m = strikes.size(); // no. of observations
   // weights_.resize(m);
   // for (int i=0;i<m;i++)
@@ -432,7 +406,7 @@ void sVol::FXcalibrator(vector<double> maturitys, vector<double> forwards,
   marketQuotes_.resize(m);
   marketQuotes_ = marketQuotes;
   for (int i = 0; i < m; i++) {
-    double vol = marketQuotes[i] * sqrt(maturitys[i]);
+    double vol = marketQuotes[i] * std::sqrt(maturitys[i]);
     double d1 = std::log(forwards[i] / strikes[i]) / vol + 0.5 * vol;
     double d2 = d1 - vol;
     marketQuotes_[i] =
@@ -472,26 +446,9 @@ void sVol::FXcalibrator(vector<double> maturitys, vector<double> forwards,
   lmdif(m, n, x, fvec, ftol, xtol, gtol, maxfev, epsfcn, diag, mode, factor,
         nprint, &info, &nfev, fjac, ldfjac, ipvt, qtf, wa1, wa2, wa3, wa4,
         fcnheston);
-  //*   info is an integer output variable. if the user has terminated
-  // execution, info is set to the (negative)
-  //*     value of iflag. see description of fcn. otherwise, info is set as
-  // follows.
-  //	*     info = 0  improper input parameters.
-  //	*     info = 1  both actual and predicted relative reductions in the sum
-  // of squares are at most ftol.
-  //	*     info = 2  relative error between two consecutive iterates is at
-  // most xtol.
-  //	*     info = 3  conditions for info = 1 and info = 2 both hold.
-  //	*     info = 4  the cosine of the angle between fvec and any column of
-  // the jacobian is at most gtol in absolute value.
-  //	*     info = 5  number of calls to fcn has reached or exceeded maxfev.
-  //	*     info = 6  ftol is too small. no further reduction in the sum of
-  // squares is possible.
-  //	*     info = 7  xtol is too small. no further improvement in the
-  // approximate solution x is possible.
-  //	*     info = 8  gtol is too small. fvec is orthogonal to the columns of
-  // the jacobian to machine precision.
-  QL_ENSURE(info != 4, "Heston Model FX Calibration Fails " << info);
+  QL_ENSURE(info >= 1 && info <= 4,
+            "Heston Model FX Calibration Fails: " << getLmdifMessage(info)
+                                                  << " (info=" << info << ")");
   // the below is output result
   setParameterVar0(x[0]);
   setParameterTheta(x[1]);
@@ -530,14 +487,16 @@ void sVol::FXcalibrator(vector<double> maturitys, vector<double> forwards,
 //			double vol = marketQuotes[i] * sqrt(maturitys[i]);
 //			double d1 = std::log(forwards[i]/strikes[i])/vol
 //+0.5*vol; 			double d2 = d1-vol;
-//marketQuotes_[i] = forwards[i]*cdf_normal(d1) - strikes[i]*cdf_normal(d2);
+// marketQuotes_[i] = forwards[i]*cdf_normal(d1) - strikes[i]*cdf_normal(d2);
 //			}
 //		}
 //
 //	int n = 5;					//no. of HESTON model
 // paremeters 	double* x = new double[n];	//initial estimate of parameters
-// vector 	x[0] = getParameterVar0(); 	x[1] = getParameterKappa(); 	x[2] =
-//getParameterTheta(); 	x[3] = getParameterXi(); 	x[4] = getParameterRho();
+// vector 	x[0] = getParameterVar0(); 	x[1] = getParameterKappa();
+// x[2] =
+// getParameterTheta(); 	x[3] = getParameterXi(); 	x[4] =
+// getParameterRho();
 //
 //	double* fvec = new double[m]; //no need to populate
 //	double ftol = 1e-08; //tolerance
@@ -562,8 +521,8 @@ void sVol::FXcalibrator(vector<double> maturitys, vector<double> forwards,
 //
 //	boost::function<void (sVol*, int,int,double*,double*,int*)> objheston =
 //&sVol::objFcn; 	lmfcn fcnheston = boost::bind(objheston, this,
-//_1,_2,_3,_4,_5); 	lmdif(m, n, x, fvec, ftol, xtol, gtol, maxfev, epsfcn, diag,
-//mode, factor, 		nprint, &info, &nfev, fjac, ldfjac, ipvt, qtf,
+//_1,_2,_3,_4,_5); 	lmdif(m, n, x, fvec, ftol, xtol, gtol, maxfev, epsfcn,
+// diag, mode, factor, 		nprint, &info, &nfev, fjac, ldfjac, ipvt, qtf,
 // wa1, wa2, wa3, wa4, fcnheston);
 //	//*   info is an integer output variable. if the user has terminated
 // execution, info is set to the (negative)
@@ -626,7 +585,8 @@ void sVol::objFcn(int m, int /*n*/, double *x, double *fvec, int * /*iflag*/) {
   for (int i = 0; i < m; i++)
     //	fvec[i] = (hestonPrice(maturitys_[i], forwards_[i], strikes_[i], "call")
     //- marketQuotes_[i])*weights_[i];
-    fvec[i] = (hestonPrice(maturitys_[i], forwards_[i], strikes_[i], "call") -
+    fvec[i] = (hestonPrice(maturitys_[i], forwards_[i], strikes_[i],
+                           OptionType::Call) -
                marketQuotes_[i]);
   // fvec[i] = (hestonPriceCF(maturitys_[i], forwards_[i], strikes_[i], "call")
   // - marketQuotes_[i]);
@@ -645,7 +605,7 @@ void sVol::objFcnIV(int m, int /*n*/, double *x, double *fvec,
   for (int i = 0; i < m; i++)
     fvec[i] = (implied_vol(maturitys_[i], forwards_[i], strikes_[i],
                            hestonPrice(maturitys_[i], forwards_[i], strikes_[i],
-                                       "call")) -
+                                       OptionType::Call)) -
                marketQuotes_[i]) +
               A;
 };
@@ -659,57 +619,60 @@ void sVol::objFcnFX(int m, int /*n*/, double *x, double *fvec,
   if (kappa_ * x[1] * 2.0 < x[2] * x[2])
     A = 10000;
   for (int i = 0; i < m; i++)
-    fvec[i] =
-        1.0 -
-        (hestonPrice(maturitys_[i], forwards_[i], strikes_[i], "call") + A) /
-            marketQuotes_[i];
+    fvec[i] = 1.0 - (hestonPrice(maturitys_[i], forwards_[i], strikes_[i],
+                                 OptionType::Call) +
+                     A) /
+                        marketQuotes_[i];
 };
 
 // NOT USED!!!
-double sVol::hestonIntegrandNET(complex<double> k, double maturity,
+double sVol::hestonIntegrandNET(std::complex<double> k, double maturity,
                                 double forward, double strike) const {
-  complex<double> i(0.0, 1.0);
+  std::complex<double> i(0.0, 1.0);
   double b = 2.0 / (xi_ * xi_) * (kappa_ + rho_ * xi_);
-  complex<double> d = sqrt(b * b + 4.0 * (k * k - i * k) / (xi_ * xi_));
-  complex<double> r1 = (b + d) / 2.0;
-  complex<double> g = (b + d) / (b - d);
-  complex<double> Y = exp(0.5 * xi_ * xi_ * maturity * d);
-  complex<double> F1 =
+  std::complex<double> d =
+      std::sqrt(b * b + 4.0 * (k * k - i * k) / (xi_ * xi_));
+  std::complex<double> r1 = (b + d) / 2.0;
+  std::complex<double> g = (b + d) / (b - d);
+  std::complex<double> Y = std::exp(0.5 * xi_ * xi_ * maturity * d);
+  std::complex<double> F1 =
       kappa_ * theta_ *
-      (r1 * maturity + 2.0 / (xi_ * xi_) * log((1.0 - g) / (1.0 - g * Y)));
-  complex<double> F2 = r1 * (1.0 - Y) / (1.0 - g * Y);
-  complex<double> integrand =
-      exp(-i * k * log(forward / strike) + F1 + F2 * var0_) / (k * k - i * k);
-  if (real(integrand) != real(integrand))
+      (r1 * maturity + 2.0 / (xi_ * xi_) * std::log((1.0 - g) / (1.0 - g * Y)));
+  std::complex<double> F2 = r1 * (1.0 - Y) / (1.0 - g * Y);
+  std::complex<double> integrand =
+      std::exp(-i * k * std::log(forward / strike) + F1 + F2 * var0_) /
+      (k * k - i * k);
+  if (std::real(integrand) != std::real(integrand))
     return 0.0;
   else
-    return real(integrand);
+    return std::real(integrand);
 }
 double sVol::hestonPriceNET(double maturity, double forward, double strike,
-                            string optType) const {
+                            OptionType optType) const {
   const double ki = 0.5;
   int kmax = std::max(1000.0, std::ceil(10.0 / std::sqrt(var0_ * maturity)));
-  vector<double> int_x(kmax * 5), int_y(kmax * 5);
+  std::vector<double> int_x(kmax * 5), int_y(kmax * 5);
   int count = 0;
   for (double phi = 0.000001; phi < kmax; phi += 0.2) {
     int_x[count] = phi;
-    complex<double> pass_phi(phi, ki);
+    std::complex<double> pass_phi(phi, ki);
     int_y[count] = hestonIntegrandNET(pass_phi, maturity, forward, strike);
     count += 1;
   }
   // computing the price
   double callPrice = forward - strike * trapz(int_x, int_y) / PI;
-  if (optType == "Call" || optType == "call")
+  if (optType == OptionType::Call)
     return callPrice;
   else
     return callPrice + strike - forward;
 }
-vector<double> sVol::simulationHestonMax(vector<double> times,
-                                         vector<double> forwards) const {
+std::vector<double>
+sVol::simulationHestonMax(std::vector<double> times,
+                          std::vector<double> forwards) const {
   int N = times.size();
-  vector<double> pathF(N);
+  std::vector<double> pathF(N);
   int T = 0;
-  double V = var0_, S = spot_, rho2 = sqrt(1 - rho_ * rho_);
+  double V = var0_, S = spot_, rho2 = std::sqrt(1 - rho_ * rho_);
   double Smax = S;
   for (int i = 0; i <= int(times[N - 1] / DT); i++) {
     double z1 = random_normal();
@@ -728,12 +691,13 @@ vector<double> sVol::simulationHestonMax(vector<double> times,
   return pathF;
 }
 
-vector<double> sVol::simulationHestonCliq(vector<double> times,
-                                          vector<double> forwards, double gcap,
-                                          double gfloor, double lcap,
-                                          double lfloor, double alpha) const {
+std::vector<double> sVol::simulationHestonCliq(std::vector<double> times,
+                                               std::vector<double> forwards,
+                                               double gcap, double gfloor,
+                                               double lcap, double lfloor,
+                                               double alpha) const {
   int N = times.size();
-  vector<double> pathF(N);
+  std::vector<double> pathF(N);
   int T = 0;
   double V = var0_, S = spot_, rho2 = sqrt(1 - rho_ * rho_);
   double S1, S0 = S;
@@ -746,9 +710,9 @@ vector<double> sVol::simulationHestonCliq(vector<double> times,
   for (int i = 0; i <= int(times[N - 1] / DT); i++) {
     double z1 = random_normal();
     double z2 = rho_ * z1 + rho2 * random_normal();
-    S += S * sqrt(abs(V)) * SDT *
+    S += S * std::sqrt(std::abs(V)) * SDT *
          z1; // This line (S) must put BEFORE line (V)!!!
-    V += kappa_ * (theta_ - V) * DT + xi_ * sqrt(abs(V)) * SDT * z2 +
+    V += kappa_ * (theta_ - V) * DT + xi_ * std::sqrt(std::abs(V)) * SDT * z2 +
          0.25 * xi_ * xi_ * DT * (z2 * z2 - 1); // Milstein scheme
     accT += DT;
     if (accT >= Day * dt) {
@@ -766,19 +730,19 @@ vector<double> sVol::simulationHestonCliq(vector<double> times,
   return pathF;
 }
 
-vector<double> sVol::simulationHestonDNT(vector<double> times,
-                                         vector<double> forwards, double UP,
-                                         double DOWN) const {
+std::vector<double> sVol::simulationHestonDNT(std::vector<double> times,
+                                              std::vector<double> forwards,
+                                              double UP, double DOWN) const {
   int N = times.size();
-  vector<double> pathF(N, 0.0);
+  std::vector<double> pathF(N, 0.0);
   int T = 0;
   int pr = 1e6;
   int iUP = UP * pr;
   int iDOWN = DOWN * pr;
-  double V = var0_, S = spot_, rho2 = sqrt(1 - rho_ * rho_);
+  double V = var0_, S = spot_, rho2 = std::sqrt(1 - rho_ * rho_);
   int S1;
   double dt = 0.0009;
-  double sdt = sqrt(dt);
+  double sdt = std::sqrt(dt);
 
   // for(int i=0; i<=int(times[N-1]/DT); i++)
   //{
@@ -798,9 +762,9 @@ vector<double> sVol::simulationHestonDNT(vector<double> times,
   for (int i = 0; i <= int(times[N - 1] / dt); i++) {
     double z1 = random_normal();
     double z2 = rho_ * z1 + rho2 * random_normal();
-    S += S * sqrt(abs(V)) * sdt *
+    S += S * std::sqrt(std::abs(V)) * sdt *
          z1; // This line (S) must put BEFORE line (V)!!!
-    V += kappa_ * (theta_ - V) * dt + xi_ * sqrt(abs(V)) * sdt * z2 +
+    V += kappa_ * (theta_ - V) * dt + xi_ * std::sqrt(std::abs(V)) * sdt * z2 +
          0.25 * xi_ * xi_ * dt * (z2 * z2 - 1); // Milstein scheme
     S1 = interpolateF(times, forwards, i * dt) * S / spot_ * pr;
     if (!((S1 <= iUP) && (S1 >= iDOWN)))
@@ -813,8 +777,8 @@ vector<double> sVol::simulationHestonDNT(vector<double> times,
   return pathF;
 }
 
-double sVol::simulationHestonDNTdt(vector<double> times,
-                                   vector<double> forwards, double UP,
+double sVol::simulationHestonDNTdt(std::vector<double> times,
+                                   std::vector<double> forwards, double UP,
                                    double DOWN, double dt) const {
   int N = times.size();
 
@@ -822,15 +786,15 @@ double sVol::simulationHestonDNTdt(vector<double> times,
   int pr = 1e6;
   int iUP = UP * pr;
   int iDOWN = DOWN * pr;
-  double V = var0_, S = spot_, rho2 = sqrt(1 - rho_ * rho_);
+  double V = var0_, S = spot_, rho2 = std::sqrt(1 - rho_ * rho_);
   int S1;
-  double sdt = sqrt(dt);
+  double sdt = std::sqrt(dt);
   for (int i = 0; i <= Nstep; i++) {
     double z1 = random_normal();
     double z2 = rho_ * z1 + rho2 * random_normal();
-    S += S * sqrt(abs(V)) * sdt *
+    S += S * std::sqrt(std::abs(V)) * sdt *
          z1; // This line (S) must put BEFORE line (V)!!!
-    V += kappa_ * (theta_ - V) * dt + xi_ * sqrt(abs(V)) * sdt * z2 +
+    V += kappa_ * (theta_ - V) * dt + xi_ * std::sqrt(std::abs(V)) * sdt * z2 +
          0.25 * xi_ * xi_ * dt * (z2 * z2 - 1); // Milstein scheme
     S1 = interpolateF(times, forwards, i * dt) * S / spot_ * pr;
     if (!((S1 <= iUP) && (S1 >= iDOWN)))
@@ -838,22 +802,22 @@ double sVol::simulationHestonDNTdt(vector<double> times,
   }
   return 1.0;
 }
-int sVol::simulationHestonDNTdtS(vector<double> times, vector<double> forwards,
-                                 double maturity, double UP, double DOWN,
-                                 double dt) const {
+int sVol::simulationHestonDNTdtS(std::vector<double> times,
+                                 std::vector<double> forwards, double maturity,
+                                 double UP, double DOWN, double dt) const {
   int Nstep = maturity / dt;
   int pr = 1e6;
   int iUP = UP * pr;
   int iDOWN = DOWN * pr;
-  double V = var0_, S = spot_, rho2 = sqrt(1 - rho_ * rho_);
+  double V = var0_, S = spot_, rho2 = std::sqrt(1 - rho_ * rho_);
   int S1;
-  double sdt = sqrt(dt);
+  double sdt = std::sqrt(dt);
   for (int i = 0; i <= Nstep; i++) {
     double z1 = random_normal();
     double z2 = rho_ * z1 + rho2 * random_normal();
-    S += S * sqrt(abs(V)) * sdt *
+    S += S * std::sqrt(std::abs(V)) * sdt *
          z1; // This line (S) must put BEFORE line (V)!!!
-    V += kappa_ * (theta_ - V) * dt + xi_ * sqrt(abs(V)) * sdt * z2 +
+    V += kappa_ * (theta_ - V) * dt + xi_ * std::sqrt(std::abs(V)) * sdt * z2 +
          0.25 * xi_ * xi_ * dt * (z2 * z2 - 1); // Milstein scheme
     S1 = interpolateF(times, forwards, i * dt) * S / spot_ * pr;
     if (!((S1 <= iUP) && (S1 >= iDOWN)))
@@ -861,25 +825,25 @@ int sVol::simulationHestonDNTdtS(vector<double> times, vector<double> forwards,
   }
   return 1;
 }
-int sVol::simulationHestonDNTdtE(vector<double> times, vector<double> forwards,
-                                 double maturity, double UP, double DOWN,
-                                 double dt) const {
+int sVol::simulationHestonDNTdtE(std::vector<double> times,
+                                 std::vector<double> forwards, double maturity,
+                                 double UP, double DOWN, double dt) const {
   int Nstep = maturity / dt;
   int pr = 1e6;
   int iUP = UP * pr;
   int iDOWN = DOWN * pr;
-  double V = var0_, S = spot_, rho2 = sqrt(1 - rho_ * rho_);
+  double V = var0_, S = spot_, rho2 = std::sqrt(1 - rho_ * rho_);
   int S1;
-  double sdt = sqrt(dt);
+  double sdt = std::sqrt(dt);
   for (int i = 0; i <= Nstep; i++) {
     double z1 = random_normal();
     double z2 = rho_ * z1 + rho2 * random_normal();
-    S += S * sqrt(abs(V)) * sdt *
+    S += S * std::sqrt(std::abs(V)) * sdt *
          z1; // This line (S) must put BEFORE line (V)!!!
     // V += kappa_*(theta_-V)*dt +xi_*sqrt(abs(V))*sdt*z2
     // +0.25*xi_*xi_*dt*(z2*z2-1);  //Milstein scheme
     V += kappa_ * (theta_ - V) * dt +
-         xi_ * sqrt(abs(V)) * sdt * z2; // Euler scheme
+         xi_ * std::sqrt(std::abs(V)) * sdt * z2; // Euler scheme
     S1 = interpolateF(times, forwards, i * dt) * S / spot_ * pr;
     if (!((S1 <= iUP) && (S1 >= iDOWN)))
       return 0;
@@ -887,22 +851,22 @@ int sVol::simulationHestonDNTdtE(vector<double> times, vector<double> forwards,
   return 1;
 }
 
-vector<double> sVol::simulationHestonUpnOut(vector<double> times,
-                                            vector<double> forwards,
-                                            double BARRIER) const {
+std::vector<double> sVol::simulationHestonUpnOut(std::vector<double> times,
+                                                 std::vector<double> forwards,
+                                                 double BARRIER) const {
 
   int N = times.size();
-  vector<double> pathF(N, 0.0);
+  std::vector<double> pathF(N, 0.0);
   if (BARRIER <= spot_)
     return pathF;
   int T = 0;
-  double V = var0_, S = spot_, rho2 = sqrt(1 - rho_ * rho_);
+  double V = var0_, S = spot_, rho2 = std::sqrt(1 - rho_ * rho_);
   double S1;
   for (int i = 0; i <= int(times[N - 1] / DT); i++) {
     double z1 = random_normal();
     double z2 = rho_ * z1 + rho2 * random_normal();
-    S += S * sqrt(abs(V)) * SDT * z1;
-    V += kappa_ * (theta_ - V) * DT + xi_ * sqrt(abs(V)) * SDT * z2 +
+    S += S * std::sqrt(std::abs(V)) * SDT * z1;
+    V += kappa_ * (theta_ - V) * DT + xi_ * std::sqrt(std::abs(V)) * SDT * z2 +
          0.25 * xi_ * xi_ * DT * (z2 * z2 - 1); // Milstein scheme
     S1 = interpolateF(times, forwards, i * DT) * S / spot_;
     if (S1 > BARRIER)
@@ -915,22 +879,22 @@ vector<double> sVol::simulationHestonUpnOut(vector<double> times,
   return pathF;
 }
 
-vector<double> sVol::simulationHestonDownnOut(vector<double> times,
-                                              vector<double> forwards,
-                                              double BARRIER) const {
+std::vector<double> sVol::simulationHestonDownnOut(std::vector<double> times,
+                                                   std::vector<double> forwards,
+                                                   double BARRIER) const {
 
   int N = times.size();
-  vector<double> pathF(N, 0.0);
+  std::vector<double> pathF(N, 0.0);
   if (BARRIER >= spot_)
     return pathF;
   int T = 0;
-  double V = var0_, S = spot_, rho2 = sqrt(1 - rho_ * rho_);
+  double V = var0_, S = spot_, rho2 = std::sqrt(1 - rho_ * rho_);
   double S1;
   for (int i = 0; i <= int(times[N - 1] / DT); i++) {
     double z1 = random_normal();
     double z2 = rho_ * z1 + rho2 * random_normal();
-    S += S * sqrt(abs(V)) * SDT * z1;
-    V += kappa_ * (theta_ - V) * DT + xi_ * sqrt(abs(V)) * SDT * z2 +
+    S += S * std::sqrt(std::abs(V)) * SDT * z1;
+    V += kappa_ * (theta_ - V) * DT + xi_ * std::sqrt(std::abs(V)) * SDT * z2 +
          0.25 * xi_ * xi_ * DT * (z2 * z2 - 1); // Milstein scheme
     S1 = interpolateF(times, forwards, i * DT) * S / spot_;
     if (S1 < BARRIER)

@@ -1,6 +1,8 @@
+import pytest
 import numpy as np
 
 import velesquant.native as m
+from velesquant.models import QuantoedCMSSpreadModel
 
 
 def test_quantoed_cms_spread_init_and_sim():
@@ -50,6 +52,54 @@ def test_quantoed_cms_spread_init_and_sim():
         corr,
     )
 
-    sim = qcs.simulationQuantoedCMSs(0.0, 0.0)
+    sim = qcs.simulate(0.0, 0.0)
     assert isinstance(sim, list)
     assert len(sim) == 2
+
+
+def test_quantoed_cms_spread_wrapper_init():
+    strikes = np.array([0.01, 0.02, 0.03]).reshape(-1, 1)
+    quotes = np.array([0.2, 0.2, 0.2]).reshape(-1, 1)
+    model = QuantoedCMSSpreadModel(
+        1.0,
+        10.0,
+        0.03,
+        8.5,
+        1.0,
+        0.97,
+        0.3,
+        0.15,
+        0.85,
+        strikes,
+        quotes,
+        "Price",
+        1.0,
+        10.0,
+        0.03,
+        8.5,
+        1.0,
+        0.97,
+        0.3,
+        0.15,
+        0.85,
+        strikes,
+        quotes,
+        "Price",
+        0.5,
+    )
+    assert model._cpp_model is not None
+
+    # Test to_dict
+    d = model.to_dict()
+    assert d["type"] == "QuantoedCMSSpreadModel"
+    assert d["corr"] == 0.5
+
+    # Test simulate (2 args)
+    sim = model.simulate(0.5, 0.5)
+    assert len(sim) > 0
+
+    with pytest.raises(NotImplementedError):
+        model.price(None, None)
+
+    with pytest.raises(NotImplementedError):
+        model.calibrate([], None)

@@ -6,12 +6,45 @@ using namespace std;
 #include <algorithm>
 
 #ifdef _MSC_VER
-#pragma warning(disable : 4996)
 #endif
 
 #define BUG 0
 
 namespace velesquant {
+
+const char *getLmdifMessage(int info) {
+  switch (info) {
+  case 0:
+    return "Improper input parameters.";
+  case 1:
+    return "Both actual and predicted relative reductions in the sum of "
+           "squares "
+           "are at most ftol.";
+  case 2:
+    return "Relative error between two consecutive iterates is at most xtol.";
+  case 3:
+    return "Conditions for info = 1 and info = 2 both hold.";
+  case 4:
+    return "The cosine of the angle between fvec and any column of the "
+           "jacobian is at most gtol in absolute value.";
+  case 5:
+    return "Number of calls to fcn has reached or exceeded maxfev.";
+  case 6:
+    return "ftol is too small. No further reduction in the sum of squares is "
+           "possible.";
+  case 7:
+    return "xtol is too small. No further improvement in the approximate "
+           "solution x is possible.";
+  case 8:
+    return "gtol is too small. fvec is orthogonal to the columns of the "
+           "jacobian to machine precision.";
+  default:
+    if (info < 0)
+      return "Execution terminated by user.";
+    return "Unknown info code.";
+  }
+}
+
 // Enormous number warning suppression for non-MSVC if needed, otherwise this
 // comment is just here. The warnings below are logic specific.
 

@@ -43,7 +43,7 @@ class SabrModel(Model):
         """
         Calculate implied volatility for a given strike.
         """
-        return self._cpp_model.impliedVol(strike)
+        return self._cpp_model.implied_vol(strike)
 
     def calibrate(
         self,
@@ -69,9 +69,11 @@ class SabrModel(Model):
         s_mat = np.array(strikes).reshape(-1, 1)
         q_mat = np.array(quotes).reshape(-1, 1)
 
-        target = native.CalibrationTarget.Volatility
-        if calibration_target.lower() == "price":
-            target = native.CalibrationTarget.Price
+        target = (
+            native.CalibrationTarget.Price
+            if calibration_target.capitalize() == "Price"
+            else native.CalibrationTarget.Volatility
+        )
 
         # Call C++ calibration
         # The C++ method returns a dict of parameters and updates internal state
@@ -87,3 +89,16 @@ class SabrModel(Model):
         self.rho = params["rho"]
 
         return self
+
+    def to_dict(self) -> dict:
+        """Serialize model state."""
+        return {
+            "type": "SabrModel",
+            "maturity": self.maturity,
+            "forward": self.forward,
+            "alpha": self.alpha,
+            "beta": self.beta,
+            "nu": self.nu,
+            "rho": self.rho,
+            "shift": self.shift,
+        }

@@ -71,3 +71,6 @@ test_output/
 build_tests/
 build_coverage/
 build_debug/
+build_core/
+.cache
+.agent

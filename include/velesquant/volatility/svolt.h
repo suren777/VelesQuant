@@ -39,9 +39,9 @@ public:
   ~sVolT() {};
 
   double hestonPriceTd(double maturity, double forward, double strike,
-                       std::string optType) const;
+                       OptionType optType) const;
   double hestonPriceTdCF(double maturity, double forward, double strike,
-                         std::string optType) const;
+                         OptionType optType) const;
 
   double getParameterVar0() const { return var0_; };
   double getParameterKappa() const { return kappa_; };
@@ -83,10 +83,12 @@ public:
 
   void calibratorLM(std::vector<double> maturities,
                     std::vector<double> forwards, std::vector<double> strikes,
-                    std::vector<double> marketQuotes, std::string quoteType);
+                    std::vector<double> marketQuotes,
+                    CalibrationTarget quoteType);
 
   //	void calibratorNM(vector<double> maturities, vector<double> forwards,
-  //vector<double> strikes, 		vector<double> marketQuotes, string quoteType);
+  // vector<double> strikes, 		vector<double> marketQuotes, string
+  // quoteType);
 
   std::vector<double> simulationHestonTd(std::vector<double> times,
                                          std::vector<double> forwards) const;

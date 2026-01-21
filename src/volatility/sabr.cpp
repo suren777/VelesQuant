@@ -5,18 +5,18 @@
 #include <cmath>
 #include <ql/quantlib.hpp>
 #include <velesquant/constants.h>
-#include <velesquant/volatility/lm.h>
-#include <velesquant/volatility/sabr.h>
 #include <velesquant/models/solver.h>
 #include <velesquant/models/utility.h>
+#include <velesquant/volatility/lm.h>
+#include <velesquant/volatility/sabr.h>
 
-using namespace std;
+// using namespace std;
 #include <memory>
 #include <velesquant/errors.h>
 #include <velesquant/models/utility.h>
 
-using namespace std;
-using namespace QuantLib;
+// using namespace std;
+// using namespace QuantLib;
 
 namespace velesquant {
 
@@ -59,8 +59,8 @@ double Sabr::normalVol(double K) const {
 
 double Sabr::Nvolb0(double K) const {
   double zeta = nu_ / alpha_ * (forward_ - K);
-  double xOfZeta =
-      log((sqrt(1 - rho_ * zeta + zeta * zeta) - rho_ + zeta) / (1 - rho_));
+  double xOfZeta = std::log(
+      (std::sqrt(1 - rho_ * zeta + zeta * zeta) - rho_ + zeta) / (1 - rho_));
   return alpha_ * zeta / xOfZeta *
          (1 + (COEFF_4 * rho_ * nu_ * alpha_ +
                COEFF_24 * (2 - 3 * rho_ * rho_) * nu_ * nu_) *
@@ -69,13 +69,13 @@ double Sabr::Nvolb0(double K) const {
 
 double Sabr::Nvolb(double K) const {
   double forwardBetaDiff =
-      pow(forward_ + shift_, beta_) - pow(K + shift_, beta_);
+      std::pow(forward_ + shift_, beta_) - std::pow(K + shift_, beta_);
   double forwardOneMinusBetaDiff =
-      pow(forward_ + shift_, 1 - beta_) - pow(K + shift_, 1 - beta_);
-  double logForwardOverStrike = log((forward_ + shift_) / (K + shift_));
+      std::pow(forward_ + shift_, 1 - beta_) - std::pow(K + shift_, 1 - beta_);
+  double logForwardOverStrike = std::log((forward_ + shift_) / (K + shift_));
   double zeta = nu_ / alpha_ * forwardOneMinusBetaDiff / (1 - beta_);
-  double xOfZeta =
-      log((sqrt(1 - rho_ * zeta + zeta * zeta) - rho_ + zeta) / (1 - rho_));
+  double xOfZeta = std::log(
+      (std::sqrt(1 - rho_ * zeta + zeta * zeta) - rho_ + zeta) / (1 - rho_));
   double baseTerm = alpha_ * (forward_ - K) * (1 - beta_) /
                     forwardOneMinusBetaDiff * zeta / xOfZeta;
   double betaCorrection =
@@ -90,10 +90,11 @@ double Sabr::Nvolb(double K) const {
 };
 
 double Sabr::Nvolb1(double K) const {
-  double logForwardPlusLogStrike = log(forward_ + shift_) + log(K + shift_);
+  double logForwardPlusLogStrike =
+      std::log(forward_ + shift_) + std::log(K + shift_);
   double zeta = nu_ / alpha_ * logForwardPlusLogStrike;
-  double xOfZeta =
-      log((sqrt(1 - rho_ * zeta + zeta * zeta) - rho_ + zeta) / (1 - rho_));
+  double xOfZeta = std::log(
+      (std::sqrt(1 - rho_ * zeta + zeta * zeta) - rho_ + zeta) / (1 - rho_));
   double baseTerm =
       alpha_ * (forward_ - K) / logForwardPlusLogStrike * zeta / xOfZeta;
   double volOfVolCorrection = 0.25 * rho_ * nu_ * alpha_ +
@@ -321,27 +322,9 @@ void Sabr::calibratorWithInitialATM(std::vector<double> strikes,
         ipvt.data(), qtf.data(), wa1.data(), wa2.data(), wa3.data(), wa4.data(),
         fcn);
 
-  //*   info is an integer output variable. if the user has terminated
-  // execution, info is set to the (negative)
-  //*     value of iflag. see description of fcn. otherwise, info is set as
-  // follows.
-  //	*     info = 0  improper input parameters.
-  //	*     info = 1  both actual and predicted relative reductions in the sum
-  // of squares are at most ftol.
-  //	*     info = 2  relative error between two consecutive iterates is at
-  // most xtol.
-  //	*     info = 3  conditions for info = 1 and info = 2 both hold.
-  //	*     info = 4  the cosine of the angle between fvec and any column of
-  // the jacobian is at most gtol in absolute value.
-  //	*     info = 5  number of calls to fcn has reached or exceeded maxfev.
-  //	*     info = 6  ftol is too small. no further reduction in the sum of
-  // squares is possible.
-  //	*     info = 7  xtol is too small. no further improvement in the
-  // approximate solution x is possible.
-  //	*     info = 8  gtol is too small. fvec is orthogonal to the columns of
-  // the jacobian to machine precision.
-
-  QL_ENSURE(info != 4, "SABR caliration fails with the info = " << info);
+  QL_ENSURE(info >= 1 && info <= 4,
+            "SABR Calibration Fails: " << getLmdifMessage(info)
+                                       << " (info=" << info << ")");
 
   // the below is output result
   setParameterNu(x[0]);
@@ -465,12 +448,12 @@ void Sabr::calibrator(std::vector<double> strikes,
 boost::math::normal_distribution<> stdnormal(0.0, 1.0);
 void Sabr::qutlTable() {
   int N = 1200;
-  vector<double> spots(N), qutls, cdfss;
+  std::vector<double> spots(N), qutls, cdfss;
   if (forward_ < 1.0)
     spots = grMesh(N);
   else
     spots = gsMesh(N);
-  vector<double> isp;
+  std::vector<double> isp;
 
   for (int i = 0; i < N; i++) {
     double cVal = getPremium(spots[i]);
@@ -483,7 +466,7 @@ void Sabr::qutlTable() {
     }
   }
   // sorting the cdf distribution in an increasing order
-  vector<double> scdfs;
+  std::vector<double> scdfs;
   asort(qutls, isp, cdfss);
   double current = qutls[0];
   int k = static_cast<int>(isp.size());
@@ -547,17 +530,18 @@ std::vector<double> Sabr::simulations(std::vector<double> correlatedRNs) {
   return spots;
 };
 
-int Sabr::amin(const vector<double> &values, int position) {
+int Sabr::amin(const std::vector<double> &values, int position) {
   auto it = std::min_element(values.begin() + position, values.end());
   return static_cast<int>(std::distance(values.begin(), it));
 };
 
-int Sabr::amax(const vector<double> &values, int position) {
+int Sabr::amax(const std::vector<double> &values, int position) {
   auto it = std::max_element(values.begin() + position, values.end());
   return static_cast<int>(std::distance(values.begin(), it));
 };
 
-void Sabr::asort(vector<double> &a, vector<double> &b, vector<double> &c) {
+void Sabr::asort(std::vector<double> &a, std::vector<double> &b,
+                 std::vector<double> &c) {
   int N = a.size();
   int imin = amin(a, 0);
 
@@ -575,48 +559,49 @@ void Sabr::asort(vector<double> &a, vector<double> &b, vector<double> &c) {
   }
 };
 
-vector<double> Sabr::gsMesh(int meshSize) {
-  vector<double> Mesh(meshSize);
+std::vector<double> Sabr::gsMesh(int meshSize) {
+  std::vector<double> Mesh(meshSize);
   double spotLeft = .7 * forward_;
   double spotRight = 1.4 * forward_;
   double meshSpacing = forward_ / 20.0;
   double spotMax = forward_ * 14.0;
-  double zMin = asinh(-spotLeft / meshSpacing);
+  double zMin = std::asinh(-spotLeft / meshSpacing);
   double zIntermediate = (spotRight - spotLeft) / meshSpacing;
-  double zMax = zIntermediate + asinh((spotMax - spotRight) / meshSpacing);
+  double zMax = zIntermediate + std::asinh((spotMax - spotRight) / meshSpacing);
   double deltaZ = (zMax - zMin) / meshSize;
   for (int i = 0; i < meshSize; i++) {
     double z = zMin + i * deltaZ;
     if (z < 0)
-      Mesh[i] = spotLeft + meshSpacing * sinh(z);
+      Mesh[i] = spotLeft + meshSpacing * std::sinh(z);
     else
       Mesh[i] = (z <= zIntermediate)
                     ? (spotLeft + meshSpacing * z)
-                    : (spotRight + meshSpacing * sinh(z - zIntermediate));
+                    : (spotRight + meshSpacing * std::sinh(z - zIntermediate));
   }
   return Mesh;
 };
 
-vector<double> Sabr::grMesh(int meshSize) {
-  vector<double> Mesh(meshSize);
+std::vector<double> Sabr::grMesh(int meshSize) {
+  std::vector<double> Mesh(meshSize);
   double rateMax = 1.0;
   double meshSpacing = rateMax / (meshSize * .9);
-  double start = asinh((-rateMax - forward_) / meshSpacing);
+  double start = std::asinh((-rateMax - forward_) / meshSpacing);
   double deltaX =
-      1.0 / meshSize * (asinh((rateMax - forward_) / meshSpacing) - start);
+      1.0 / meshSize * (std::asinh((rateMax - forward_) / meshSpacing) - start);
   for (int i = 0; i < meshSize; i++)
-    Mesh[i] = forward_ + meshSpacing * sinh(start + i * deltaX);
+    Mesh[i] = forward_ + meshSpacing * std::sinh(start + i * deltaX);
   return Mesh;
 };
 
 double Sabr::ATMvolPoly(double alpha) {
-  double a =
-      (pow(1 - beta_, 2) * maturity_) / (24 * pow(forward_, 2 - 2 * beta_));
-  double b = (rho_ * beta_ * nu_ * maturity_) / (4 * pow(forward_, 1 - beta_));
-  double c = (1 + (2 - 3 * pow(rho_, 2)) / (24) * nu_ * nu_ * maturity_);
-  double d = atmVol_ * pow(forward_, 1 - beta_);
+  double a = (std::pow(1 - beta_, 2) * maturity_) /
+             (24 * std::pow(forward_, 2 - 2 * beta_));
+  double b =
+      (rho_ * beta_ * nu_ * maturity_) / (4 * std::pow(forward_, 1 - beta_));
+  double c = (1 + (2 - 3 * std::pow(rho_, 2)) / (24) * nu_ * nu_ * maturity_);
+  double d = atmVol_ * std::pow(forward_, 1 - beta_);
 
-  return a * pow(alpha, 3) + b * pow(alpha, 2) + c * alpha - d; //=0
+  return a * std::pow(alpha, 3) + b * std::pow(alpha, 2) + c * alpha - d; //=0
 };
 
 double Sabr::ATMvolRoots(double lBound, double uBound, double tol) {
@@ -633,7 +618,7 @@ double Sabr::ATMvolRoots(double lBound, double uBound, double tol) {
     y = ATMvolPoly(alpha);
     if ((uBound - lBound) < tol / 10)
       Step++;
-  } while ((fabs(y - 0.0) > tol) && (Step < 50));
+  } while ((std::fabs(y - 0.0) > tol) && (Step < 50));
   return alpha;
 }
 } // namespace velesquant

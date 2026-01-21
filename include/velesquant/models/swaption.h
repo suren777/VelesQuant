@@ -3,15 +3,17 @@
 #ifndef SWAPTION_H
 #define SWAPTION_H
 
+#include <memory>
 #include <string>
-#include <velesquant/volatility/sabr.h>
+#include <velesquant/engines/swaption_engine.h>
+#include <velesquant/instruments/swaption.h>
 #include <velesquant/models/utility.h>
 #include <velesquant/types.h>
+#include <velesquant/volatility/sabr.h>
 
 namespace velesquant {
 
 // using namespace std; // REMOVED by refactor
-using namespace xlw;
 
 class swaption {
 public:
@@ -27,7 +29,7 @@ public:
            double beta, CellMatrix &strikes, CellMatrix &marketQuotes,
            CalibrationTarget quoteType, CellMatrix &initialParams);
 
-  ~swaption() { delete swaptionSABR_; };
+  ~swaption() = default;
 
   double swaptionFairValue(double strike,
                            OptionType callORput = OptionType::Call) const;
@@ -42,8 +44,9 @@ public:
   double getParameterRho() const;
 
 private:
-  double annuity_;
-  Sabr *swaptionSABR_;
+  std::shared_ptr<instruments::Swaption> instrument_;
+  std::shared_ptr<Sabr> model_;
+  std::shared_ptr<engines::SwaptionAnalyticEngine<Sabr>> engine_;
 };
 
 } // namespace velesquant

@@ -26,7 +26,7 @@ def test_sabr_calibration():
     ground_truth = native.Sabr(T, fwd, 0.5, true_alpha, true_nu, true_rho)
 
     strikes = [0.02, 0.025, 0.03, 0.035, 0.04]
-    vols = [ground_truth.impliedVol(k) for k in strikes]
+    vols = [ground_truth.implied_vol(k) for k in strikes]
 
     # Initialize a perturbed model
     model = SabrModel(maturity=T, forward=fwd, alpha=0.5, beta=0.5, nu=0.5, rho=0.0)

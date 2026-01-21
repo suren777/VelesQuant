@@ -3,12 +3,12 @@
 #include <algorithm>
 #include <string>
 #include <vector>
-#include <velesquant/volatility/sabr.h>
 #include <velesquant/models/utility.h>
 #include <velesquant/types.h>
+#include <velesquant/volatility/sabr.h>
 
-using namespace std;
-using namespace velesquant::xlw;
+// using namespace std;
+// using namespace velesquant::xlw;
 
 namespace velesquant {
 
@@ -31,7 +31,7 @@ cms::cms(double expirySR, double tenorSR, double forwardSR, double annuitySR,
     : discountCMS_(discountCMS) {
   Sabr *swaptionSABR = new Sabr(expirySR, forwardSR, beta);
   int m = strikes.RowsInStructure();
-  vector<double> theStrikes(m), theQuotes(m);
+  std::vector<double> theStrikes(m), theQuotes(m);
   for (int i = 0; i < m; ++i) {
     theStrikes[i] = strikes(i, 0).NumericValue();
     theQuotes[i] = marketQuotes(i, 0).NumericValue();
@@ -56,7 +56,7 @@ cms::cms(double expirySR, double tenorSR, double forwardSR, double freqSR,
     : discountCMS_(discountCMS) {
   Sabr *swaptionSABR = new Sabr(expirySR, forwardSR, beta);
   int m = strikes.RowsInStructure();
-  vector<double> theStrikes(m), theQuotes(m);
+  std::vector<double> theStrikes(m), theQuotes(m);
   for (int i = 0; i < m; ++i) {
     theStrikes[i] = strikes(i, 0).NumericValue();
     theQuotes[i] = marketQuotes(i, 0).NumericValue();
@@ -80,12 +80,12 @@ cms::cms(double expirySR, double tenorSR, double forwardSR, double annuitySR,
     : discountCMS_(discountCMS) {
   Sabr *swaptionSABR = new Sabr(expirySR, forwardSR, beta);
   int m = strikes.RowsInStructure();
-  vector<double> theStrikes(m), theQuotes(m);
+  std::vector<double> theStrikes(m), theQuotes(m);
   for (int i = 0; i < m; ++i) {
     theStrikes[i] = strikes(i, 0).NumericValue();
     theQuotes[i] = marketQuotes(i, 0).NumericValue();
   }
-  vector<double> theParams(3);
+  std::vector<double> theParams(3);
   theParams[0] = initialParams(0, 0).NumericValue();
   theParams[1] = initialParams(1, 0).NumericValue();
   theParams[2] = initialParams(2, 0).NumericValue();
@@ -133,10 +133,10 @@ double cms::convAdj(double expirySR, double tenorSR, double forwardSR,
   double durationReciprocal = 1.0 / tenorSR;
   double convexityCoeff =
       (discountCMS / annuitySR - durationReciprocal) / forwardSR;
-  if (atmVol * atmVol * expirySR < 1.0 * atan(1.0))
+  if (atmVol * atmVol * expirySR < 1.0 * std::atan(1.0))
     return forwardSR *
            (durationReciprocal +
-            convexityCoeff * forwardSR * exp(atmVol * atmVol * expirySR)) /
+            convexityCoeff * forwardSR * std::exp(atmVol * atmVol * expirySR)) /
            (durationReciprocal + convexityCoeff * forwardSR);
   else
     return forwardSR *
@@ -152,10 +152,11 @@ double cms::convAdjAlt(double expirySR, double tenorSR, double forwardSR,
   double numPeriods = tenorSR * freqSR;
   double forwardOverFreq = forwardSR / freqSR;
   double adjustmentFactor =
-      1 - forwardOverFreq *
-              (freqSR / freqCMS +
-               numPeriods / (pow(1.0 + forwardOverFreq, numPeriods) - 1.0)) /
-              (1.0 + forwardOverFreq);
+      1 -
+      forwardOverFreq *
+          (freqSR / freqCMS +
+           numPeriods / (std::pow(1.0 + forwardOverFreq, numPeriods) - 1.0)) /
+          (1.0 + forwardOverFreq);
   double convexityAdj =
       forwardSR * adjustmentFactor * atmVol * atmVol * expirySR;
   return forwardSR + convexityAdj;

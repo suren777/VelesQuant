@@ -38,15 +38,18 @@ class HestonModel(Model):
         """
         Price a European option using Heston semi-analytical formula.
         """
-        return self._cpp_model.hestonPrice(
-            maturity, forward, strike, option_type.lower()
+        native_type = (
+            native.OptionType.Call
+            if option_type.lower() == "call"
+            else native.OptionType.Put
         )
+        return self._cpp_model.price(maturity, forward, strike, native_type)
 
     def simulate(self, times: List[float], forwards: List[float]) -> List[float]:
         """
         Simulate Heston paths.
         """
-        return self._cpp_model.simulationHeston(times, forwards)
+        return self._cpp_model.simulate(times, forwards)
 
     def calibrate(
         self,
@@ -67,10 +70,13 @@ class HestonModel(Model):
         s_mat = np.array(strikes).reshape(-1, 1)
         q_mat = np.array(quotes).reshape(-1, 1)
 
-        # C++ expects std::string for quote type
-        params = self._cpp_model.calibrate(
-            m_mat, f_mat, s_mat, q_mat, calibration_target
+        # Map string to Enum
+        native_target = (
+            native.CalibrationTarget.Price
+            if calibration_target.capitalize() == "Price"
+            else native.CalibrationTarget.Volatility
         )
+        params = self._cpp_model.calibrate(m_mat, f_mat, s_mat, q_mat, native_target)
 
         # Update python attributes
         self.var0 = params["var0"]

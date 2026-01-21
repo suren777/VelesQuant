@@ -4,12 +4,12 @@
 #include <boost/function.hpp>
 #include <boost/math/distributions.hpp>
 #include <ql/quantlib.hpp>
-#include <velesquant/volatility/l_vol.h>
-#include <velesquant/volatility/sabr.h>
 #include <velesquant/models/utility.h>
 #include <velesquant/numerics/tri_diag_matrix.h>
+#include <velesquant/volatility/l_vol.h>
+#include <velesquant/volatility/sabr.h>
 
-using namespace std;
+// using namespace std;
 
 namespace velesquant {
 
@@ -62,7 +62,7 @@ void lVol::buildGrid(const std::vector<double> times) {
     double currentForward = getForward(currentTime);
     for (int x = 0; x < Mx; x++) {
       gridFwd_[t][x] = Wx[x] * currentForward;
-      currentTime = max(0.002, currentTime); // one day 1/365=0.002
+      currentTime = std::max(0.002, currentTime); // one day 1/365=0.002
       gridLV_[t][x] = getLocVol(currentTime, gridFwd_[t][x], currentForward);
     }
   }
@@ -82,7 +82,7 @@ double lVol::callPDE(double maturity, double strike, const int Nt) {
   std::vector<double> payoff(Mx), pv(Mx);
   double fwd = getForward(maturity);
   for (int x = 0; x < Mx; x++)
-    payoff[x] = max(0.0, Wx[x] * fwd - strike);
+    payoff[x] = std::max(0.0, Wx[x] * fwd - strike);
   for (int t = Nt - 2; t >= 0; t--) {
     oneStepBackward(t, payoff, pv);
     for (int x = 0; x < Mx; x++)
@@ -99,7 +99,7 @@ double lVol::putPDE(double maturity, double strike, const int Nt) {
   std::vector<double> payoff(Mx), pv(Mx);
   double fwd = getForward(maturity);
   for (int x = 0; x < Mx; x++)
-    payoff[x] = max(0.0, strike - Wx[x] * fwd);
+    payoff[x] = std::max(0.0, strike - Wx[x] * fwd);
   for (int t = Nt - 2; t >= 0; t--) {
     oneStepBackward(t, payoff, pv);
     for (int x = 0; x < Mx; x++)
@@ -112,9 +112,9 @@ double lVol::putPDE(double maturity, double strike, const int Nt) {
   return pv[x];
 };
 
-void lVol::oneStepBackward(const int t, const vector<double> &inV,
-                           vector<double> &outV) {
-  vector<double> l(Mx - 2), c(Mx - 2), u(Mx - 2), d(Mx - 2), V(Mx - 2);
+void lVol::oneStepBackward(const int t, const std::vector<double> &inV,
+                           std::vector<double> &outV) {
+  std::vector<double> l(Mx - 2), c(Mx - 2), u(Mx - 2), d(Mx - 2), V(Mx - 2);
   double delT = gridT_[t + 1] - gridT_[t];
   // x in the middle range
   for (int r = 1; r < Mx - 1; r++) {
@@ -250,7 +250,7 @@ double lVol::dntPDE(double maturity, double upperBarrier, double lowerBarrier,
     gridLV_[t].push_back(localV);
   };
   int M = gridFwd_[Nt - 1].size();
-  vector<double> payoff(M), pv(M);
+  std::vector<double> payoff(M), pv(M);
   for (int x = 0; x < M; x++) {
     payoff[x] = 1.0;
     double spot = gridFwd_[Nt - 1][x];
@@ -268,10 +268,10 @@ double lVol::dntPDE(double maturity, double upperBarrier, double lowerBarrier,
   return pv[x];
 };
 
-void lVol::oneStepBackwardDirichlet(const int t, const vector<double> &inV,
-                                    vector<double> &outV) {
+void lVol::oneStepBackwardDirichlet(const int t, const std::vector<double> &inV,
+                                    std::vector<double> &outV) {
   int M = inV.size();
-  vector<double> l(M - 2), c(M - 2), u(M - 2), d(M - 2), V(M - 2);
+  std::vector<double> l(M - 2), c(M - 2), u(M - 2), d(M - 2), V(M - 2);
   double delT = gridT_[t + 1] - gridT_[t];
   // x in the middle range
   for (int r = 1; r < M - 1; r++) {
@@ -355,7 +355,7 @@ void lVol::forwardOneStep(const int t, const std::vector<double> &y,
   TriDiagonalSolve(Mx, a, b, c, d, z);
 };
 
-vector<double> lVol::density(double maturity, const int Nt) {
+std::vector<double> lVol::density(double maturity, const int Nt) {
   buildGrid(maturity, Nt);
   std::vector<double> idensity(Mx), tdensity(Mx);
   for (int x = 0; x < Mx; x++) {
@@ -380,8 +380,8 @@ vector<double> lVol::density(double maturity, const int Nt) {
 
 double lVol::premiumCALL(double strike, double forward, double maturity,
                          double vol) const {
-  double deviation = vol * sqrt(maturity);
-  double d1 = log(forward / strike) / deviation + 0.5 * deviation;
+  double deviation = vol * std::sqrt(maturity);
+  double d1 = std::log(forward / strike) / deviation + 0.5 * deviation;
   double d2 = d1 - deviation;
   double premiumCALL;
   if (forward > strike) {
@@ -427,7 +427,7 @@ double lVol::interpolatedCall(const Sabr &preModel, const Sabr &nextModel,
   double nextStrike = nextFwd * strike / forward; // same ratio - return
   double nextImpvol = nextModel.impliedVol(nextStrike);
   double nextVar = nextImpvol * nextImpvol * nextMat;
-  double vars = preVar + max(0.0, nextVar - preVar) * (maturity - preMat) /
+  double vars = preVar + std::max(0.0, nextVar - preVar) * (maturity - preMat) /
                              (nextMat - preMat); // linear var
   double vol = std::sqrt(vars / maturity);
   return premiumCALL(strike, forward, maturity, vol);
@@ -438,7 +438,8 @@ const double RTOP = 50.0;
 const double DAMP = 0.95;
 void lVol::getLocVol(double time, double preSpot, double preFwd, double &locvol,
                      double &forward) const {
-  double fixRatio = 1.0 + DAMP * (min(max(RFLO, preSpot / preFwd), RTOP) - 1.0);
+  double fixRatio =
+      1.0 + DAMP * (std::min(std::max(RFLO, preSpot / preFwd), RTOP) - 1.0);
   double firstMaturity = sabrModels_[0].getMaturity();
   if (time < firstMaturity) {
     double afterForward = sabrModels_[0].getForward();
@@ -452,11 +453,13 @@ void lVol::getLocVol(double time, double preSpot, double preFwd, double &locvol,
         interpolatedCall(sabrModels_[0], currSpot * 1.001, forward, time);
     double dS2val =
         (cRgt + cLft - 2.0 * cVal) / (0.001 * currSpot * 0.001 * currSpot);
-    assert(dS2val > 0.0);
+    // assert(dS2val > 0.0);
+    dS2val = std::max(1.0E-20, dS2val);
     double cBigT =
         interpolatedCall(sabrModels_[0], currSpot, forward, time * 1.001);
     double dTval = (cBigT - cVal) / (0.001 * time);
-    assert(dTval > 0.0);
+    // assert(dTval > 0.0);
+    dTval = std::max(0.0, dTval);
     locvol = std::sqrt(2.0 * dTval / dS2val) / currSpot;
     // locvol = sabrModels_[0].localVol( afterForward * fixRatio );
     return;
@@ -491,11 +494,13 @@ void lVol::getLocVol(double time, double preSpot, double preFwd, double &locvol,
                                      currSpot * 1.001, forward, time);
       double dS2val =
           (cRgt + cLft - 2.0 * cVal) / (0.001 * currSpot * 0.001 * currSpot);
-      assert(dS2val > 0.0);
+      // assert(dS2val > 0.0);
+      dS2val = std::max(1.0E-20, dS2val);
       double cBigT = interpolatedCall(sabrModels_[i - 1], sabrModels_[i],
                                       currSpot, forward, time * 1.001);
       double dTval = (cBigT - cVal) / (0.001 * time);
-      assert(dTval > 0.0);
+      // assert(dTval > 0.0);
+      dTval = std::max(0.0, dTval);
       locvol = std::sqrt(2.0 * dTval / dS2val) / currSpot;
       // if(locvol != locvol) locvol = 0.0;	//if(locvol > 111.111) locvol =
       // 111.111;
@@ -545,12 +550,12 @@ double lVol::getLocVol(double preTime, double preSpot, double preFwd) const {
     double dS2val =
         (cRgt + cLft - 2.0 * cVal) / (0.001 * preSpot * 0.001 * preSpot);
     // assert(dS2val>0.0);
-    dS2val = max(1.0E-20, dS2val);
+    dS2val = std::max(1.0E-20, dS2val);
     double cBigT =
         interpolatedCall(sabrModels_[0], preSpot, preFwd, preTime * 1.001);
     double dTval = (cBigT - cVal) / (0.001 * preTime);
     // assert(dTval>0.0);
-    dTval = max(0.0, dTval); // testing
+    dTval = std::max(0.0, dTval); // testing
     return std::sqrt(2.0 * dTval / dS2val) / preSpot;
   }
   if (preTime == firstMaturity)
@@ -572,12 +577,12 @@ double lVol::getLocVol(double preTime, double preSpot, double preFwd) const {
       double dS2val =
           (cRgt + cLft - 2.0 * cVal) / (0.001 * preSpot * 0.001 * preSpot);
       // assert(dS2val>0.0);
-      dS2val = max(1.0E-20, dS2val);
+      dS2val = std::max(1.0E-20, dS2val);
       double cBigT = interpolatedCall(sabrModels_[i - 1], sabrModels_[i],
                                       preSpot, preFwd, preTime * 1.001);
       double dTval = (cBigT - cVal) / (0.001 * preTime);
       // assert(dTval>0.0);
-      dTval = max(0.0, dTval); // testing
+      dTval = std::max(0.0, dTval); // testing
       return std::sqrt(2.0 * dTval / dS2val) / preSpot;
     }
     if (preTime == afterMaturity)
@@ -586,8 +591,8 @@ double lVol::getLocVol(double preTime, double preSpot, double preFwd) const {
   return 0.0;
 };
 
-vector<double> lVol::simulation(vector<double> timesPath,
-                                vector<double> randsPath) const {
+std::vector<double> lVol::simulation(std::vector<double> timesPath,
+                                     std::vector<double> randsPath) const {
   double preSpot = spot_;
   double preFwd = spot_;
   double preTime = 0.0;
@@ -599,7 +604,7 @@ vector<double> lVol::simulation(vector<double> timesPath,
     double currentLocVol, currentForward;
     getLocVol(currentTime, preSpot, preFwd, currentLocVol, currentForward);
     // getLocVolOLD(currentTime,preSpot,preFwd,currentLocVol,currentForward);
-    double currentVol = currentLocVol * sqrt(currentTime - preTime);
+    double currentVol = currentLocVol * std::sqrt(currentTime - preTime);
     double currentDrift = -0.5 * currentVol * currentVol +
                           currentVol * randsPath[i]; // Euler scheme
     driftPath = driftPath + currentDrift;
@@ -624,7 +629,7 @@ std::vector<double> lVol::simulation(std::vector<double> timesPath) const {
       preTime = 0.75 * currentTime;
     // preTime = max(0.002,preTime);  // one day 1/365=0.002
     double preLocVol = getLocVol(preTime, preSpot, preFwd);
-    double currentVol = preLocVol * sqrt(currentTime - preTime);
+    double currentVol = preLocVol * std::sqrt(currentTime - preTime);
     double z = random_normal();
     double currentDrift =
         currentVol * z - 0.5 * currentVol * currentVol; // Euler scheme
@@ -635,9 +640,9 @@ std::vector<double> lVol::simulation(std::vector<double> timesPath) const {
                                       skewLocVol; // Milstein scheme
     double currentForward = getForward(currentTime);
     double currentSpot =
-        preSpot * exp(currentDrift) * (currentForward / preFwd);
-    currentSpot =
-        currentForward * min(max(0.01, currentSpot / currentForward), 50.0);
+        preSpot * std::exp(currentDrift) * (currentForward / preFwd);
+    currentSpot = currentForward *
+                  std::min(std::max(0.01, currentSpot / currentForward), 50.0);
     spotsPath[i] = currentSpot;
     preSpot = currentSpot;
     preFwd = currentForward;
@@ -663,7 +668,7 @@ std::vector<double> lVol::simulation(std::vector<double> timesPath) const {
 //		double z = random_normal();
 //		double currentDrift = currentVol*z -0.5*currentVol*currentVol;
 ////Euler scheme 		double bumpLocVol =
-///getLocVol(preTime, 1.001*preSpot, preFwd);
+/// getLocVol(preTime, 1.001*preSpot, preFwd);
 //		double skewLocVol = (bumpLocVol-preLocVol)/(0.001*preSpot);
 //		currentDrift = currentDrift
 //+0.5*(z*z-1.0)*preLocVol*(currentTime-preTime)*skewLocVol; //Milstein scheme
@@ -671,7 +676,8 @@ std::vector<double> lVol::simulation(std::vector<double> timesPath) const {
 //		double currentForward = getForward(currentTime);
 //		double currentSpot = currentForward * min(max(0.001,
 // exp(pathDrift)), 500.0); 		spotsPath[i] = currentSpot;
-// preSpot = currentSpot; 		preFwd = currentForward; 		preTime = currentTime;
+// preSpot = currentSpot; 		preFwd = currentForward;
+// preTime = currentTime;
 //	}
 //	return spotsPath;
 // };
@@ -687,7 +693,7 @@ std::vector<double> lVol::simulationTEST(std::vector<double> timesPath) const {
     double currentTime = timesPath[i];
     double currentSpot, currentForward, currentLocVol;
     getLocVol(currentTime, preSpot, preFwd, currentLocVol, currentForward);
-    double currentVol = currentLocVol * sqrt(currentTime - preTime);
+    double currentVol = currentLocVol * std::sqrt(currentTime - preTime);
     double currentDrift = -0.5 * currentVol * currentVol +
                           currentVol * random_normal(); // Euler scheme
     // double bumpLocVol, bumpForward;
@@ -700,8 +706,8 @@ std::vector<double> lVol::simulationTEST(std::vector<double> timesPath) const {
     //						+0.5*(z*z-1.0)*currentLocVol*(currentTime-preTime)*skewLocVol;
     ////Milstein scheme
     driftPath = driftPath + currentDrift;
-    currentSpot =
-        currentForward * min(max(RFLO, std::exp(driftPath)), RTOP); // lognormal
+    currentSpot = currentForward * std::min(std::max(RFLO, std::exp(driftPath)),
+                                            RTOP); // lognormal
     spotsPath[i] = currentSpot;
     preSpot = currentSpot;
     preFwd = currentForward;

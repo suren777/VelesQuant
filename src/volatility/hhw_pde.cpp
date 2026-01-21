@@ -1,10 +1,10 @@
 #include <velesquant/volatility/hhw_pde.h>
-using namespace std;
+// using namespace std;
 #include <algorithm>
 
 namespace velesquant {
 
-double asinh(double a) { return log(a + sqrt(a * a + 1.0)); }
+double asinh(double a) { return std::log(a + std::sqrt(a * a + 1.0)); }
 
 double HHWPDE::deltax(Vdoub aVec, int i) {
   if ((i - 1) < 0)
@@ -124,11 +124,11 @@ Vdoub HHWPDE::gsMesh() {
   for (int i = 0; i <= Ms_; i++) {
     double z = zmin + i * dz;
     if ((z >= zmin) && (z < 0))
-      Mesh[i] = Sleft + d1 * sinh(z);
+      Mesh[i] = Sleft + d1 * std::sinh(z);
     else if ((z >= 0) && (z <= zint))
       Mesh[i] = Sleft + d1 * z;
     else
-      Mesh[i] = Sright + d1 * sinh(z - zint);
+      Mesh[i] = Sright + d1 * std::sinh(z - zint);
   }
   return Mesh;
 };
@@ -139,7 +139,7 @@ Vdoub HHWPDE::gvMesh() {
   double d2 = Vmax_ / 500.0;
   double dn = 1.0 / Mv_ * asinh(Vmax_ / d2);
   for (int i = 0; i <= Mv_; i++)
-    Mesh[i] = d2 * sinh(i * dn);
+    Mesh[i] = d2 * std::sinh(i * dn);
   return Mesh;
 };
 
@@ -150,7 +150,7 @@ Vdoub HHWPDE::grMesh() {
   double start = asinh((-Rmax_ - r0_) / d3);
   double dx = 1 / Mr_ * (asinh((Rmax_ - r0_) / d3) - start);
   for (int i = 0; i <= Mv_; i++)
-    Mesh[i] = r0_ + d3 * sinh(start + i * dx);
+    Mesh[i] = r0_ + d3 * std::sinh(start + i * dx);
   return Mesh;
 };
 
@@ -170,9 +170,9 @@ void HHWPDE::A0Ug(Vdoub &Uin, Vdoub &Uout) {
         Uout[i + Mv_ * j + Mv_ * Ms_ * k] =
             rho12_ * sigma1_ * vM_[j] * sM_[k] *
                 dudxdy(vM_, sM_, Uin, i, j, k, 1) +
-            rho13_ * sigma2_ * sM_[k] * sqrt(vM_[j]) *
+            rho13_ * sigma2_ * sM_[k] * std::sqrt(vM_[j]) *
                 dudxdy(rM_, sM_, Uin, i, j, k, 3) +
-            rho23_ * sigma1_ * sigma2_ * sqrt(vM_[j]) *
+            rho23_ * sigma1_ * sigma2_ * std::sqrt(vM_[j]) *
                 dudxdy(rM_, vM_, Uin, i, j, k, 2);
 };
 double HHWPDE::dudxdy(Vdoub &a, Vdoub &b, Vdoub &U, int i, int j, int k,

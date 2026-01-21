@@ -1,19 +1,20 @@
 """Tests for Fixed Income PDE Solvers (HWPDE, ShortRate1FPDE, ShortRate2FPDE)."""
 
 from velesquant import HWPDE, ShortRate1FPDE, ShortRate2FPDE
+from velesquant.native import HullWhiteModel, ShortRate1FModel, ShortRate2FModel
 
 
 def test_hwpde_binding():
     """Test that HWPDE can be instantiated."""
     # Parameters for Hull-White PDE
-    R0 = 0.03
     kappa = 0.05
     timeSigmas = [0.5, 1.0, 2.0]
     sigmas = [0.01, 0.012, 0.015]
-    timeThetas = [0.5, 1.0, 2.0]
-    thetas = [0.03, 0.035, 0.04]
+    time_dfs = [0.5, 1.0, 2.0]
+    dfs = [0.98, 0.95, 0.9]
 
-    hwpde = HWPDE(R0, kappa, timeSigmas, sigmas, timeThetas, thetas)
+    model = HullWhiteModel(kappa, timeSigmas, sigmas, time_dfs, dfs)
+    hwpde = HWPDE(model)
     assert hwpde is not None
 
 
@@ -23,13 +24,14 @@ def test_hwpde_swaption():
     kappa = 0.05
     timeSigmas = [1.0, 2.0, 5.0]
     sigmas = [0.01, 0.012, 0.015]
-    timeThetas = [1.0, 2.0, 5.0]
-    thetas = [0.03, 0.035, 0.04]
+    time_dfs = [0.0, 0.5, 1.0, 5.0]
+    dfs = [1.0, 0.99, 0.95, 0.80]
 
-    hwpde = HWPDE(R0, kappa, timeSigmas, sigmas, timeThetas, thetas)
+    model = HullWhiteModel(kappa, timeSigmas, sigmas, time_dfs, dfs)
+    hwpde = HWPDE(model)
 
     # Price a 1Y into 5Y swaption
-    price = hwpde.pricingSwaption(1.0, 5.0, 0.03, 0.5)
+    price = hwpde.price_swaption(1.0, 5.0, 0.03, 0.5)
     assert isinstance(price, float)
     # Swaption price should be positive
     assert price >= 0.0
@@ -44,12 +46,11 @@ def test_short_rate_1f_pde_binding():
     gamma = 1.0
     timeSigmas = [1.0, 2.0]
     sigmas = [0.01, 0.012]
-    timeThetas = [1.0, 2.0]
-    thetas = [0.03, 0.035]
+    # timeThetas = [1.0, 2.0]
+    # thetas = [0.03, 0.035]
 
-    sr1f = ShortRate1FPDE(
-        R0, kappa, alpha, beta, gamma, timeSigmas, sigmas, timeThetas, thetas
-    )
+    model = ShortRate1FModel(R0, kappa, alpha, beta, gamma, timeSigmas, sigmas)
+    sr1f = ShortRate1FPDE(model)
     assert sr1f is not None
 
 
@@ -65,7 +66,8 @@ def test_short_rate_2f_pde_binding():
     timeAlphas = [1.0, 2.0]
     alphas = [0.03, 0.035]
 
-    sr2f = ShortRate2FPDE(
+    # No R0
+    model = ShortRate2FModel(
         kappa1,
         kappa2,
         lam,
@@ -76,4 +78,5 @@ def test_short_rate_2f_pde_binding():
         timeAlphas,
         alphas,
     )
+    sr2f = ShortRate2FPDE(model)
     assert sr2f is not None
