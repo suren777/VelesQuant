@@ -58,8 +58,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        # macos-13 is x86_64 (deprecated), macos-14 is arm64 (M1/M2)
-        # using macos-15-intel for x86_64 support
         os: [macos-15-intel, macos-14, ubuntu-latest]
 
     steps:
@@ -131,27 +129,18 @@ jobs:
             yum install -y epel-release &&
             yum install -y ccache &&
             yum install -y wget tar gzip gcc-c++ make &&
-            mkdir -p /host/boost-cache/include &&
             if [ -d "/host/boost-cache/include/boost" ]; then
                 echo "Restoring Boost from cache..." &&
                 cp -r /host/boost-cache/* /usr/local/
             else
-                sh /project/scripts/ci_install_boost.sh
+                echo "Boost cache not found on host!" && exit 1
             fi &&
             yum install -y eigen3-devel &&
             if [ -f "/host/quantlib-cache/lib/libQuantLib.a" ]; then
                 echo "Restoring QuantLib from cache..." &&
                 cp -r /host/quantlib-cache/* /usr/local/
             else
-                wget -q https://github.com/lballabio/QuantLib/releases/download/v1.41/QuantLib-1.41.tar.gz || exit 1 &&
-                tar xzf QuantLib-1.41.tar.gz || { echo "Failed to extract QuantLib archive"; exit 1; } &&
-                cd QuantLib-1.41 &&
-                ./configure --disable-shared --prefix=/usr/local --enable-std-classes &&
-                make -j4 &&
-                make install &&
-                echo "Saving QuantLib to cache..." &&
-                mkdir -p /host/quantlib-cache &&
-                cp -r /usr/local/lib /usr/local/include /host/quantlib-cache/
+                echo "QuantLib cache not found on host!" && exit 1
             fi
           CMAKE_ARGS: ${{ env.CMAKE_ARGS }} -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
