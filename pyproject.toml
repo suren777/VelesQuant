@@ -14,8 +14,8 @@ requires-python = ">=3.11"
 dependencies = [
     "numpy",
 ]
-license = "MIT"
-license-files = ["LICENSE"]
+license = { text = "MIT" }
+
 keywords = ["finance", "valuation", "quantitative", "pde", "volatility", "options", "quantlib", "pybind11"]
 classifiers = [
     "Development Status :: 4 - Beta",
