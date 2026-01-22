@@ -2,6 +2,7 @@
 #define TERMSTRUCTURE_H
 
 #include <ql/quantlib.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace velesquant {
 
