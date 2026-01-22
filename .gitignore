@@ -75,3 +75,4 @@ build_core/
 .cache
 .agent
 *.whlsrc/velesquant/_version.py
+src/velesquant/_version.py

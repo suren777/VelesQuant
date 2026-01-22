@@ -268,7 +268,7 @@ class HullWhiteModel(Model):
         return 0.0
 
     def _price_bond(self, instrument: Bond, curve: DiscountCurve) -> float:
-        model = self._create_native_objects(curve)
+        model, _ = self._create_native_objects(curve)
 
         if isinstance(instrument, ZeroCouponBond):
             return model.zero_coupon(instrument.maturity)
