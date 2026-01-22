@@ -90,19 +90,20 @@ public:
 
     int ns1 = sigma1s_.size();
     int ns2 = sigma2s_.size();
-    int n = ns1 + ns2 + 3;    // no. of model volatility term paremeters
-    std::vector<double> x(n); // initial estimate of parameters vector
+    int n_params = ns1 + ns2 + 3; // no. of model volatility term paremeters
+    std::vector<double> x_params(
+        n_params); // initial estimate of parameters vector
     for (int i = 0; i < ns1; i++)
-      x[i] = sigma1s_[i]; // sigma1s initial value
+      x_params[i] = sigma1s_[i]; // sigma1s initial value
     for (int i = 0; i < ns2; i++)
-      x[ns1 + i] = sigma2s_[i]; // sigma2s initial value
-    x[n - 1] = kappa1_;         // kappa1 initial value
-    x[n - 2] = kappa2_;         // kappa2 initial value
-    x[n - 3] = lambda_;         // lambda initial value
-    int m = quoteSwap_.size();  // no. of observations
-    QL_ENSURE(m >= n, "too much freedom in Calibration");
+      x_params[ns1 + i] = sigma2s_[i]; // sigma2s initial value
+    x_params[n_params - 1] = kappa1_;  // kappa1 initial value
+    x_params[n_params - 2] = kappa2_;  // kappa2 initial value
+    x_params[n_params - 3] = lambda_;  // lambda initial value
+    int m_obs = quoteSwap_.size();     // no. of observations
+    QL_ENSURE(m_obs >= n_params, "too much freedom in Calibration");
 
-    std::vector<double> fvec(m);
+    std::vector<double> fvec_vec(m_obs);
     // Default parameters for ShortRate2FPDE
     double ftol = 1e-5;
     double xtol = 1e-5;
@@ -121,42 +122,43 @@ public:
     if (optimizer_params.count("epsfcn"))
       epsfcn = optimizer_params.at("epsfcn");
 
-    std::vector<double> diag(n);
+    std::vector<double> diag(n_params);
     int mode = 1;
     double factor = 1;
     int nprint = 0;
     int info = 0;
     int nfev = 0;
-    std::vector<double> fjac(m * n);
-    int ldfjac = m;
-    std::vector<int> ipvt(n);
-    std::vector<double> qtf(n);
-    std::vector<double> wa1(n);
-    std::vector<double> wa2(n);
-    std::vector<double> wa3(n);
-    std::vector<double> wa4(m);
+    std::vector<double> fjac(m_obs * n_params);
+    int ldfjac = m_obs;
+    std::vector<int> ipvt(n_params);
+    std::vector<double> qtf(n_params);
+    std::vector<double> wa1(n_params);
+    std::vector<double> wa2(n_params);
+    std::vector<double> wa3(n_params);
+    std::vector<double> wa4(m_obs);
 
     velesquant::lmfcn fcn = [this](int m, int n, double *x, double *fvec,
                                    int *iflag) {
       this->objFcnCalibrator(m, n, x, fvec, iflag);
     };
 
-    velesquant::lmdif(m, n, x.data(), fvec.data(), ftol, xtol, gtol, maxfev,
-                      epsfcn, diag.data(), mode, factor, nprint, &info, &nfev,
-                      fjac.data(), ldfjac, ipvt.data(), qtf.data(), wa1.data(),
-                      wa2.data(), wa3.data(), wa4.data(), fcn);
+    velesquant::lmdif(m_obs, n_params, x_params.data(), fvec_vec.data(), ftol,
+                      xtol, gtol, maxfev, epsfcn, diag.data(), mode, factor,
+                      nprint, &info, &nfev, fjac.data(), ldfjac, ipvt.data(),
+                      qtf.data(), wa1.data(), wa2.data(), wa3.data(),
+                      wa4.data(), fcn);
 
     QL_ENSURE(info >= 1 && info <= 4,
               "Model Calibration Fails (info=" + std::to_string(info) + ")");
 
     // Update local members
     for (int i = 0; i < ns1; i++)
-      sigma1s_[i] = std::fabs(x[i]);
+      sigma1s_[i] = std::fabs(x_params[i]);
     for (int i = 0; i < ns2; i++)
-      sigma2s_[i] = std::fabs(x[ns1 + i]);
-    kappa1_ = x[n - 1];
-    kappa2_ = x[n - 2];
-    lambda_ = x[n - 3];
+      sigma2s_[i] = std::fabs(x_params[ns1 + i]);
+    kappa1_ = x_params[n_params - 1];
+    kappa2_ = x_params[n_params - 2];
+    lambda_ = x_params[n_params - 3];
 
     // Update Model
     model_->setKappa1(kappa1_);
@@ -441,7 +443,8 @@ private:
     };
   }
 
-  void objFcnCalibrator(int m, int n, double *x, double *fvec, int *iflag) {
+  void objFcnCalibrator(int m, int n, double *x, double *fvec,
+                        int * /*iflag*/) {
     int ns1 = sigma1s_.size();
     int ns2 = sigma2s_.size();
     for (int i = 0; i < ns1; i++)

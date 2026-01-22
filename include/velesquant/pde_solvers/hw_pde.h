@@ -572,7 +572,7 @@ private:
     }
   }
 
-  void objFcnCalibration(int m, int n, double *x, double *fvec, int *iflag,
+  void objFcnCalibration(int m, int n, double *x, double *fvec, int * /*iflag*/,
                          double *lb, double *ub) {
     double penalty = pen_fun(x, lb, ub, n);
     for (int i = 0; i < n - 1; i++)

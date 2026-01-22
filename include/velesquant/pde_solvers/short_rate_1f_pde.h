@@ -368,27 +368,27 @@ public:
 
     // Calibration Loop
     int ns = sigmas_.size();
-    int n = ns + 1;
-    std::vector<double> x(n);
+    int n_params = ns + 1;
+    std::vector<double> x_params(n_params);
     for (int i = 0; i < ns; i++)
-      x[i] = sigmas_[i];
+      x_params[i] = sigmas_[i];
 
     // Kappa Calibration
     calibrateKappa();
 
-    x[n - 1] = alpha_ / 1000; // Beta initial guess related
-    int m = quoteSwap_.size();
-    QL_ENSURE(m >= n, "too much freedom in Calibration");
+    x_params[n_params - 1] = alpha_ / 1000; // Beta initial guess related
+    int m_obs = quoteSwap_.size();
+    QL_ENSURE(m_obs >= n_params, "too much freedom in Calibration");
 
-    for (int i = 0; i < m; i++)
+    for (int i = 0; i < m_obs; i++)
       quoteSwap_[i].Value = swaptionATM(
           quoteSwap_[i].Expiry, quoteSwap_[i].Tenor, quoteSwap_[i].VolATM);
 
-    std::vector<double> fvec(m);
+    std::vector<double> fvec_vec(m_obs);
     int info = 0;
-    std::vector<double> diag(n), fjac(m * n), qtf(n), wa1(n), wa2(n), wa3(n),
-        wa4(m);
-    std::vector<int> ipvt(n);
+    std::vector<double> diag(n_params), fjac(m_obs * n_params), qtf(n_params),
+        wa1(n_params), wa2(n_params), wa3(n_params), wa4(m_obs);
+    std::vector<int> ipvt(n_params);
     int nfev = 0;
 
     lmfcn fcn = [this](int m, int n, double *x, double *fvec, int *iflag) {
@@ -414,17 +414,18 @@ public:
       epsfcn = optimizer_params.at("epsfcn");
 
     in_calibration_ = true;
-    lmdif(m, n, x.data(), fvec.data(), ftol, xtol, gtol, maxfev, epsfcn,
-          diag.data(), 1, 1.0, 0, &info, &nfev, fjac.data(), m, ipvt.data(),
-          qtf.data(), wa1.data(), wa2.data(), wa3.data(), wa4.data(), fcn);
+    lmdif(m_obs, n_params, x_params.data(), fvec_vec.data(), ftol, xtol, gtol,
+          maxfev, epsfcn, diag.data(), 1, 1.0, 0, &info, &nfev, fjac.data(),
+          m_obs, ipvt.data(), qtf.data(), wa1.data(), wa2.data(), wa3.data(),
+          wa4.data(), fcn);
     in_calibration_ = false;
 
     QL_ENSURE(info >= 1 && info <= 4,
               "Model Calibration Fails (info=" + std::to_string(info) + ")");
 
     for (int i = 0; i < ns; i++)
-      sigmas_[i] = std::fabs(x[i]);
-    beta_ = (alpha_ - 1e-32) * std::sin(x[n - 1]) / 500;
+      sigmas_[i] = std::fabs(x_params[i]);
+    beta_ = (alpha_ - 1e-32) * std::sin(x_params[n_params - 1]) / 500;
 
     // Update Model
     model_->setVolatilityStructure(timeSigmas_, sigmas_);
@@ -780,7 +781,8 @@ private:
     }
   }
 
-  void objFcnCalibrator(int m, int n, double *x, double *fvec, int *iflag) {
+  void objFcnCalibrator(int m, int n, double *x, double *fvec,
+                        int * /*iflag*/) {
     if (in_calibration_) {
       int ns = sigmas_.size();
       for (int i = 0; i < ns; i++)

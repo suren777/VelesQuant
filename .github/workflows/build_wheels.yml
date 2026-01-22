@@ -31,20 +31,20 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ci_cache/boost
-          key: boost-1.83.0-manylinux2014-v3-${{ hashFiles('scripts/ci_install_boost.sh') }}
+          key: boost-1.83.0-manylinux2014-v4-${{ hashFiles('scripts/ci_install_boost.sh') }}
 
       - name: Cache QuantLib
         id: cache-quantlib
         uses: actions/cache@v4
         with:
           path: ci_cache/quantlib
-          key: quantlib-v1.41-manylinux2014-v3-${{ hashFiles('scripts/ci_install_quantlib.sh') }}
+          key: quantlib-v1.41-manylinux2014-v4-${{ hashFiles('scripts/ci_install_quantlib.sh') }}
 
       - name: Cache ccache
         uses: actions/cache@v4
         with:
           path: ci_cache/ccache
-          key: ccache-${{ runner.os }}-v3-${{ hashFiles('.github/workflows/build_wheels.yml') }}
+          key: ccache-${{ runner.os }}-v4-${{ hashFiles('.github/workflows/build_wheels.yml') }}
 
       - name: Install dependencies (macOS)
         if: runner.os == 'macOS'
