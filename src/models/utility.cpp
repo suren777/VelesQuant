@@ -1,4 +1,3 @@
-
 #include <velesquant/models/utility.h>
 
 #include <algorithm>
@@ -7,6 +6,7 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/normal_distribution.hpp>
 #include <boost/random/variate_generator.hpp>
+#include <cmath>
 #include <ql/math/matrixutilities/choleskydecomposition.hpp>
 #include <ql/quantlib.hpp>
 #include <string>

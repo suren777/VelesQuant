@@ -16,8 +16,45 @@ on:
   workflow_dispatch:
 
 jobs:
+prepare_deps:
+    name: Prepare dependencies
+    runs-on: ubuntu-latest
+    outputs:
+      deps-artifact: deps-ready
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Boost & QuantLib (CI)
+        run: |
+          mkdir -p ci_cache/boost ci_cache/quantlib
+          mkdir -p /tmp/boost-cache
+          sudo mkdir -p /host
+          sudo ln -s $(pwd)/ci_cache/boost /host/boost-cache
+          
+          sh ./scripts/ci_install_boost.sh
+          
+          # QuantLib
+          wget -q https://github.com/lballabio/QuantLib/releases/download/v1.41/QuantLib-1.41.tar.gz
+          tar xzf QuantLib-1.41.tar.gz
+          cd QuantLib-1.41
+          ./configure --disable-shared --prefix=/usr/local --enable-std-classes
+          make -j$(nproc)
+          sudo make install
+          cd ..
+          
+          # Copy QuantLib results into ci_cache for upload
+          mkdir -p ci_cache/quantlib/include
+          cp -r /usr/local/include/ql ci_cache/quantlib/include/ || true
+          mkdir -p ci_cache/quantlib/lib
+          cp -r /usr/local/lib/libQuantLib* ci_cache/quantlib/lib/ || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deps-cache
+          path: ci_cache
+
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
+    needs: [prepare_deps]
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -27,6 +64,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Download deps artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: deps-cache
+          path: ./ci_cache
 
       - name: Install dependencies (macOS)
         if: runner.os == 'macOS'
@@ -48,7 +91,7 @@ jobs:
           # Provide CMake args so FindOpenMP can pick up the flags on macOS
           echo "CMAKE_ARGS=-DOpenMP_C_FLAGS='-Xpreprocessor -fopenmp -I$LIBOMP_DIR/include' -DOpenMP_CXX_FLAGS='-Xpreprocessor -fopenmp -I$LIBOMP_DIR/include' -DOpenMP_C_LIB_NAMES='omp' -DOpenMP_CXX_LIB_NAMES='omp'" >> $GITHUB_ENV
 
-      - name: Create Cache Directory
+      - name: Create Cache Directory (Ensure exists)
         run: |
           mkdir -p ci_cache/quantlib
           mkdir -p ci_cache/boost
@@ -88,7 +131,13 @@ jobs:
             yum install -y epel-release &&
             yum install -y ccache &&
             yum install -y wget tar gzip gcc-c++ make &&
-            sh /project/scripts/ci_install_boost.sh &&
+            mkdir -p /host/boost-cache/include &&
+            if [ -d "/host/boost-cache/include/boost" ]; then
+                echo "Restoring Boost from cache..." &&
+                cp -r /host/boost-cache/* /usr/local/
+            else
+                sh /project/scripts/ci_install_boost.sh
+            fi &&
             yum install -y eigen3-devel &&
             if [ -f "/host/quantlib-cache/lib/libQuantLib.a" ]; then
                 echo "Restoring QuantLib from cache..." &&
@@ -97,7 +146,7 @@ jobs:
                 wget -q https://github.com/lballabio/QuantLib/releases/download/v1.41/QuantLib-1.41.tar.gz || exit 1 &&
                 tar xzf QuantLib-1.41.tar.gz || { echo "Failed to extract QuantLib archive"; exit 1; } &&
                 cd QuantLib-1.41 &&
-                ./configure --disable-shared --prefix=/usr/local &&
+                ./configure --disable-shared --prefix=/usr/local --enable-std-classes &&
                 make -j4 &&
                 make install &&
                 echo "Saving QuantLib to cache..." &&

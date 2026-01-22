@@ -1,10 +1,10 @@
-
 #include <ql/quantlib.hpp>
+#include <velesquant/models/utility.h>
 #include <velesquant/volatility/hhw.h>
 #include <velesquant/volatility/lm.h>
-#include <velesquant/models/utility.h>
 using namespace std;
 #include <algorithm>
+#include <cmath>
 
 const double PI = 3.14159265358979323846264338327950288;
 using namespace QuantLib;

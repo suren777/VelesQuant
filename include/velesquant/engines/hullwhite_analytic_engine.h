@@ -1,6 +1,7 @@
 #ifndef VELESQUANT_ENGINES_HULLWHITE_ANALYTIC_ENGINE_H
 #define VELESQUANT_ENGINES_HULLWHITE_ANALYTIC_ENGINE_H
 
+#include <cmath>
 #include <memory>
 #include <velesquant/models/concepts.h>
 #include <velesquant/models/hullwhite_model.h>

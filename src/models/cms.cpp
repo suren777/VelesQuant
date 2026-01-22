@@ -1,6 +1,7 @@
 #include <velesquant/models/cms.h>
 
 #include <algorithm>
+#include <cmath>
 #include <string>
 #include <vector>
 #include <velesquant/models/utility.h>

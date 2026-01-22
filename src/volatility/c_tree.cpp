@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cmath>
 #include <velesquant/errors.h>
 #include <velesquant/volatility/c_tree.h>
 

@@ -1,6 +1,7 @@
-
 #include <algorithm>
 #include <assert.h>
+#include <cmath>
+
 #include <boost/function.hpp>
 #include <boost/math/distributions.hpp>
 #include <ql/quantlib.hpp>

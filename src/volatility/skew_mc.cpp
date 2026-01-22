@@ -1,5 +1,4 @@
-
-
+#include <cmath>
 #include <ql/math/matrixutilities/choleskydecomposition.hpp>
 #include <ql/quantlib.hpp>
 #include <velesquant/models/utility.h>

@@ -1,6 +1,7 @@
 #include <velesquant/volatility/hhw_pde.h>
-// using namespace std;
+
 #include <algorithm>
+#include <cmath>
 
 namespace velesquant {
 
