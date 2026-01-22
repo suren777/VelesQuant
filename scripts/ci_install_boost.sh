@@ -1,6 +1,13 @@
 #!/bin/bash
 set -e
 
+# Determine if sudo is needed
+if [ "$(id -u)" -eq 0 ]; then
+    SUDO=""
+else
+    SUDO="sudo"
+fi
+
 # Define Boost version and paths
 BOOST_VERSION="1.83.0"
 BOOST_VERSION_UNDERSCORE="1_83_0"
@@ -13,8 +20,12 @@ CACHE_DIR="/host/boost-cache"
 # Check Cache
 if [ -f "${CACHE_DIR}/include/boost/version.hpp" ]; then
     echo "Restoring Boost from cache..."
-    sudo cp -r ${CACHE_DIR}/include/boost /usr/local/include/ 2>/dev/null || true
-    sudo cp -r ${CACHE_DIR}/lib/* /usr/local/lib/ 2>/dev/null || true
+    $SUDO cp -r ${CACHE_DIR}/include/boost /usr/local/include/ 2>/dev/null || true
+    $SUDO cp -r ${CACHE_DIR}/lib/* /usr/local/lib/ 2>/dev/null || true
+    if [ -d "${CACHE_DIR}/cmake" ]; then
+        $SUDO mkdir -p /usr/local/lib/cmake
+        $SUDO cp -r ${CACHE_DIR}/cmake/* /usr/local/lib/cmake/ 2>/dev/null || true
+    fi
     echo "Boost restored from cache."
     exit 0
 fi
@@ -71,22 +82,20 @@ cd "boost_${BOOST_VERSION_UNDERSCORE}"
 echo "Bootstrapping..."
 ./bootstrap.sh
 echo "Installing..."
-sudo ./b2 install --prefix=/usr/local
-
-
+$SUDO ./b2 install --prefix=/usr/local
 
 # Save to Cache
 echo "Saving Boost to cache..."
-sudo mkdir -p ${CACHE_DIR}/include ${CACHE_DIR}/lib ${CACHE_DIR}/cmake
-sudo cp -r /usr/local/include/boost ${CACHE_DIR}/include/
-sudo cp -r /usr/local/lib/libboost* ${CACHE_DIR}/lib/
+$SUDO mkdir -p ${CACHE_DIR}/include ${CACHE_DIR}/lib ${CACHE_DIR}/cmake
+$SUDO cp -r /usr/local/include/boost ${CACHE_DIR}/include/
+$SUDO cp -r /usr/local/lib/libboost* ${CACHE_DIR}/lib/
 # Also cache Boost CMake files if they exist
 if [ -d /usr/local/lib/cmake ]; then
-    sudo cp -r /usr/local/lib/cmake/boost* ${CACHE_DIR}/cmake/ 2>/dev/null || true
-    sudo cp -r /usr/local/lib/cmake/Boost* ${CACHE_DIR}/cmake/ 2>/dev/null || true
+    $SUDO cp -r /usr/local/lib/cmake/boost* ${CACHE_DIR}/cmake/ 2>/dev/null || true
+    $SUDO cp -r /usr/local/lib/cmake/Boost* ${CACHE_DIR}/cmake/ 2>/dev/null || true
 fi
 
 # Cleanup
 cd ..
-sudo rm -rf "boost_${BOOST_VERSION_UNDERSCORE}" "${BOOST_FILENAME}"
+$SUDO rm -rf "boost_${BOOST_VERSION_UNDERSCORE}" "${BOOST_FILENAME}"
 echo "Boost installation complete."

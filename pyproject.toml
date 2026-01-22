@@ -1,10 +1,10 @@
 [build-system]
-requires = ["scikit-build-core", "pybind11"]
+requires = ["scikit-build-core", "pybind11", "setuptools-scm"]
 build-backend = "scikit_build_core.build"
 
 [project]
 name = "VelesQuant"
-version = "0.1.0"
+dynamic = ["version"]
 description = "A high-performance financial valuation library"
 readme = "README.md"
 authors = [
@@ -15,6 +15,8 @@ dependencies = [
     "numpy",
 ]
 license = { file = "LICENSE" }
+license-files = ["LICENSE"]
+keywords = ["finance", "valuation", "quantitative", "pde", "volatility", "options", "quantlib", "pybind11"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -27,48 +29,54 @@ classifiers = [
     "Operating System :: MacOS",
     "Operating System :: POSIX :: Linux",
     "Topic :: Office/Business :: Financial",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
 ]
 
 [project.urls]
+Homepage = "https://github.com/suren777/VelesQuant"
 Repository = "https://github.com/suren777/VelesQuant"
 Issues = "https://github.com/suren777/VelesQuant/issues"
+"Code of Conduct" = "https://github.com/suren777/VelesQuant/blob/main/CODE_OF_CONDUCT.md"
 
 [project.optional-dependencies]
-test = ["pytest"]
-dev = ["pytest"]
+test = [
+    "pytest",
+    "pytest-cov",
+]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "ruff",
+    "mypy",
+    "pylint",
+    "pybind11-stubgen",
+]
 
-[tool.poetry]
-name = "velesquant"
-version = "0.1.0"
-description = "A high-performance financial valuation library"
-authors = ["Suren Islyaev <suren.islyaev@gmail.com>"]
-readme = "README.md"
-packages = [{include = "velesquant", from = "src"}]
+[tool.ruff]
+line-length = 88
+target-version = "py311"
 
-[tool.poetry.dependencies]
-python = "^3.11"
-numpy = "^2.4.1"
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "A", "C4", "SIM", "PTH"]
+ignore = []
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.0.0"
-ruff = "^0.14.11"
-black = "^25.12.0"
-isort = "^7.0.0"
-pybind11 = "^3.0.1"
-pybind11-stubgen = "^2.5.5"
-pytest-cov = "^7.0.0"
-
-[tool.isort]
-profile = "black"
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
 
 [tool.scikit-build]
 cmake.verbose = true
 logging.level = "INFO"
 # Set the wheel install directory to match src-layout
 wheel.packages = ["src/velesquant"]
+metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
+sdist.include = ["src/velesquant/native.pyi", "src/velesquant/py.typed"]
 
-[tool.setuptools.package-data]
-velesquant = ["py.typed", "*.pyi"]
+[tool.setuptools_scm]
+write_to = "src/velesquant/_version.py"
 
 [tool.mypy]
 python_version = "3.11"

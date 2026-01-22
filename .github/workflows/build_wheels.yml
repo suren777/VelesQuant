@@ -16,45 +16,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  prepare_deps:
-    name: Prepare dependencies
-    runs-on: ubuntu-latest
-    outputs:
-      deps-artifact: deps-ready
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build Boost & QuantLib (CI)
-        run: |
-          mkdir -p ci_cache/boost ci_cache/quantlib
-          mkdir -p /tmp/boost-cache
-          sudo mkdir -p /host
-          sudo ln -s $(pwd)/ci_cache/boost /host/boost-cache
-          
-          sh ./scripts/ci_install_boost.sh
-          
-          # QuantLib
-          wget -q https://github.com/lballabio/QuantLib/releases/download/v1.41/QuantLib-1.41.tar.gz
-          tar xzf QuantLib-1.41.tar.gz
-          cd QuantLib-1.41
-          ./configure --disable-shared --prefix=/usr/local --enable-std-classes
-          make -j$(nproc)
-          sudo make install
-          cd ..
-          
-          # Copy QuantLib results into ci_cache for upload
-          mkdir -p ci_cache/quantlib/include
-          cp -r /usr/local/include/ql ci_cache/quantlib/include/ || true
-          mkdir -p ci_cache/quantlib/lib
-          cp -r /usr/local/lib/libQuantLib* ci_cache/quantlib/lib/ || true
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: deps-cache
-          path: ci_cache
-
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
-    needs: [prepare_deps]
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -63,11 +26,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download deps artifact
-        uses: actions/download-artifact@v4
+      - name: Cache Boost
+        id: cache-boost
+        uses: actions/cache@v4
         with:
-          name: deps-cache
-          path: ./ci_cache
+          path: ci_cache/boost
+          key: boost-1.83.0-manylinux2014-v3-${{ hashFiles('scripts/ci_install_boost.sh') }}
+
+      - name: Cache QuantLib
+        id: cache-quantlib
+        uses: actions/cache@v4
+        with:
+          path: ci_cache/quantlib
+          key: quantlib-v1.41-manylinux2014-v3-${{ hashFiles('scripts/ci_install_quantlib.sh') }}
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ci_cache/ccache
+          key: ccache-${{ runner.os }}-v3-${{ hashFiles('.github/workflows/build_wheels.yml') }}
 
       - name: Install dependencies (macOS)
         if: runner.os == 'macOS'
@@ -94,26 +71,6 @@ jobs:
           mkdir -p ci_cache/quantlib
           mkdir -p ci_cache/boost
 
-      - name: Cache QuantLib
-        id: cache-quantlib
-        uses: actions/cache@v4
-        with:
-          path: ci_cache/quantlib
-          key: quantlib-v1.41-manylinux2014-v3-${{ hashFiles('.github/workflows/build_wheels.yml') }}
-
-      - name: Cache Boost
-        id: cache-boost
-        uses: actions/cache@v4
-        with:
-          path: ci_cache/boost
-          key: boost-1.83.0-manylinux2014-v3-${{ hashFiles('.github/workflows/build_wheels.yml') }}
-
-      - name: Cache ccache
-        uses: actions/cache@v4
-        with:
-          path: ci_cache/ccache
-          key: ccache-${{ runner.os }}-v3-${{ hashFiles('.github/workflows/build_wheels.yml') }}
-
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.16.5
         env:
@@ -129,26 +86,27 @@ jobs:
             yum install -y epel-release &&
             yum install -y ccache &&
             yum install -y wget tar gzip gcc-c++ make &&
-            if [ -d "/host/boost-cache/include/boost" ]; then
-                echo "Restoring Boost from cache..." &&
-                cp -r /host/boost-cache/include/boost /usr/local/include/ &&
-                cp -r /host/boost-cache/lib/* /usr/local/lib/ &&
-                if [ -d "/host/boost-cache/cmake" ]; then
-                    mkdir -p /usr/local/lib/cmake &&
-                    cp -r /host/boost-cache/cmake/* /usr/local/lib/cmake/
-                fi
+            if [ -f "{project}/scripts/ci_install_boost.sh" ]; then
+                  echo "Running Boost install script..." &&
+                  sh "{project}/scripts/ci_install_boost.sh"
             else
-                echo "Boost cache not found on host!" && exit 1
+                echo "Boost install script not found at {project}/scripts/ci_install_boost.sh" && exit 1
             fi &&
             yum install -y eigen3-devel &&
-            if [ -f "/host/quantlib-cache/lib/libQuantLib.a" ]; then
-                echo "Restoring QuantLib from cache..." &&
-                cp -r /host/quantlib-cache/* /usr/local/
+            if [ -f "{project}/scripts/ci_install_quantlib.sh" ]; then
+                  echo "Running QuantLib install script..." &&
+                  sh "{project}/scripts/ci_install_quantlib.sh"
             else
-                echo "QuantLib cache not found on host!" && exit 1
+                echo "QuantLib install script not found at {project}/scripts/ci_install_quantlib.sh" && exit 1
             fi
-          CMAKE_ARGS: ${{ env.CMAKE_ARGS }} -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
-
+          CIBW_TEST_COMMAND: "pytest {project}/tests"
+          CIBW_TEST_REQUIRES: "pytest numpy"
+          CMAKE_ARGS: >
+            ${{ env.CMAKE_ARGS }}
+            -DBUILD_TESTING=OFF
+            -DBUILD_EXAMPLES=OFF
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+            -DCMAKE_PREFIX_PATH="/usr/local"
 
       - uses: actions/upload-artifact@v4
         with:

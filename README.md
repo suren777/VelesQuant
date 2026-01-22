@@ -54,27 +54,47 @@ paths = hw.simulate(times, curve)
 
 | Model | Class | Description |
 |-------|-------|-------------|
-| SABR | [`SabrModel`](docs/models/sabr.md) | Stochastic Alpha Beta Rho volatility model |
-| Heston | [`HestonModel`](docs/models/heston.md) | Stochastic variance model |
-| Local Vol | [`LocalVolModel`](docs/models/localvol.md) | Local volatility from SABR slices |
-| Hull-White | [`HullWhiteModel`](docs/models/hullwhite.md) | 1-Factor short rate model |
+| SABR | [`SabrModel`](https://github.com/suren777/VelesQuant/blob/main/docs/models/sabr.md) | Stochastic Alpha Beta Rho volatility model |
+| Heston | [`HestonModel`](https://github.com/suren777/VelesQuant/blob/main/docs/models/heston.md) | Stochastic variance model |
+| Local Vol | [`LocalVolModel`](https://github.com/suren777/VelesQuant/blob/main/docs/models/localvol.md) | Local volatility from SABR slices |
+| Hull-White | [`HullWhiteModel`](https://github.com/suren777/VelesQuant/blob/main/docs/models/hullwhite.md) | 1-Factor short rate model |
 | ShortRate2F | `ShortRate2FPDEModel` | 2-Factor G2++ short rate model |
-| CMS | [`CMSModel`](docs/models/cms.md) | Constant Maturity Swap pricing |
-| CMS Spread | [`CMSSpreadModel`](docs/models/cms_spread.md) | CMS Spread Option pricing (Copula) |
-| Basket | [`LogNormalBasketModel`](docs/models/basket.md) | Multi-asset Log-Normal Basket |
-| Quantoed CMS | [`QuantoedCMSModel`](docs/models/quantoed.md) | Quantoed Constant Maturity Swap |
-| Quantoed Spread | [`QuantoedCMSSpreadModel`](docs/models/quantoed.md) | Quantoed CMS Spread Option |
-| Heston Hull-White | [`HybridHWModel`](docs/models/hybrid_hw.md) | Hybrid Equity-Interest Rate Model |
+| CMS | [`CMSModel`](https://github.com/suren777/VelesQuant/blob/main/docs/models/cms.md) | Constant Maturity Swap pricing |
+| CMS Spread | [`CMSSpreadModel`](https://github.com/suren777/VelesQuant/blob/main/docs/models/cms_spread.md) | CMS Spread Option pricing (Copula) |
+| Basket | [`LogNormalBasketModel`](https://github.com/suren777/VelesQuant/blob/main/docs/models/basket.md) | Multi-asset Log-Normal Basket |
+| Quantoed CMS | [`QuantoedCMSModel`](https://github.com/suren777/VelesQuant/blob/main/docs/models/quantoed.md) | Quantoed Constant Maturity Swap |
+| Quantoed Spread | [`QuantoedCMSSpreadModel`](https://github.com/suren777/VelesQuant/blob/main/docs/models/quantoed.md) | Quantoed CMS Spread Option |
+| Heston Hull-White | [`HybridHWModel`](https://github.com/suren777/VelesQuant/blob/main/docs/models/hybrid_hw.md) | Hybrid Equity-Interest Rate Model |
 
 
-## Supported Instruments
+For a comprehensive list of supported financial instruments and their pricing methods, please refer to [Supported Instruments](https://github.com/suren777/VelesQuant/blob/main/docs/supported_instruments.md).
 
-For a comprehensive list of supported financial instruments and their pricing methods, please refer to [Supported Instruments](docs/supported_instruments.md).
+## Performance
+
+VelesQuant is built for extreme performance:
+- **C++20 Core**: Leveraging modern language features for safety and speed.
+- **SIMD Optimized**: Critical numerical paths are designed for vectorization.
+- **Multi-threaded**: Parallel PDE solvers and Monte Carlo simulations utilizing **OpenMP**.
+- **QuantLib Integration**: Built on top of the industry-standard QuantLib library.
 
 ## Testing
 
 
 ### Python Tests
+
+The recommended way to develop is using [**uv**](https://github.com/astral-sh/uv) for lightning-fast environment management:
+```bash
+uv sync --all-extras
+uv run pytest
+```
+
+Alternatively, using standard `pip`:
+```bash
+pip install ".[dev]"
+pytest
+```
+
+If using `poetry`:
 ```bash
 poetry run pytest
 ```
@@ -97,4 +117,4 @@ We welcome contributions! Please follow these steps:
     - Submit a PR with a clear description of changes.
 
 ## License
-[MIT License](LICENSE)
+[MIT License](https://github.com/suren777/VelesQuant/blob/main/LICENSE)
