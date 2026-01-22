@@ -81,5 +81,5 @@ cp -r /usr/local/lib/libboost* ${CACHE_DIR}/lib/
 
 # Cleanup
 cd ..
-rm -rf "boost_${BOOST_VERSION_UNDERSCORE}" "${BOOST_FILENAME}"
+sudo rm -rf "boost_${BOOST_VERSION_UNDERSCORE}" "${BOOST_FILENAME}"
 echo "Boost installation complete."
