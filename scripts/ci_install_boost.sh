@@ -69,7 +69,8 @@ cd "boost_${BOOST_VERSION_UNDERSCORE}"
 echo "Bootstrapping..."
 ./bootstrap.sh
 echo "Installing..."
-./b2 install --prefix=/usr/local
+sudo ./b2 install --prefix=/usr/local
+
 
 
 # Save to Cache
