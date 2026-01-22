@@ -271,13 +271,13 @@ class HullWhiteModel(Model):
         model, _ = self._create_native_objects(curve)
 
         if isinstance(instrument, ZeroCouponBond):
-            return model.zero_coupon(instrument.maturity)
+            return model.get_discount_factor(instrument.maturity)
 
         elif isinstance(instrument, CouponBond):
             value = 0.0
             t = instrument.pay_frequency
             while t <= instrument.maturity + 1e-9:
-                df = model.zero_coupon(t)
+                df = model.get_discount_factor(t)
                 coupon = (
                     instrument.face_value
                     * instrument.coupon_rate
@@ -285,7 +285,9 @@ class HullWhiteModel(Model):
                 )
                 value += coupon * df
                 t += instrument.pay_frequency
-            value += instrument.face_value * model.zero_coupon(instrument.maturity)
+            value += instrument.face_value * model.get_discount_factor(
+                instrument.maturity
+            )
             return value
         else:
             raise TypeError(f"Unsupported bond type: {type(instrument)}")
