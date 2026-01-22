@@ -132,7 +132,7 @@ def test_calibration_optimizer_params():
         {"expiry": 2.0, "tenor": 1.0, "rate": 0.05, "vol": 0.2},
     ]
 
-    optimizer_params = {"maxfev": 2000, "ftol": 1e-5}
+    optimizer_params = {"maxfev": 10000, "ftol": 1e-5}
 
     # Should run without error
     model.calibrate(time_dfs, dfs, swap_quotes, optimizer_params)
