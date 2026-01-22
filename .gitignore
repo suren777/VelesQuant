@@ -74,3 +74,4 @@ build_debug/
 build_core/
 .cache
 .agent
+*.whl

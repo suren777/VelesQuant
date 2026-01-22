@@ -16,6 +16,13 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 find_package(QuantLib REQUIRED)
 find_package(Boost REQUIRED)
 find_package(Python3 COMPONENTS Interpreter Development.Module REQUIRED)
+# Handle pybind11 matching the Python version
+execute_process(
+    COMMAND "${Python3_EXECUTABLE}" -c "import pybind11; print(pybind11.get_cmake_dir())"
+    OUTPUT_VARIABLE _pybind11_cmake_dir
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+list(APPEND CMAKE_PREFIX_PATH "${_pybind11_cmake_dir}")
 find_package(pybind11 CONFIG REQUIRED)
 find_package(Eigen3 QUIET)
 
