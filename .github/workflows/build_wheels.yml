@@ -131,7 +131,12 @@ jobs:
             yum install -y wget tar gzip gcc-c++ make &&
             if [ -d "/host/boost-cache/include/boost" ]; then
                 echo "Restoring Boost from cache..." &&
-                cp -r /host/boost-cache/* /usr/local/
+                cp -r /host/boost-cache/include/boost /usr/local/include/ &&
+                cp -r /host/boost-cache/lib/* /usr/local/lib/ &&
+                if [ -d "/host/boost-cache/cmake" ]; then
+                    mkdir -p /usr/local/lib/cmake &&
+                    cp -r /host/boost-cache/cmake/* /usr/local/lib/cmake/
+                fi
             else
                 echo "Boost cache not found on host!" && exit 1
             fi &&
