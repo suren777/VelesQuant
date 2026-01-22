@@ -16,7 +16,7 @@ on:
   workflow_dispatch:
 
 jobs:
-prepare_deps:
+  prepare_deps:
     name: Prepare dependencies
     runs-on: ubuntu-latest
     outputs:
