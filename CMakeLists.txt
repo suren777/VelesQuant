@@ -132,7 +132,7 @@ set_target_properties(native PROPERTIES
     CXX_VISIBILITY_PRESET default
     VISIBILITY_INLINES_HIDDEN OFF
 )
-target_compile_options(native PRIVATE -fno-lto)
+target_compile_options(native PRIVATE -fno-lto -fvisibility=default)
 target_link_options(native PRIVATE -fno-lto)
 
 # Install the module to the python package
