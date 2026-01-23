@@ -127,6 +127,7 @@ pybind11_add_module(native
 )
 
 target_link_libraries(native PRIVATE velesquant_core)
+set_target_properties(native PROPERTIES INTERPROCEDURAL_OPTIMIZATION FALSE)
 target_compile_options(native PRIVATE -fno-lto)
 target_link_options(native PRIVATE -fno-lto)
 
