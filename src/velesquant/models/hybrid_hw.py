@@ -1,4 +1,4 @@
-from velesquant import native
+from velesquant import HHW
 
 from ..instruments.base import Instrument
 from .base import MarketDataInput, Model
@@ -37,7 +37,7 @@ class HybridHWModel(Model):
         self._sigma2 = sigma2
         self._a = a
 
-        self._cpp_model = native.HHW(s0, v0, r0, kappa, eta, rho, sigma1, sigma2, a)
+        self._cpp_model = HHW(s0, v0, r0, kappa, eta, rho, sigma1, sigma2, a)
 
     def calibrate(
         self, instruments: list[Instrument], market_data: MarketDataInput

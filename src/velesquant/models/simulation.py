@@ -1,12 +1,13 @@
-from typing import List, Union
+
 import numpy as np
+
 from velesquant.models.localvol import LocalVolModel
 
 
 def simulate_multi_asset(
-    models: List[LocalVolModel],
-    correlation_matrix: Union[List[List[float]], np.ndarray],
-    times: Union[List[float], np.ndarray],
+    models: list[LocalVolModel],
+    correlation_matrix: list[list[float]] | np.ndarray,
+    times: list[float] | np.ndarray,
     n_paths: int,
     seed: int = 42,
 ) -> np.ndarray:

@@ -1,5 +1,6 @@
 import numpy as np
-from velesquant import native
+
+from velesquant import CalibrationTarget, CmsSpread
 
 from ..instruments.base import Instrument
 from .base import MarketDataInput, Model
@@ -66,17 +67,17 @@ class CMSSpreadModel(Model):
 
         # Convert strings to native enums
         ctype1 = (
-            native.CalibrationTarget.Price
+            CalibrationTarget.Price
             if type1.lower() == "price"
-            else native.CalibrationTarget.Volatility
+            else CalibrationTarget.Volatility
         )
         ctype2 = (
-            native.CalibrationTarget.Price
+            CalibrationTarget.Price
             if type2.lower() == "price"
-            else native.CalibrationTarget.Volatility
+            else CalibrationTarget.Volatility
         )
 
-        self._cpp_model = native.CmsSpread(
+        self._cpp_model = CmsSpread(
             expiry1,
             tenor1,
             fwd1,

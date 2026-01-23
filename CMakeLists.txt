@@ -109,7 +109,7 @@ elseif(USE_OPENMP_FALLBACK)
 endif()
 
 # Create the Python Extension Module (modular bindings)
-pybind11_add_module(native
+pybind11_add_module(_core
     bindings/module.cpp
     bindings/bind_enums.cpp
     bindings/bind_exceptions.cpp
@@ -126,17 +126,17 @@ pybind11_add_module(native
     bindings/pde_solvers/bind_pde_solvers.cpp
 )
 
-target_link_libraries(native PRIVATE velesquant_core)
-set_target_properties(native PROPERTIES 
+target_link_libraries(_core PRIVATE velesquant_core)
+set_target_properties(_core PROPERTIES 
     INTERPROCEDURAL_OPTIMIZATION FALSE
     CXX_VISIBILITY_PRESET default
     VISIBILITY_INLINES_HIDDEN OFF
 )
-target_compile_options(native PRIVATE -fno-lto -fvisibility=default)
-target_link_options(native PRIVATE -fno-lto)
+target_compile_options(_core PRIVATE -fno-lto -fvisibility=default)
+target_link_options(_core PRIVATE -fno-lto)
 
 # Install the module to the python package
-install(TARGETS native DESTINATION velesquant)
+install(TARGETS _core DESTINATION velesquant)
 
 # Tests
 add_subdirectory(tests_cpp)

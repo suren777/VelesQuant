@@ -1,7 +1,6 @@
 from collections import defaultdict
+from collections.abc import Iterator
 from dataclasses import dataclass, field
-from typing import Iterator, List, Type
-
 
 from .base import Instrument
 
@@ -12,7 +11,7 @@ class Portfolio(Instrument):
     A collection of instruments.
     """
 
-    instruments: List[Instrument] = field(default_factory=list)
+    instruments: list[Instrument] = field(default_factory=list)
 
     def add(self, instrument: Instrument):
         self.instruments.append(instrument)
@@ -23,7 +22,7 @@ class Portfolio(Instrument):
     def __len__(self) -> int:
         return len(self.instruments)
 
-    def group_by_type(self) -> dict[Type[Instrument], List[Instrument]]:
+    def group_by_type(self) -> dict[type[Instrument], list[Instrument]]:
         """
         Groups instruments by their concrete class type.
         Useful for batch vectorization.

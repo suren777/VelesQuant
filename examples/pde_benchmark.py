@@ -1,6 +1,7 @@
 import time
-import velesquant.native as n
+
 import numpy as np
+import velesquant as n
 
 
 def benchmark():

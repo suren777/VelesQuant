@@ -1,6 +1,6 @@
 import numpy as np
 
-from velesquant import native
+from velesquant import Sabr
 from velesquant.models.sabr import SabrModel
 
 
@@ -17,19 +17,19 @@ def test_sabr_initialization():
 def test_sabr_calibration():
     # Synthetic data
     fwd = 0.03
-    T = 1.0
+    tenor = 1.0
     true_alpha = 0.2
     true_nu = 0.3
     true_rho = -0.2
 
     # Generate "market" quotes using a ground truth model
-    ground_truth = native.Sabr(T, fwd, 0.5, true_alpha, true_nu, true_rho)
+    ground_truth = Sabr(tenor, fwd, 0.5, true_alpha, true_nu, true_rho)
 
     strikes = [0.02, 0.025, 0.03, 0.035, 0.04]
     vols = [ground_truth.implied_vol(k) for k in strikes]
 
     # Initialize a perturbed model
-    model = SabrModel(maturity=T, forward=fwd, alpha=0.5, beta=0.5, nu=0.5, rho=0.0)
+    model = SabrModel(maturity=tenor, forward=fwd, alpha=0.5, beta=0.5, nu=0.5, rho=0.0)
 
     # Calibrate
     model.calibrate(strikes, vols, calibration_target="Volatility")

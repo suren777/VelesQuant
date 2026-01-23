@@ -1,5 +1,6 @@
 import numpy as np
-from velesquant import native
+
+from velesquant import CalibrationTarget, QuantoedCmsSpread
 
 from ..instruments.base import Instrument
 from .base import MarketDataInput, Model
@@ -73,17 +74,17 @@ class QuantoedCMSSpreadModel(Model):
         }
 
         ctype1 = (
-            native.CalibrationTarget.Price
+            CalibrationTarget.Price
             if type1.lower() == "price"
-            else native.CalibrationTarget.Volatility
+            else CalibrationTarget.Volatility
         )
         ctype2 = (
-            native.CalibrationTarget.Price
+            CalibrationTarget.Price
             if type2.lower() == "price"
-            else native.CalibrationTarget.Volatility
+            else CalibrationTarget.Volatility
         )
 
-        self._cpp_model = native.QuantoedCmsSpread(
+        self._cpp_model = QuantoedCmsSpread(
             expiry1,
             tenor1,
             fwd1,

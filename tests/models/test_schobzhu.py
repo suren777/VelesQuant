@@ -1,11 +1,12 @@
 import pytest
-from velesquant import native
+
+from velesquant import SchobelZhu
 from velesquant.models import SchobelZhuModel
 
 
 def test_schobzhu_binding():
     # SchobelZhu(spot, var0, kappa, theta, xi, rho)
-    sz = native.SchobelZhu(100.0, 0.04, 1.0, 0.04, 0.3, -0.5)
+    sz = SchobelZhu(100.0, 0.04, 1.0, 0.04, 0.3, -0.5)
     price = sz.price(1.0, 100.0, 100.0)
     assert isinstance(price, float)
     assert price > 0
@@ -18,7 +19,7 @@ def test_schobzhu_simulation():
     """
     Scenario: Monte Carlo simulation of Schobel-Zhu price paths.
     """
-    sz = native.SchobelZhu(100.0, 0.04, 1.0, 0.04, 0.3, -0.5)
+    sz = SchobelZhu(100.0, 0.04, 1.0, 0.04, 0.3, -0.5)
     times = [0.1, 0.5, 1.0]
     forwards = [100.0, 101.0, 102.0]
 
@@ -41,9 +42,7 @@ def test_schobzhu_calibration():
     true_var0 = 0.04
     true_xi = 0.3
     true_rho = -0.5
-    sz_true = native.SchobelZhu(
-        100.0, true_var0, true_kappa, true_theta, true_xi, true_rho
-    )
+    sz_true = SchobelZhu(100.0, true_var0, true_kappa, true_theta, true_xi, true_rho)
 
     # 2. Generate Synthetic Market Data
     maturities = [1.0, 1.0, 1.0, 1.0, 1.0]
@@ -55,7 +54,7 @@ def test_schobzhu_calibration():
         quotes.append(p)
 
     # 3. Guess Model (perturbed parameters - closer to truth)
-    sz_guess = native.SchobelZhu(100.0, 0.045, 0.9, 0.045, 0.25, -0.45)
+    sz_guess = SchobelZhu(100.0, 0.045, 0.9, 0.045, 0.25, -0.45)
 
     # 4. Calibrate
     sz_guess.calibrate(maturities, forwards, strikes, quotes)

@@ -1,9 +1,10 @@
 import pytest
+
 from velesquant.models import (
     HWPDEModel,
+    SabrPDEModel,
     ShortRate1FPDEModel,
     ShortRate2FPDEModel,
-    SabrPDEModel,
 )
 
 

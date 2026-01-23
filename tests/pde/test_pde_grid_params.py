@@ -1,4 +1,3 @@
-import pytest
 from velesquant.models.pde_solvers import (
     HWPDEModel,
     ShortRate1FPDEModel,

@@ -1,11 +1,9 @@
-import pytest
 import numpy as np
-from velesquant.native import (
+
+from velesquant import (
+    DefSwap,
     ShortRate2FModel,
     ShortRate2FPDE,
-    DefSwap,
-    CalibrationTarget,
-    OptionType,
 )
 
 

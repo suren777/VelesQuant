@@ -1,4 +1,4 @@
-from typing import Any, Type, TypeVar
+from typing import Any, TypeVar
 
 T = TypeVar("T")
 
@@ -21,7 +21,7 @@ class Market:
         key = (name, type(data))
         self._data[key] = data
 
-    def get(self, name: str, kind: Type[T]) -> T:
+    def get(self, name: str, kind: type[T]) -> T:
         """
         Retrieve market data by name and expected type.
         Raises KeyError if not found.

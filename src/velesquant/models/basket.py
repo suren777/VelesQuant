@@ -1,4 +1,4 @@
-from velesquant import native
+from velesquant import LogNormalBasket
 
 from ..instruments.base import Instrument
 from .base import MarketDataInput, Model
@@ -31,7 +31,7 @@ class LogNormalBasketModel(Model):
         self.ivs = ivs
         self.correlation = correlation
 
-        self._cpp_model = native.LogNormalBasket(
+        self._cpp_model = LogNormalBasket(
             spots, strikes, maturities, forwards, ivs, correlation
         )
 

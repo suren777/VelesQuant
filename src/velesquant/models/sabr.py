@@ -1,9 +1,8 @@
-from typing import List, Union
 
 import numpy as np
 
 # Import native module
-from velesquant import native
+from velesquant import CalibrationTarget, Sabr
 
 from .base import Model
 
@@ -33,11 +32,9 @@ class SabrModel(Model):
 
         # Construct the underlying C++ model immediately
         if shift == 0.0:
-            self._cpp_model = native.Sabr(maturity, forward, beta, alpha, nu, rho)
+            self._cpp_model = Sabr(maturity, forward, beta, alpha, nu, rho)
         else:
-            self._cpp_model = native.Sabr(
-                maturity, forward, beta, alpha, nu, rho, shift
-            )
+            self._cpp_model = Sabr(maturity, forward, beta, alpha, nu, rho, shift)
 
     def implied_vol(self, strike: float) -> float:
         """
@@ -47,8 +44,8 @@ class SabrModel(Model):
 
     def calibrate(
         self,
-        strikes: Union[List[float], np.ndarray],
-        quotes: Union[List[float], np.ndarray],
+        strikes: list[float] | np.ndarray,
+        quotes: list[float] | np.ndarray,
         calibration_target: str = "Volatility",
     ) -> "SabrModel":
         """
@@ -70,9 +67,9 @@ class SabrModel(Model):
         q_mat = np.array(quotes).reshape(-1, 1)
 
         target = (
-            native.CalibrationTarget.Price
+            CalibrationTarget.Price
             if calibration_target.capitalize() == "Price"
-            else native.CalibrationTarget.Volatility
+            else CalibrationTarget.Volatility
         )
 
         # Call C++ calibration

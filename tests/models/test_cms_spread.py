@@ -1,7 +1,7 @@
 import numpy as np
-
 import pytest
-import velesquant.native as m
+
+from velesquant import CalibrationTarget, CmsSpread
 from velesquant.models import CMSSpreadModel
 
 
@@ -20,7 +20,7 @@ def test_cms_spread_init_and_pricing():
 
     corr = 0.6
 
-    cs = m.CmsSpread(
+    cs = CmsSpread(
         exp1,
         ten1,
         fwd1,
@@ -30,7 +30,7 @@ def test_cms_spread_init_and_pricing():
         beta1,
         strikes1,
         quotes1,
-        m.CalibrationTarget.Price,
+        CalibrationTarget.Price,
         exp2,
         ten2,
         fwd2,
@@ -40,7 +40,7 @@ def test_cms_spread_init_and_pricing():
         beta2,
         strikes2,
         quotes2,
-        m.CalibrationTarget.Price,
+        CalibrationTarget.Price,
         corr,
     )
 
@@ -61,7 +61,7 @@ def test_cms_spread_simulation():
     strikes2 = np.array([[0.03]])
     quotes2 = np.array([[0.20]])
 
-    cs = m.CmsSpread(
+    cs = CmsSpread(
         exp1,
         ten1,
         fwd1,
@@ -71,7 +71,7 @@ def test_cms_spread_simulation():
         beta1,
         strikes1,
         quotes1,
-        m.CalibrationTarget.Price,
+        CalibrationTarget.Price,
         exp2,
         ten2,
         fwd2,
@@ -81,7 +81,7 @@ def test_cms_spread_simulation():
         beta2,
         strikes2,
         quotes2,
-        m.CalibrationTarget.Price,
+        CalibrationTarget.Price,
         0.0,
     )
 

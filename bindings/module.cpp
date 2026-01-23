@@ -27,7 +27,7 @@ void bind_exceptions(py::module_ &m);
 } // namespace bindings
 } // namespace velesquant
 
-PYBIND11_MODULE(native, m) {
+PYBIND11_MODULE(_core, m) {
   m.doc() = "VelesQuant Core Bindings - Quantitative Finance Library";
 
   using namespace velesquant::bindings;

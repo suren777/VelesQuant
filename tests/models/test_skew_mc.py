@@ -1,26 +1,26 @@
 """Tests for SkewMC (Skew Monte Carlo) model."""
 
-from velesquant import native
-from velesquant.models import SkewMCModel, SabrModel
+from velesquant import Sabr, SkewMC
+from velesquant.models import SabrModel, SkewMCModel
 
 
 def test_skewmc_binding():
     """Test that SkewMC can be instantiated with SABR models."""
     # Create a list of SABR models for different maturities
-    sabr1 = native.Sabr(0.5, 0.05, 0.5, 0.2, 0.3, -0.2)
-    sabr2 = native.Sabr(1.0, 0.05, 0.5, 0.2, 0.3, -0.2)
-    sabr3 = native.Sabr(2.0, 0.05, 0.5, 0.2, 0.3, -0.2)
+    sabr1 = Sabr(0.5, 0.05, 0.5, 0.2, 0.3, -0.2)
+    sabr2 = Sabr(1.0, 0.05, 0.5, 0.2, 0.3, -0.2)
+    sabr3 = Sabr(2.0, 0.05, 0.5, 0.2, 0.3, -0.2)
 
-    mc = native.SkewMC([sabr1, sabr2, sabr3])
+    mc = SkewMC([sabr1, sabr2, sabr3])
     assert mc is not None
 
 
 def test_skewmc_simulation():
     """Test Monte Carlo simulation execution."""
-    sabr1 = native.Sabr(0.5, 100.0, 0.5, 0.2, 0.3, -0.2)
-    sabr2 = native.Sabr(1.0, 100.0, 0.5, 0.2, 0.3, -0.2)
+    sabr1 = Sabr(0.5, 100.0, 0.5, 0.2, 0.3, -0.2)
+    sabr2 = Sabr(1.0, 100.0, 0.5, 0.2, 0.3, -0.2)
 
-    mc = native.SkewMC([sabr1, sabr2])
+    mc = SkewMC([sabr1, sabr2])
 
     # Simulate at times 0.25, 0.5, 0.75, 1.0
     times = [0.25, 0.5, 0.75, 1.0]

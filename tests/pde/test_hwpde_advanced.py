@@ -8,15 +8,16 @@ Verifies the newly exposed methods:
 """
 
 import pytest
-import velesquant.native as n
+
+from velesquant import HWPDE, DefSwap, HullWhiteModel, OptionType
 
 
 def create_hwpde_model(
     kappa, time_sigmas, sigmas, time_dfs, dfs, grid_points=100, time_step=0.01
 ):
     """Helper to create HWPDE with a HullWhiteModel."""
-    model = n.HullWhiteModel(kappa, time_sigmas, sigmas, time_dfs, dfs)
-    return n.HWPDE(model, grid_points, time_step)
+    model = HullWhiteModel(kappa, time_sigmas, sigmas, time_dfs, dfs)
+    return HWPDE(model, grid_points, time_step)
 
 
 def test_hwpde_basic_pricing():
@@ -44,7 +45,7 @@ def test_hwpde_basic_pricing():
     assert isinstance(swap, float)
 
     # Test pricingZBO
-    zbo = hwpde.price_zero_bond_option(1.0, 5.0, 0.90, n.OptionType.Call)
+    zbo = hwpde.price_zero_bond_option(1.0, 5.0, 0.90, OptionType.Call)
     assert zbo >= 0
 
     # Test pricingCouponBond
@@ -52,7 +53,7 @@ def test_hwpde_basic_pricing():
     assert coupon_bond > 0
 
     # Test pricingCBO
-    cbo = hwpde.price_coupon_bond_option(1.0, 5.0, 0.04, 1.0, 0.5, n.OptionType.Call)
+    cbo = hwpde.price_coupon_bond_option(1.0, 5.0, 0.04, 1.0, 0.5, OptionType.Call)
     assert cbo >= 0
 
 
@@ -75,7 +76,7 @@ def test_hwpde_exotic_pricing():
 
     # Test pricingCallableSwap
     callable_swap = hwpde.price_callable_swap(
-        1.0, 5.0, exercises, 0.04, 1.0, 0.5, n.OptionType.Call
+        1.0, 5.0, exercises, 0.04, 1.0, 0.5, OptionType.Call
     )
     assert isinstance(callable_swap, float)
 
@@ -135,7 +136,7 @@ def test_hwpde_calibration():
     # Create swap quotes for calibration
     swaps = []
 
-    s1 = n.DefSwap()
+    s1 = DefSwap()
     s1.expiry = 1.0
     s1.tenor = 5.0
     s1.frequency = 0.5
@@ -144,7 +145,7 @@ def test_hwpde_calibration():
     s1.value = 0.0
     swaps.append(s1)
 
-    s2 = n.DefSwap()
+    s2 = DefSwap()
     s2.expiry = 5.0
     s2.tenor = 5.0
     s2.frequency = 0.5

@@ -1,6 +1,6 @@
 """Tests for CTree (Binomial/Trinomial Tree) model."""
 
-from velesquant import native
+from velesquant import CTree, ExerciseStyle, OptionType, TreeType
 from velesquant.models import TreeModel
 
 
@@ -14,15 +14,15 @@ def test_ctree_binding():
     r = [0.01, 0.01]
     q = [0.002, 0.002]
 
-    tree = native.CTree(S, T, F, IV, r, q)
+    tree = CTree(S, T, F, IV, r, q)
     # European call using binomial tree
     price = tree.calculate_binomial(
         100.0,
         1.0,
         100,
-        native.ExerciseStyle.European,
-        native.OptionType.Call,
-        native.TreeType.Recombining,
+        ExerciseStyle.European,
+        OptionType.Call,
+        TreeType.Recombining,
     )
     assert isinstance(price, float)
     assert price >= 0.0
@@ -35,23 +35,23 @@ def test_ctree_american_put():
     F = [100.5, 101.0]
     IV = [0.2, 0.22]
 
-    tree = native.CTree(S, T, F, IV)
+    tree = CTree(S, T, F, IV)
 
     euro_put = tree.calculate_binomial(
         100.0,
         1.0,
         100,
-        native.ExerciseStyle.European,
-        native.OptionType.Put,
-        native.TreeType.Recombining,
+        ExerciseStyle.European,
+        OptionType.Put,
+        TreeType.Recombining,
     )
     amer_put = tree.calculate_binomial(
         100.0,
         1.0,
         100,
-        native.ExerciseStyle.American,
-        native.OptionType.Put,
-        native.TreeType.Recombining,
+        ExerciseStyle.American,
+        OptionType.Put,
+        TreeType.Recombining,
     )
 
     # American put should be >= European put
@@ -65,14 +65,14 @@ def test_ctree_trinomial():
     F = [100.5, 101.0]
     IV = [0.2, 0.22]
 
-    tree = native.CTree(S, T, F, IV)
+    tree = CTree(S, T, F, IV)
     price = tree.calculate_trinomial(
         100.0,
         1.0,
         50,
-        native.ExerciseStyle.European,
-        native.OptionType.Call,
-        native.TreeType.Recombining,
+        ExerciseStyle.European,
+        OptionType.Call,
+        TreeType.Recombining,
     )
     assert isinstance(price, float)
     assert price >= 0.0

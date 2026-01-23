@@ -73,7 +73,7 @@ logging.level = "INFO"
 # Set the wheel install directory to match src-layout
 wheel.packages = ["src/velesquant"]
 metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
-sdist.include = ["src/velesquant/native.pyi", "src/velesquant/py.typed"]
+sdist.include = ["src/velesquant/_core.pyi", "src/velesquant/py.typed"]
 
 [tool.setuptools_scm]
 write_to = "src/velesquant/_version.py"
@@ -84,7 +84,7 @@ warn_return_any = true
 warn_unused_configs = true
 
 [[tool.mypy.overrides]]
-module = "velesquant.native"
+module = "velesquant._core"
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
@@ -92,4 +92,4 @@ testpaths = ["tests"]
 norecursedirs = ["build", "build_*", "_deps", ".venv", "dist"]
 
 [tool.pylint.main]
-extension-pkg-allow-list = ["velesquant.native"]
+extension-pkg-allow-list = ["velesquant._core"]

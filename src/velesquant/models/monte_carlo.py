@@ -1,4 +1,4 @@
-from velesquant import native
+from velesquant import SkewMC
 
 from ..instruments.base import Instrument
 from .base import MarketDataInput, Model
@@ -24,7 +24,7 @@ class SkewMCModel(Model):
 
         # Extract native Sabr objects for the C++ constructor
         native_sabrs = [m._cpp_model for m in sabr_models]
-        self._cpp_model = native.SkewMC(native_sabrs)
+        self._cpp_model = SkewMC(native_sabrs)
 
     def calibrate(
         self, instruments: list[Instrument], market_data: MarketDataInput

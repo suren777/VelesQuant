@@ -8,8 +8,7 @@ over multiple iterations to assess binding overhead.
 import time
 
 import numpy as np
-
-import velesquant.native as n
+import velesquant as n
 
 
 def benchmark_sabr_calibration(iterations: int = 100):
@@ -93,23 +92,23 @@ def benchmark_hull_white_simulation(iterations: int = 1000):
     print(f"\n=== Hull-White Simulation Benchmark ({iterations} iterations) ===")
 
     # Setup
-    hw = n.HullWhite(
+    hw = n.HullWhiteModel(
         kappa=0.1,
-        timeSigmas=[1.0, 5.0, 10.0],
+        time_sigmas=[1.0, 5.0, 10.0],
         sigmas=[0.01, 0.012, 0.015],
-        timeDFs=[0.0, 1.0, 5.0, 10.0, 30.0],
-        DFs=[1.0, 0.95, 0.80, 0.65, 0.30],
+        discount_factor_times=[0.0, 1.0, 5.0, 10.0, 30.0],
+        discount_factors=[1.0, 0.95, 0.80, 0.65, 0.30],
     )
 
     times = [0.25 * i for i in range(1, 121)]  # 30 years quarterly
 
     # Warm-up
-    _ = hw.simulation(times)
+    _ = hw.simulate(times)
 
     # Timed runs
     start_time = time.perf_counter()
     for _ in range(iterations):
-        hw.simulation(times)
+        hw.simulate(times)
     end_time = time.perf_counter()
 
     total_time = end_time - start_time

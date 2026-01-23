@@ -4,10 +4,10 @@ import numpy as np
 
 # Models
 from velesquant.models import (
-    SabrModel,
     HestonModel,
     LocalVolModel,
     LogNormalBasketModel,
+    SabrModel,
 )
 
 
@@ -38,7 +38,7 @@ def run_sabr_example():
         f"Calibrated Params: Alpha={sabr.alpha:.4f}, Nu={sabr.nu:.4f}, Rho={sabr.rho:.4f}"
     )
 
-    from velesquant.native import black_formula_call
+    from velesquant import black_formula_call
 
     strike_price = 1.22
     vol = sabr.implied_vol(strike_price)

@@ -2,16 +2,16 @@
 
 import numpy as np
 
+# Instruments
+from velesquant.instruments.bonds import ZeroCouponBond
+from velesquant.instruments.rates import Swaption
+
 # Market Data & Containers
 from velesquant.market.container import Market
 from velesquant.market.curves import DiscountCurve
 
-# Instruments
-from velesquant.instruments.bonds import ZeroCouponBond, CouponBond
-from velesquant.instruments.rates import Swaption
-
 # Models
-from velesquant.models import HullWhiteModel, HWPDEModel, CMSModel, CMSSpreadModel
+from velesquant.models import CMSModel, CMSSpreadModel, HullWhiteModel, HWPDEModel
 
 
 def build_market() -> Market:

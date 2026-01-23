@@ -1,13 +1,14 @@
 import copy
 from abc import ABC, abstractmethod
-from typing import ClassVar, Optional, Type, Union
+import typing
+from typing import ClassVar, Union
 
 from ..instruments.base import Instrument
 from ..market.base import MarketData, MarketDataContainer
 from .enums import BumpType, ModelParam
 
 # Type alias for market data: either a single data object or a container
-MarketDataInput = Union[MarketData, MarketDataContainer]
+MarketDataInput = Union[MarketData, MarketDataContainer, typing.Any]
 
 
 class Model(ABC):
@@ -21,12 +22,10 @@ class Model(ABC):
 
     # Subclasses should override with their specific Param enum
     # e.g., Param: ClassVar[Type[ModelParam]] = HullWhiteParam
-    Param: ClassVar[Optional[Type[ModelParam]]] = None
+    Param: ClassVar[type[ModelParam] | None] = None
 
     @abstractmethod
-    def calibrate(
-        self, instruments: list[Instrument], market_data: MarketDataInput
-    ) -> "Model":
+    def calibrate(self, instruments: typing.Any, market_data: typing.Any) -> "Model":
         """
         Calibrate the model to a set of instruments.
         Returns a new calibrated model instance or self.
@@ -262,7 +261,7 @@ class Model(ABC):
 
         return (price_up - price_down) / (2 * bump)
 
-    def price(self, instrument: Instrument, market_data: MarketDataInput) -> float:
+    def price(self, instrument: typing.Any, market_data: typing.Any) -> typing.Any:
         """
         Price an instrument. Subclasses should override this.
         Used by the generic sensitivity() method.
@@ -273,7 +272,7 @@ class Model(ABC):
     # Helper Methods
     # -------------------------------------------------------------------------
 
-    def _get_param(self, name: str) -> Optional[ModelParam]:
+    def _get_param(self, name: str) -> ModelParam | None:
         """Get a parameter from this model's Param enum by name, or None if not found."""
         if self.Param is None:
             return None

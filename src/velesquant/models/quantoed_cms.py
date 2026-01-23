@@ -1,5 +1,6 @@
 import numpy as np
-from velesquant import native
+
+from velesquant import CalibrationTarget, OptionType, QuantoedCMS
 
 from ..instruments.base import Instrument
 from .base import MarketDataInput, Model
@@ -47,12 +48,12 @@ class QuantoedCMSModel(Model):
         }
 
         ctype = (
-            native.CalibrationTarget.Price
+            CalibrationTarget.Price
             if calibration_type.lower() == "price"
-            else native.CalibrationTarget.Volatility
+            else CalibrationTarget.Volatility
         )
 
-        self._cpp_model = native.QuantoedCMS(
+        self._cpp_model = QuantoedCMS(
             expiry,
             tenor,
             fwd,
@@ -77,9 +78,9 @@ class QuantoedCMSModel(Model):
         """
         Price a quantoed CMS caplet/floorlet.
         """
-        otype = native.OptionType.Call
+        otype = OptionType.Call
         if option_type.lower() == "put":
-            otype = native.OptionType.Put
+            otype = OptionType.Put
         # Note: In bindings, fairValue return value and args are fixed
         return self._cpp_model.fair_value(strike, otype)
 

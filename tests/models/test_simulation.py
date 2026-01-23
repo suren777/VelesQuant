@@ -1,5 +1,5 @@
-import pytest
 import numpy as np
+
 from velesquant.models.localvol import LocalVolModel
 from velesquant.models.simulation import simulate_multi_asset
 

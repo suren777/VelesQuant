@@ -1,4 +1,4 @@
-from velesquant import native
+from velesquant import OptionType, Swaption
 
 from ..instruments.base import Instrument
 from .base import MarketDataInput, Model
@@ -46,7 +46,7 @@ class SabrSwaptionModel(Model):
         self.nu = nu
         self.rho = rho
 
-        self._cpp_model = native.Swaption(
+        self._cpp_model = Swaption(
             expiry, tenor, forward, annuity, beta, alpha, nu, rho
         )
 
@@ -67,9 +67,9 @@ class SabrSwaptionModel(Model):
         Returns:
             Swaption fair value.
         """
-        otype = native.OptionType.Call
+        otype = OptionType.Call
         if option_type.lower() == "put":
-            otype = native.OptionType.Put
+            otype = OptionType.Put
         return self._cpp_model.fair_value(strike, otype)
 
     def implied_vol(self, strike: float) -> float:

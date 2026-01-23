@@ -1,4 +1,4 @@
-from velesquant import native
+from velesquant import CMS, OptionType
 
 from ..instruments.base import Instrument
 from .base import MarketDataInput, Model
@@ -50,7 +50,7 @@ class CMSModel(Model):
         self.nu = nu
         self.rho = rho
 
-        self._cpp_model = native.CMS(
+        self._cpp_model = CMS(
             expiry, tenor, forward, annuity, pay_cms, discount_cms, beta, alpha, nu, rho
         )
 
@@ -81,9 +81,9 @@ class CMSModel(Model):
         Returns:
             Option fair value.
         """
-        otype = native.OptionType.Call
+        otype = OptionType.Call
         if option_type.lower() == "put":
-            otype = native.OptionType.Put
+            otype = OptionType.Put
         return self._cpp_model.fair_value(strike, otype)
 
     def implied_vol(self, strike: float) -> float:

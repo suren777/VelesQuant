@@ -1,18 +1,16 @@
 import numpy as np
 import pytest
-from velesquant.models.hullwhite import HullWhiteModel
-from velesquant.models.pde_solvers import (
-    HWPDEModel,
-    ShortRate1FPDEModel,
-    ShortRate2FPDEModel,
-    SabrPDEModel,
-)
+
 from velesquant.instruments.bonds import ZeroCouponBond
 from velesquant.instruments.rates import Swaption
 from velesquant.market.curves import DiscountCurve
-
-
-import velesquant.native
+from velesquant.models.hullwhite import HullWhiteModel
+from velesquant.models.pde_solvers import (
+    HWPDEModel,
+    SabrPDEModel,
+    ShortRate1FPDEModel,
+    ShortRate2FPDEModel,
+)
 
 
 class TestModelPricingValidation:
@@ -49,10 +47,10 @@ class TestModelPricingValidation:
         )
 
         # 1. Zero Bond Pricing
-        T = 5.0
-        zcb = ZeroCouponBond(maturity=T)
+        tenor = 5.0
+        zcb = ZeroCouponBond(maturity=tenor)
         analytic_zb = hw_analytic.price(zcb, curve)
-        pde_zb = hw_pde.price_zero_bond(T)
+        pde_zb = hw_pde.price_zero_bond(tenor)
 
         assert (
             abs(analytic_zb - pde_zb) < 2e-3

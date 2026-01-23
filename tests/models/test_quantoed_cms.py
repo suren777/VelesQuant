@@ -1,6 +1,6 @@
 import numpy as np
 
-import velesquant.native as m
+from velesquant import CalibrationTarget, OptionType, QuantoedCMS
 from velesquant.models import QuantoedCMSModel
 
 
@@ -13,7 +13,7 @@ def test_quantoed_cms_init_and_pricing():
     strikes = np.array([[0.02], [0.03], [0.04]])
     quotes = np.array([[0.20], [0.20], [0.20]])  # Flat vol
 
-    q_cms = m.QuantoedCMS(
+    q_cms = QuantoedCMS(
         exp,
         ten,
         fwd,
@@ -25,11 +25,11 @@ def test_quantoed_cms_init_and_pricing():
         beta,
         strikes,
         quotes,
-        m.CalibrationTarget.Price,
+        CalibrationTarget.Price,
     )
 
     # Test Fair Value
-    val = q_cms.fair_value(0.03, m.OptionType.Call)
+    val = q_cms.fair_value(0.03, OptionType.Call)
     assert val > 0.0
 
     # Test Forward
@@ -46,7 +46,7 @@ def test_quantoed_cms_simulation():
     strikes = np.array([[0.03]])
     quotes = np.array([[0.20]])
 
-    q_cms = m.QuantoedCMS(
+    q_cms = QuantoedCMS(
         exp,
         ten,
         fwd,
@@ -58,7 +58,7 @@ def test_quantoed_cms_simulation():
         beta,
         strikes,
         quotes,
-        m.CalibrationTarget.Price,
+        CalibrationTarget.Price,
     )
 
     sim_val = q_cms.simulate(0.0)

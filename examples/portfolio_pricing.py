@@ -3,7 +3,6 @@ import numpy as np
 from velesquant.instruments.bonds import ZeroCouponBond
 from velesquant.instruments.portfolio import Portfolio
 from velesquant.instruments.rates import Swaption
-
 from velesquant.market.container import Market
 from velesquant.market.curves import DiscountCurve
 from velesquant.models import HullWhiteModel, SabrModel

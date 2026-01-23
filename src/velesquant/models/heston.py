@@ -1,8 +1,7 @@
-from typing import List, Union
 
 import numpy as np
 
-from velesquant import native
+from velesquant import CalibrationTarget, Heston, OptionType
 
 from .base import Model
 
@@ -30,7 +29,7 @@ class HestonModel(Model):
         self.rho = rho
         self.seed = seed
 
-        self._cpp_model = native.Heston(spot, var0, kappa, theta, xi, rho, seed)
+        self._cpp_model = Heston(spot, var0, kappa, theta, xi, rho, seed)
 
     def price_option(
         self, maturity: float, forward: float, strike: float, option_type: str = "call"
@@ -39,13 +38,11 @@ class HestonModel(Model):
         Price a European option using Heston semi-analytical formula.
         """
         native_type = (
-            native.OptionType.Call
-            if option_type.lower() == "call"
-            else native.OptionType.Put
+            OptionType.Call if option_type.lower() == "call" else OptionType.Put
         )
         return self._cpp_model.price(maturity, forward, strike, native_type)
 
-    def simulate(self, times: List[float], forwards: List[float]) -> List[float]:
+    def simulate(self, times: list[float], forwards: list[float]) -> list[float]:
         """
         Simulate Heston paths.
         """
@@ -53,10 +50,10 @@ class HestonModel(Model):
 
     def calibrate(
         self,
-        maturities: Union[List[float], np.ndarray],
-        forwards: Union[List[float], np.ndarray],
-        strikes: Union[List[float], np.ndarray],
-        quotes: Union[List[float], np.ndarray],
+        maturities: list[float] | np.ndarray,
+        forwards: list[float] | np.ndarray,
+        strikes: list[float] | np.ndarray,
+        quotes: list[float] | np.ndarray,
         calibration_target: str = "Price",
     ) -> "HestonModel":
         """
@@ -72,9 +69,9 @@ class HestonModel(Model):
 
         # Map string to Enum
         native_target = (
-            native.CalibrationTarget.Price
+            CalibrationTarget.Price
             if calibration_target.capitalize() == "Price"
-            else native.CalibrationTarget.Volatility
+            else CalibrationTarget.Volatility
         )
         params = self._cpp_model.calibrate(m_mat, f_mat, s_mat, q_mat, native_target)
 

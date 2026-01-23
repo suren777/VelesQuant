@@ -1,4 +1,4 @@
-import velesquant.native as n
+from velesquant import DefSwap, ShortRate2FModel, ShortRate2FPDE
 
 
 def test_short_rate_2f_binding():
@@ -15,7 +15,7 @@ def test_short_rate_2f_binding():
     time_alpha = [10.0]
     alpha = [0.0]
 
-    model = n.ShortRate2FModel(
+    model = ShortRate2FModel(
         kappa1,
         kappa2,
         lam,
@@ -26,7 +26,7 @@ def test_short_rate_2f_binding():
         time_alpha,
         alpha,
     )
-    sr2f = n.ShortRate2FPDE(model)
+    sr2f = ShortRate2FPDE(model)
 
     try:
         val = sr2f.pricing_swaption(1.0, 5.0, 0.03)
@@ -38,7 +38,7 @@ def test_short_rate_2f_binding():
     dfs = [1.0, 0.95, 0.70]
 
     swaps = []
-    s = n.DefSwap()
+    s = DefSwap()
     s.expiry = 1.0
     s.tenor = 5.0
     s.swap_rate = 0.03

@@ -1,10 +1,9 @@
-import pytest
-import velesquant.native as n
+from velesquant import DefSwap, ShortRate1FModel, ShortRate1FPDE
 
 
 def test_short_rate_1f_model_basic():
     """Test basic ShortRate1FModel creation and getters."""
-    model = n.ShortRate1FModel(
+    model = ShortRate1FModel(
         R0=0.03,
         kappa=0.01,
         alpha=0.5,
@@ -23,7 +22,7 @@ def test_short_rate_1f_model_basic():
 
 def test_short_rate_1f_pde_pricing():
     """Test ShortRate1FPDE pricing using the new model."""
-    model = n.ShortRate1FModel(
+    model = ShortRate1FModel(
         R0=0.03,
         kappa=0.02,
         alpha=0.01,  # Typical params
@@ -33,7 +32,7 @@ def test_short_rate_1f_pde_pricing():
         sigmas=[0.01, 0.02],
     )
 
-    solver = n.ShortRate1FPDE(model)
+    solver = ShortRate1FPDE(model)
 
     # Test Zero Bond
     zb = solver.price_zero_bond(5.0)
@@ -47,7 +46,7 @@ def test_short_rate_1f_pde_pricing():
     time_dfs = [0.0, 1.0, 5.0, 10.0]
     dfs = [1.0, 0.95, 0.80, 0.60]
 
-    quote1 = n.DefSwap()
+    quote1 = DefSwap()
     quote1.expiry = 1.0
     quote1.tenor = 5.0
     quote1.frequency = 0.5

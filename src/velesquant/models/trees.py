@@ -1,4 +1,4 @@
-from velesquant import native
+from velesquant import CTree, ExerciseStyle, OptionType, TreeType
 
 from ..instruments.base import Instrument
 from .base import MarketDataInput, Model
@@ -30,7 +30,7 @@ class TreeModel(Model):
         self._r = r if r is not None else []
         self._q = q if q is not None else []
 
-        self._cpp_model = native.CTree(
+        self._cpp_model = CTree(
             spot, self._times, self._forwards, self._ivs, self._r, self._q
         )
 
@@ -63,9 +63,9 @@ class TreeModel(Model):
         Price an option using a Binomial Tree.
         """
         # Get enums from native
-        style = self._get_enum(native.ExerciseStyle, exercise_style)
-        otype = self._get_enum(native.OptionType, option_type)
-        ttype = self._get_enum(native.TreeType, tree_type)
+        style = self._get_enum(ExerciseStyle, exercise_style)
+        otype = self._get_enum(OptionType, option_type)
+        ttype = self._get_enum(TreeType, tree_type)
 
         return self._cpp_model.calculate_binomial(
             strike, maturity, n_nodes, style, otype, ttype
@@ -81,9 +81,9 @@ class TreeModel(Model):
         tree_type: str = "Recombining",
     ) -> float:
         """Price an option using a Trinomial Tree."""
-        style = self._get_enum(native.ExerciseStyle, exercise_style)
-        otype = self._get_enum(native.OptionType, option_type)
-        ttype = self._get_enum(native.TreeType, tree_type)
+        style = self._get_enum(ExerciseStyle, exercise_style)
+        otype = self._get_enum(OptionType, option_type)
+        ttype = self._get_enum(TreeType, tree_type)
 
         return self._cpp_model.calculate_trinomial(
             strike, maturity, n_nodes, style, otype, ttype

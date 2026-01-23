@@ -1,4 +1,4 @@
-from velesquant import native
+from velesquant import CalibrationTarget, SchobelZhu
 
 from ..instruments.base import Instrument
 from .base import MarketDataInput, Model
@@ -30,7 +30,7 @@ class SchobelZhuModel(Model):
         self._xi = xi
         self._rho = rho
 
-        self._cpp_model = native.SchobelZhu(spot, var0, kappa, theta, xi, rho)
+        self._cpp_model = SchobelZhu(spot, var0, kappa, theta, xi, rho)
 
     @property
     def spot(self) -> float:
@@ -106,9 +106,9 @@ class SchobelZhuModel(Model):
         Calibrate Schöbel-Zhu model to raw market quotes.
         """
         ctarget = (
-            native.CalibrationTarget.Price
+            CalibrationTarget.Price
             if target.lower() == "price"
-            else native.CalibrationTarget.Volatility
+            else CalibrationTarget.Volatility
         )
         self._cpp_model.calibrate(maturities, forwards, strikes, quotes, ctarget)
 

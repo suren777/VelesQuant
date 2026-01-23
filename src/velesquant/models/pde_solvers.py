@@ -1,13 +1,25 @@
-from velesquant import native
+from velesquant import (
+    HWPDE,
+    AfSabr,
+    AntonovSabr,
+    DefSwap,
+    HullWhiteModel,
+    OptionType,
+    Sabr,
+    SabrPDE,
+    ShortRate1FModel,
+    ShortRate1FPDE,
+    ShortRate2FModel,
+    ShortRate2FPDE,
+)
 
-from ..instruments.base import Instrument
-from .base import MarketDataInput, Model
+from .base import Model
 
 
-def _to_native_swaps(swap_quotes: list[dict]) -> list[native.DefSwap]:
+def _to_native_swaps(swap_quotes: list[dict]) -> list[DefSwap]:
     native_swaps = []
     for q in swap_quotes:
-        ds = native.DefSwap()
+        ds = DefSwap()
         ds.expiry = q.get("expiry", 0.0)
         ds.tenor = q.get("tenor", 0.0)
         ds.frequency = q.get("frequency", 0.5)
@@ -67,11 +79,12 @@ class HWPDEModel(Model):
                 "initial_rate/thetas are not supported by the underlying native model."
             )
         else:
-            # HullWhiteModel(kappa, timeSigmas, sigmas, discount_factor_times, discount_factors)
-            self._model_instance = native.HullWhiteModel(
+            assert discount_factor_times is not None
+            assert discount_factors is not None
+            self._model_instance = HullWhiteModel(
                 kappa, time_sigmas, sigmas, discount_factor_times, discount_factors
             )
-            self._cpp_model = native.HWPDE(self._model_instance, grid_points, time_step)
+            self._cpp_model = HWPDE(self._model_instance, grid_points, time_step)
 
     def price_swaption(
         self, expiry: float, tenor: float, strike: float, pay_freq: float = 0.5
@@ -104,9 +117,7 @@ class HWPDEModel(Model):
     ) -> float:
         """Price a Callable Swap."""
         native_type = (
-            native.OptionType.Call
-            if option_type.capitalize() == "Call"
-            else native.OptionType.Put
+            OptionType.Call if option_type.capitalize() == "Call" else OptionType.Put
         )
         return self._cpp_model.price_callable_swap(
             expiry, tenor, exercises, coupon, strike, pay_freq, native_type
@@ -121,9 +132,7 @@ class HWPDEModel(Model):
     ) -> float:
         """Price a Zero Coupon Bond Option."""
         native_type = (
-            native.OptionType.Call
-            if option_type.capitalize() == "Call"
-            else native.OptionType.Put
+            OptionType.Call if option_type.capitalize() == "Call" else OptionType.Put
         )
         return self._cpp_model.price_zero_bond_option(
             expiry, maturity, strike, native_type
@@ -140,15 +149,13 @@ class HWPDEModel(Model):
     ) -> float:
         """Price a Coupon Bond Option."""
         native_type = (
-            native.OptionType.Call
-            if option_type.capitalize() == "Call"
-            else native.OptionType.Put
+            OptionType.Call if option_type.capitalize() == "Call" else OptionType.Put
         )
         return self._cpp_model.price_coupon_bond_option(
             expiry, tenor, coupon, strike, pay_freq, native_type
         )
 
-    def calibrate(
+    def calibrate(  # type: ignore[override]
         self,
         time_dfs: list[float],
         dfs: list[float],
@@ -217,7 +224,7 @@ class ShortRate1FPDEModel(Model):
         """
         self.params = locals()
         self.params.pop("self")
-        self._model_instance = native.ShortRate1FModel(
+        self._model_instance = ShortRate1FModel(
             initial_rate,
             kappa,
             alpha,
@@ -226,9 +233,7 @@ class ShortRate1FPDEModel(Model):
             time_sigmas,
             sigmas,
         )
-        self._cpp_model = native.ShortRate1FPDE(
-            self._model_instance, grid_points, time_step
-        )
+        self._cpp_model = ShortRate1FPDE(self._model_instance, grid_points, time_step)
 
     def price_swaption(
         self, expiry: float, tenor: float, strike: float, pay_freq: float = 0.5
@@ -244,9 +249,7 @@ class ShortRate1FPDEModel(Model):
     ) -> float:
         """Price a Zero Coupon Bond Option."""
         native_type = (
-            native.OptionType.Call
-            if option_type.capitalize() == "Call"
-            else native.OptionType.Put
+            OptionType.Call if option_type.capitalize() == "Call" else OptionType.Put
         )
         return self._cpp_model.price_zero_bond_option(
             expiry, maturity, strike, native_type
@@ -263,15 +266,13 @@ class ShortRate1FPDEModel(Model):
     ) -> float:
         """Price a Coupon Bond Option."""
         native_type = (
-            native.OptionType.Call
-            if option_type.capitalize() == "Call"
-            else native.OptionType.Put
+            OptionType.Call if option_type.capitalize() == "Call" else OptionType.Put
         )
         return self._cpp_model.price_coupon_bond_option(
             expiry, tenor, coupon, strike, pay_freq, native_type
         )
 
-    def calibrate(
+    def calibrate(  # type: ignore[override]
         self,
         time_dfs: list[float],
         dfs: list[float],
@@ -346,7 +347,7 @@ class ShortRate2FPDEModel(Model):
         """
         self.params = locals()
         self.params.pop("self")
-        self._model_instance = native.ShortRate2FModel(
+        self._model_instance = ShortRate2FModel(
             kappa1,
             kappa2,
             lam,
@@ -357,7 +358,7 @@ class ShortRate2FPDEModel(Model):
             time_alphas,
             alphas,
         )
-        self._cpp_model = native.ShortRate2FPDE(self._model_instance, time_step)
+        self._cpp_model = ShortRate2FPDE(self._model_instance, time_step)
 
     def price_swaption(
         self, expiry: float, tenor: float, strike: float, pay_freq: float = 0.5
@@ -367,7 +368,7 @@ class ShortRate2FPDEModel(Model):
     def price_zero_bond(self, maturity: float) -> float:
         return self._cpp_model.price_zero_bond(maturity)
 
-    def calibrate(
+    def calibrate(  # type: ignore[override]
         self,
         time_dfs: list[float],
         dfs: list[float],
@@ -436,13 +437,11 @@ class SabrPDEModel(Model):
         self.params.pop("self")
         if variant.lower() == "af":
             # Sabr(maturity, forward, beta, alpha, nu, rho, shift)
-            self._model_instance = native.Sabr(maturity, f, beta, alpha, nu, rho, shift)
-            self._cpp_model = native.AfSabr(self._model_instance, size_x, size_t, nd)
+            self._model_instance = Sabr(maturity, f, beta, alpha, nu, rho, shift)
+            self._cpp_model: SabrPDE = AfSabr(self._model_instance, size_x, size_t, nd)
         else:
-            self._model_instance = native.Sabr(maturity, f, beta, alpha, nu, rho, shift)
-            self._cpp_model = native.AntonovSabr(
-                self._model_instance, size_x, size_t, nd
-            )
+            self._model_instance = Sabr(maturity, f, beta, alpha, nu, rho, shift)
+            self._cpp_model = AntonovSabr(self._model_instance, size_x, size_t, nd)
 
     def get_density(self) -> list[float]:
         """Get risk-neutral density from PDE."""

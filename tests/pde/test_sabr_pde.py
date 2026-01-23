@@ -1,19 +1,20 @@
 import pytest
+
 from velesquant import AfSabr, AntonovSabr, Sabr
 
 
 def test_sabr_pde_binding():
     # Setup Sabr model
     # Sabr(maturity, forward, beta, alpha, nu, rho, shift)
-    T = 1.0
-    F = 0.03
+    tenor = 1.0
+    forward = 0.03
     alpha = 0.2
     beta = 0.5
     nu = 0.3
     rho = -0.4
     shift = 0.0
 
-    model = Sabr(T, F, beta, alpha, nu, rho, shift)
+    model = Sabr(tenor, forward, beta, alpha, nu, rho, shift)
 
     # AfSabr(model, sizeX, sizeT, nd)
     af = AfSabr(model, 100, 100, 3.0)
@@ -35,15 +36,15 @@ def test_sabr_pde_density():
     Scenario: Calculate PDF from SABR PDE and verify integral is approx 1.
     """
     # Setup model
-    T = 1.0
-    F = 0.03
+    tenor = 1.0
+    forward = 0.03
     alpha = 0.2
     beta = 0.5
     nu = 0.3
     rho = -0.4
     shift = 0.0
 
-    model = Sabr(T, F, beta, alpha, nu, rho, shift)
+    model = Sabr(tenor, forward, beta, alpha, nu, rho, shift)
 
     # Increase number of standard deviations for grid boundary to capture tails
     # and increase grid points for better integration accuracy

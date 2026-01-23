@@ -1,7 +1,7 @@
-from typing import List, Optional, Union
+
 import numpy as np
 
-from velesquant import native
+from velesquant import LocalVol
 
 from ..instruments.base import Instrument
 from .base import MarketDataInput, Model
@@ -18,14 +18,14 @@ class LocalVolModel(Model):
 
     def __init__(
         self,
-        sabr_models: Optional[List[SabrModel]] = None,
+        sabr_models: list[SabrModel] | None = None,
         spot: float = 100.0,
-        maturities: Optional[Union[List[float], np.ndarray]] = None,
-        forwards: Optional[Union[List[float], np.ndarray]] = None,
-        betas: Optional[Union[List[float], np.ndarray]] = None,
-        alphas: Optional[Union[List[float], np.ndarray]] = None,
-        nus: Optional[Union[List[float], np.ndarray]] = None,
-        rhos: Optional[Union[List[float], np.ndarray]] = None,
+        maturities: list[float] | np.ndarray | None = None,
+        forwards: list[float] | np.ndarray | None = None,
+        betas: list[float] | np.ndarray | None = None,
+        alphas: list[float] | np.ndarray | None = None,
+        nus: list[float] | np.ndarray | None = None,
+        rhos: list[float] | np.ndarray | None = None,
     ):
         """
         Initialize LocalVolModel.
@@ -46,7 +46,7 @@ class LocalVolModel(Model):
         if sabr_models is not None:
             # Extract native SABR objects for C++ construction
             native_sabrs = [s._cpp_model for s in sabr_models]
-            self._cpp_model = native.LocalVol(native_sabrs)
+            self._cpp_model = LocalVol(native_sabrs)
             self._cpp_model.spot = spot
         elif maturities is not None:
             # Vector based construction
@@ -61,7 +61,7 @@ class LocalVolModel(Model):
             # Pybind11 will throw if vector sizes mismatch in lVol constructor potentially?
             # Or lVol constructor assumes them.
 
-            self._cpp_model = native.LocalVol(
+            self._cpp_model = LocalVol(
                 self.maturities,
                 self.forwards,
                 self.betas,
@@ -72,13 +72,13 @@ class LocalVolModel(Model):
             )
         else:
             # Default empty constructor?
-            self._cpp_model = native.LocalVol()
+            self._cpp_model = LocalVol()
             self._cpp_model.spot = spot
 
     @staticmethod
     def _to_flat_list(
-        data: Union[List[float], np.ndarray, List[List[float]]],
-    ) -> List[float]:
+        data: list[float] | np.ndarray | list[list[float]],
+    ) -> list[float]:
         if isinstance(data, np.ndarray):
             return data.flatten().tolist()
         if isinstance(data, list):
@@ -143,17 +143,17 @@ class LocalVolModel(Model):
         """
         return self._cpp_model.dnt_pde(maturity, upper_barrier, lower_barrier, n_steps)
 
-    def density(self, maturity: float, num_steps: int = 50) -> List[float]:
+    def density(self, maturity: float, num_steps: int = 50) -> list[float]:
         """Compute risk-neutral density."""
         return self._cpp_model.density(maturity, num_steps)
 
-    def get_density(self, maturity: float, n_points: int = 100) -> List[float]:
+    def get_density(self, maturity: float, n_points: int = 100) -> list[float]:
         """Alias for density to match facade wrapper."""
         return self.density(maturity, n_points)
 
     def export_local_vol_surface(
-        self, times: Union[List[float], np.ndarray]
-    ) -> List[List[float]]:
+        self, times: list[float] | np.ndarray
+    ) -> list[list[float]]:
         """
         Export the local volatility surface for the given time points.
         Returns a matrix (list of lists) of local volatilities.
@@ -163,9 +163,9 @@ class LocalVolModel(Model):
 
     def simulate(
         self,
-        times: Union[List[float], np.ndarray],
-        rands: Optional[Union[List[float], np.ndarray]] = None,
-    ) -> List[float]:
+        times: list[float] | np.ndarray,
+        rands: list[float] | np.ndarray | None = None,
+    ) -> list[float]:
         """
         Simulate a path using the local volatility model.
         """

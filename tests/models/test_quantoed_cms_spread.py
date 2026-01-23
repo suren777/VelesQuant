@@ -1,7 +1,7 @@
-import pytest
 import numpy as np
+import pytest
 
-import velesquant.native as m
+from velesquant import CalibrationTarget, QuantoedCmsSpread
 from velesquant.models import QuantoedCMSSpreadModel
 
 
@@ -24,7 +24,7 @@ def test_quantoed_cms_spread_init_and_sim():
 
     corr = 0.6
 
-    qcs = m.QuantoedCmsSpread(
+    qcs = QuantoedCmsSpread(
         exp1,
         ten1,
         fwd1,
@@ -36,7 +36,7 @@ def test_quantoed_cms_spread_init_and_sim():
         beta1,
         strikes1,
         quotes1,
-        m.CalibrationTarget.Price,
+        CalibrationTarget.Price,
         exp2,
         ten2,
         fwd2,
@@ -48,7 +48,7 @@ def test_quantoed_cms_spread_init_and_sim():
         beta2,
         strikes2,
         quotes2,
-        m.CalibrationTarget.Price,
+        CalibrationTarget.Price,
         corr,
     )
 

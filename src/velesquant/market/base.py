@@ -1,4 +1,4 @@
-from typing import Protocol, Type, TypeVar, runtime_checkable
+from typing import Protocol, TypeVar, runtime_checkable
 
 T = TypeVar("T")
 
@@ -20,7 +20,7 @@ class MarketDataContainer(Protocol):
     Protocol for containers that hold multiple market data objects (e.g., Market).
     """
 
-    def get(self, name: str, kind: Type[T]) -> T:
+    def get(self, name: str, kind: type[T]) -> T:
         """Retrieve a specific piece of market data by name and type."""
 
     def add(self, name: str, data: MarketData) -> None:

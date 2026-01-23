@@ -1,6 +1,5 @@
 import json
 
-
 from velesquant.market.container import Market
 from velesquant.market.curves import DiscountCurve
 

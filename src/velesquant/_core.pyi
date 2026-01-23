@@ -158,14 +158,15 @@ class DefSwap:
     def __init__(self) -> None: ...
 
 class SabrPDE:
-    def getAlpha(self) -> float: ...
-    def getBeta(self) -> float: ...
-    def getDensity(self) -> list[float]: ...
-    def getFgrid(self) -> list[float]: ...
-    def getNu(self) -> float: ...
-    def getRho(self) -> float: ...
+    def get_alpha(self) -> float: ...
+    def get_beta(self) -> float: ...
+    def get_density(self) -> list[float]: ...
+    def get_f_grid(self) -> list[float]: ...
+    def get_nu(self) -> float: ...
+    def get_rho(self) -> float: ...
 
 class AfSabr(SabrPDE):
+    @typing.overload
     def __init__(
         self,
         alpha: typing.SupportsFloat,
@@ -179,9 +180,18 @@ class AfSabr(SabrPDE):
         sizeT: typing.SupportsInt,
         nd: typing.SupportsFloat,
     ) -> None: ...
-    def getShift(self) -> float: ...
+    @typing.overload
+    def __init__(
+        self,
+        model: Sabr,
+        sizeX: typing.SupportsInt,
+        sizeT: typing.SupportsInt,
+        nd: typing.SupportsFloat,
+    ) -> None: ...
+    def get_shift(self) -> float: ...
 
 class AntonovSabr(SabrPDE):
+    @typing.overload
     def __init__(
         self,
         alpha: typing.SupportsFloat,
@@ -190,6 +200,14 @@ class AntonovSabr(SabrPDE):
         rho: typing.SupportsFloat,
         maturity: typing.SupportsFloat,
         F: typing.SupportsFloat,
+        sizeX: typing.SupportsInt,
+        sizeT: typing.SupportsInt,
+        nd: typing.SupportsFloat,
+    ) -> None: ...
+    @typing.overload
+    def __init__(
+        self,
+        model: Sabr,
         sizeX: typing.SupportsInt,
         sizeT: typing.SupportsInt,
         nd: typing.SupportsFloat,
@@ -526,7 +544,7 @@ class HHW:
 class HWPDE:
     def __init__(
         self,
-        model: "HullWhiteModel",
+        model: HullWhiteModel,
         grid_points: int = 512,
         time_step: float = 0.001,
     ) -> None: ...
@@ -546,7 +564,7 @@ class HWPDE:
         coupon: typing.SupportsFloat,
         strike: typing.SupportsFloat,
         pay_frequency: typing.SupportsFloat,
-        type: str,
+        type: OptionType,
     ) -> float: ...
     def price_swaption(
         self,
@@ -577,7 +595,7 @@ class HWPDE:
         coupon: typing.SupportsFloat,
         strike: typing.SupportsFloat,
         pay_frequency: typing.SupportsFloat,
-        type: str,
+        type: OptionType,
     ) -> float: ...
     def price_coupon_bond(
         self,
@@ -632,13 +650,6 @@ class Heston:
         rho: typing.SupportsFloat,
         seed: typing.SupportsInt = 42,
     ) -> None: ...
-    def hestonPrice(
-        self,
-        maturity: typing.SupportsFloat,
-        forward: typing.SupportsFloat,
-        strike: typing.SupportsFloat,
-        optType: OptionType = OptionType.Call,
-    ) -> float: ...
     def calibrate(
         self,
         maturities: numpy.typing.ArrayLike,
@@ -647,7 +658,14 @@ class Heston:
         quotes: numpy.typing.ArrayLike,
         quote_type: CalibrationTarget = CalibrationTarget.Price,
     ) -> dict[str, float]: ...
-    def simulationHeston(
+    def price(
+        self,
+        maturity: typing.SupportsFloat,
+        forward: typing.SupportsFloat,
+        strike: typing.SupportsFloat,
+        optType: OptionType = OptionType.Call,
+    ) -> float: ...
+    def simulate(
         self,
         times: collections.abc.Sequence[typing.SupportsFloat],
         forwards: collections.abc.Sequence[typing.SupportsFloat],
@@ -664,6 +682,7 @@ class Heston:
     def xi(self) -> float: ...
 
 class HullWhiteModel:
+    def get_discount_factor(self, t: float) -> float: ...
     def __init__(
         self,
         kappa: typing.SupportsFloat,
@@ -709,7 +728,18 @@ class LocalVol:
     def __init__(self) -> None: ...
     @typing.overload
     def __init__(self, sabrModels: collections.abc.Sequence[Sabr]) -> None: ...
-    def callPDE(
+    @typing.overload
+    def __init__(
+        self,
+        maturities: collections.abc.Sequence[float],
+        forwards: collections.abc.Sequence[float],
+        betas: collections.abc.Sequence[float],
+        alphas: collections.abc.Sequence[float],
+        nus: collections.abc.Sequence[float],
+        rhos: collections.abc.Sequence[float],
+        spot: float,
+    ) -> None: ...
+    def call_pde(
         self,
         maturity: typing.SupportsFloat,
         strike: typing.SupportsFloat,
@@ -718,12 +748,30 @@ class LocalVol:
     def density(
         self, maturity: typing.SupportsFloat, Nt: typing.SupportsInt
     ) -> list[float]: ...
-    def putPDE(
+    def dnt_pde(
+        self,
+        maturity: typing.SupportsFloat,
+        upper_barrier: typing.SupportsFloat,
+        lower_barrier: typing.SupportsFloat,
+        N: typing.SupportsInt = 100,
+    ) -> float: ...
+    def export_lv(
+        self, times: collections.abc.Sequence[typing.SupportsFloat]
+    ) -> list[list[float]]: ...
+    def put_pde(
         self,
         maturity: typing.SupportsFloat,
         strike: typing.SupportsFloat,
         N: typing.SupportsInt = 100,
     ) -> float: ...
+    def simulate(
+        self,
+        times: collections.abc.Sequence[typing.SupportsFloat],
+        rands: collections.abc.Sequence[typing.SupportsFloat],
+    ) -> list[float]: ...
+    def simulate_paths(
+        self, times: collections.abc.Sequence[typing.SupportsFloat]
+    ) -> list[float]: ...
     @property
     def spot(self) -> float: ...
     @spot.setter
@@ -1002,6 +1050,7 @@ class ShortRate1FPDE:
         strike: typing.SupportsFloat,
         pay_frequency: typing.SupportsFloat = 0.5,
     ) -> float: ...
+    def price_zero_bond(self, maturity: typing.SupportsFloat) -> float: ...
     def price_zero_bond_option(
         self,
         expiry: typing.SupportsFloat,

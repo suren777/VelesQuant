@@ -1,12 +1,15 @@
-import math
-from typing import Any, List, Union
+from typing import Any
 
 import numpy as np
 
-# We import the C++ native module.
-# Depending on installation, it might be velesquant.native
-from velesquant import native
-from velesquant.native import implied_vol
+from velesquant import (
+    HullWhiteAnalyticEngine,
+    OptionType,
+    implied_vol,
+)
+from velesquant import (
+    HullWhiteModel as NativeHullWhiteModel,
+)
 
 from ..instruments.bonds import Bond, CouponBond, ZeroCouponBond
 from ..instruments.portfolio import Portfolio
@@ -61,12 +64,12 @@ class HullWhiteModel(Model):
         sigmas = [self.sigma, self.sigma]
 
         # Core Model
-        model = native.HullWhiteModel(
+        model = NativeHullWhiteModel(
             self.kappa, time_sigmas, sigmas, curve.times, curve.dfs
         )
         # Analytic Engine
         # pylint: disable=no-member
-        engine = native.HullWhiteAnalyticEngine(model)  # type: ignore
+        engine = HullWhiteAnalyticEngine(model)  # type: ignore
 
         # Update cache
         self._cached_native_objects = (
@@ -78,7 +81,7 @@ class HullWhiteModel(Model):
         )
         return model, engine
 
-    def simulate(self, times: List[float], curve: DiscountCurve) -> List[float]:
+    def simulate(self, times: list[float], curve: DiscountCurve) -> list[float]:
         """
         Simulate Hull-White paths.
         """
@@ -99,9 +102,9 @@ class HullWhiteModel(Model):
         _, engine = self._create_native_objects(curve)
 
         # Map string to enum
-        otype = native.OptionType.Call
+        otype = OptionType.Call
         if option_type.lower() == "put":
-            otype = native.OptionType.Put
+            otype = OptionType.Put
 
         return engine.option_bond(expiry, maturity, strike, otype)
 
@@ -175,10 +178,10 @@ class HullWhiteModel(Model):
 
     def price(
         self,
-        instrument: Union[Swaption, Bond, Portfolio],
-        market_data: Union[DiscountCurve, Market],
+        instrument: Swaption | Bond | Portfolio,
+        market_data: DiscountCurve | Market,
         curve_name: str = "USD",
-    ) -> Union[float, np.ndarray, dict]:
+    ) -> float | np.ndarray | dict:
         """
         Price an instrument using the Hull-White model.
         """
@@ -197,9 +200,7 @@ class HullWhiteModel(Model):
         is_vectorized = False
         if hasattr(instrument, "expiry") and isinstance(
             instrument.expiry, (list, np.ndarray)
-        ):
-            is_vectorized = True
-        elif hasattr(instrument, "maturity") and isinstance(
+        ) or hasattr(instrument, "maturity") and isinstance(
             instrument.maturity, (list, np.ndarray)
         ):
             is_vectorized = True
