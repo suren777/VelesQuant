@@ -1,9 +1,4 @@
-// bindings/module.cpp - Main module entry point
-// Explicitly force default visibility for the module entry point to avoid
-// stripping/hiding
-#ifndef PYBIND11_EXPORT
-#define PYBIND11_EXPORT __attribute__((visibility("default")))
-#endif
+
 #include "bind_common.h"
 
 namespace velesquant {
