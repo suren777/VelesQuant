@@ -82,7 +82,7 @@ cd "boost_${BOOST_VERSION_UNDERSCORE}"
 echo "Bootstrapping..."
 ./bootstrap.sh
 echo "Installing..."
-$SUDO ./b2 install --prefix=/usr/local
+$SUDO ./b2 install --prefix=/usr/local link=static runtime-link=shared
 
 # Save to Cache
 echo "Saving Boost to cache..."

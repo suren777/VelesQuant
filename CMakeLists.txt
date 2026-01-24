@@ -14,6 +14,7 @@ endif()
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 find_package(QuantLib REQUIRED)
+set(Boost_USE_STATIC_LIBS ON)
 find_package(Boost REQUIRED)
 find_package(Python3 COMPONENTS Interpreter Development.Module REQUIRED)
 # Handle pybind11 matching the Python version
