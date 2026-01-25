@@ -130,7 +130,6 @@ pybind11_add_module(_core
 target_link_libraries(_core PRIVATE velesquant_core)
 set_target_properties(_core PROPERTIES 
     INTERPROCEDURAL_OPTIMIZATION FALSE
-    VISIBILITY_INLINES_HIDDEN ON
 )
 target_compile_options(_core PRIVATE -fno-lto)
 target_link_options(_core PRIVATE -fno-lto)
