@@ -133,7 +133,7 @@ set_target_properties(_core PROPERTIES
     CXX_VISIBILITY_PRESET default
 )
 target_compile_options(_core PRIVATE -fno-lto -fvisibility=default)
-target_link_options(_core PRIVATE -fno-lto)
+target_link_options(_core PRIVATE -fno-lto -fvisibility=default)
 
 # Install the module to the python package
 install(TARGETS _core DESTINATION velesquant)

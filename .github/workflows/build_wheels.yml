@@ -100,7 +100,7 @@ jobs:
                 echo "QuantLib install script not found at {project}/scripts/ci_install_quantlib.sh" && exit 1
             fi
           CIBW_TEST_COMMAND: >
-            export SITE_PKG=$(python -c 'import velesquant; import os; print(os.path.dirname(velesquant.__file__))') &&
+            export SITE_PKG=$(pip show velesquant | grep Location | awk '{print $2}')/velesquant &&
             echo "Install loc: '${SITE_PKG}'" &&
             ls -R ${SITE_PKG} &&
             echo "Searching for _core.so..." &&
