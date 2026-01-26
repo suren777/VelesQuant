@@ -104,7 +104,10 @@ jobs:
             echo "Install loc: '${SITE_PKG}'" &&
             ls -R ${SITE_PKG} &&
             echo "Searching for _core.so..." &&
-            find ${SITE_PKG} -name "_core*.so" -exec nm -D {} \; | grep PyInit || true &&
+            SO_FILE=$(find ${SITE_PKG} -name "_core*.so" | head -n 1) &&
+            echo "Found SO: $SO_FILE" &&
+            nm -D $SO_FILE || true &&
+            objdump -T $SO_FILE || true &&
             pytest {project}/tests
           CIBW_TEST_REQUIRES: "pytest numpy"
           CMAKE_ARGS: >
