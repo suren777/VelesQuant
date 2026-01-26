@@ -101,10 +101,10 @@ jobs:
             fi
           CIBW_TEST_COMMAND: >
             export SITE_PKG=$(python -c 'import velesquant; import os; print(os.path.dirname(velesquant.__file__))') &&
-            echo "Install loc: $SITE_PKG" &&
-            ls -l $SITE_PKG &&
-            echo "Symbols in _core:" &&
-            (nm -D $SITE_PKG/_core*.so | grep PyInit || true) &&
+            echo "Install loc: '${SITE_PKG}'" &&
+            ls -R ${SITE_PKG} &&
+            echo "Searching for _core.so..." &&
+            find ${SITE_PKG} -name "_core*.so" -exec nm -D {} \; | grep PyInit || true &&
             pytest {project}/tests
           CIBW_TEST_REQUIRES: "pytest numpy"
           CMAKE_ARGS: >
