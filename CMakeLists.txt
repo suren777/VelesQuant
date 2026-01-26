@@ -127,13 +127,15 @@ pybind11_add_module(_core
     bindings/pde_solvers/bind_pde_solvers.cpp
 )
 
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
+
 target_link_libraries(_core PRIVATE velesquant_core)
 set_target_properties(_core PROPERTIES 
     INTERPROCEDURAL_OPTIMIZATION FALSE
     CXX_VISIBILITY_PRESET default
 )
 target_compile_options(_core PRIVATE -fno-lto -fvisibility=default)
-target_link_options(_core PRIVATE -fno-lto -fvisibility=default)
+target_link_options(_core PRIVATE -fno-lto -fvisibility=default -Wl,--export-dynamic)
 
 # Install the module to the python package
 install(TARGETS _core DESTINATION velesquant)
