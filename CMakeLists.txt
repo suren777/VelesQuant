@@ -132,7 +132,7 @@ set_target_properties(_core PROPERTIES
     INTERPROCEDURAL_OPTIMIZATION FALSE
     CXX_VISIBILITY_PRESET default
 )
-target_compile_options(_core PRIVATE -fno-lto)
+target_compile_options(_core PRIVATE -fno-lto -fvisibility=default)
 target_link_options(_core PRIVATE -fno-lto)
 
 # Install the module to the python package
