@@ -22,6 +22,12 @@ void bind_exceptions(py::module_ &m);
 } // namespace bindings
 } // namespace velesquant
 
+// Debug export to check if symbols are being stripped
+extern "C" __attribute__((visibility("default"))) int
+velesquant_debug_symbol() {
+  return 42;
+}
+
 PYBIND11_MODULE(_core, m) {
   m.doc() = "VelesQuant Core Bindings - Quantitative Finance Library";
 

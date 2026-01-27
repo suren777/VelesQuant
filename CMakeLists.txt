@@ -83,6 +83,7 @@ list(FILTER SOURCES EXCLUDE REGEX "test_simplex.cpp")
 
 # Create the Core C++ Library
 add_library(velesquant_core STATIC ${SOURCES})
+set_target_properties(velesquant_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 target_link_libraries(velesquant_core
     PRIVATE
