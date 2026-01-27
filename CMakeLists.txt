@@ -128,15 +128,6 @@ pybind11_add_module(_core
     bindings/pde_solvers/bind_pde_solvers.cpp
 )
 
-# [DEBUG] Inspect symbols immediately after linking to check if linker is stripping
-add_custom_command(TARGET _core POST_BUILD
-    COMMAND echo "--- POST-BUILD SYMBOL CHECK ---"
-    COMMAND echo "Checking %<TARGET_FILE:_core>..."
-    COMMAND nm -D $<TARGET_FILE:_core> | grep "PyInit" || echo "PyInit not found in nm -D"
-    COMMAND objdump -T $<TARGET_FILE:_core> | grep "PyInit" || echo "PyInit not found in objdump -T"
-    COMMAND echo "-----------------------------"
-)
-
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
 
 target_link_libraries(_core PRIVATE velesquant_core)
