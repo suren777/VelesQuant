@@ -3,6 +3,8 @@ project(velesquant LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# Globally disable LTO to prevent symbol stripping/lto-slim artifacts in extensions
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
 
 if(MSVC)
     add_compile_options(/W4)
@@ -83,7 +85,11 @@ list(FILTER SOURCES EXCLUDE REGEX "test_simplex.cpp")
 
 # Create the Core C++ Library
 add_library(velesquant_core STATIC ${SOURCES})
-set_target_properties(velesquant_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
+set_target_properties(velesquant_core PROPERTIES 
+    POSITION_INDEPENDENT_CODE ON
+    INTERPROCEDURAL_OPTIMIZATION FALSE
+)
+target_compile_options(velesquant_core PRIVATE -fno-lto)
 
 target_link_libraries(velesquant_core
     PRIVATE
@@ -128,7 +134,7 @@ pybind11_add_module(_core
     bindings/pde_solvers/bind_pde_solvers.cpp
 )
 
-set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
+
 
 target_link_libraries(_core PRIVATE velesquant_core)
 set_target_properties(_core PROPERTIES 
