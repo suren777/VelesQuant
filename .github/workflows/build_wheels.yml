@@ -38,7 +38,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ci_cache/quantlib
-          key: quantlib-v1.41-manylinux2014-v4-${{ hashFiles('scripts/ci_install_quantlib.sh') }}
+          key: quantlib-v1.41-manylinux2014-v5-${{ hashFiles('scripts/ci_install_quantlib.sh') }}
 
       - name: Cache ccache
         uses: actions/cache@v4

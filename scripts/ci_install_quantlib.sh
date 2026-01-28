@@ -31,7 +31,7 @@ tar xzf "${QUANTLIB_FILENAME}"
 
 # Build
 cd "QuantLib-${QUANTLIB_VERSION}"
-./configure --disable-shared --prefix=/usr/local --enable-std-classes
+./configure --disable-shared --prefix=/usr/local --enable-std-classes --with-pic CXXFLAGS="-O3 -fPIC"
 make -j$(nproc)
 $SUDO make install
 
