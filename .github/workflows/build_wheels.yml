@@ -75,7 +75,7 @@ jobs:
         uses: pypa/cibuildwheel@v2.16.5
         env:
           CCACHE_DIR: "${{ github.workspace }}/ci_cache/ccache"
-          CIBW_CONFIG_SETTINGS: "strip=false"
+          CIBW_CONFIG_SETTINGS_LINUX: "strip=false"
           CIBW_CONTAINER_OPTIONS: "-v ${{ github.workspace }}/ci_cache/quantlib:/host/quantlib-cache -v ${{ github.workspace }}/ci_cache/boost:/host/boost-cache -v ${{ github.workspace }}/ci_cache/ccache:/host/ccache -e CCACHE_DIR=/host/ccache"
           CIBW_BUILD: cp310-* cp311-* cp312-*
           # Skip PyPy for now as it can be tricky with C++ extensions
