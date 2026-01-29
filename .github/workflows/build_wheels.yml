@@ -80,6 +80,7 @@ jobs:
           CIBW_BUILD: cp310-* cp311-* cp312-*
           # Skip PyPy for now as it can be tricky with C++ extensions
           CIBW_SKIP: "pp*"
+          CIBW_ARCHS_LINUX: "x86_64"
           CIBW_ARCHS_MACOS: "auto"
           # Use manylinux_2_28 for C++20 support (modern GCC)
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
