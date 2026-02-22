@@ -16,12 +16,88 @@ on:
   workflow_dispatch:
 
 jobs:
+  # ── Smoke test ────────────────────────────────────────────────────────────
+  # Runs on every push/PR. Builds one wheel (cp312-linux) to catch C++ and
+  # CMake breakage fast, without paying for the full 9-wheel matrix.
+  smoke_test:
+    name: Smoke test (cp312 linux)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Boost
+        uses: actions/cache@v4
+        with:
+          path: ci_cache/boost
+          key: boost-1.83.0-manylinux2014-v4-${{ hashFiles('scripts/ci_install_boost.sh') }}
+
+      - name: Cache QuantLib
+        uses: actions/cache@v4
+        with:
+          path: ci_cache/quantlib
+          key: quantlib-v1.41-manylinux2014-v5-${{ hashFiles('scripts/ci_install_quantlib.sh') }}
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ci_cache/ccache
+          key: ccache-Linux-v4-${{ hashFiles('src/**/*.cpp', 'src/**/*.hpp', 'src/**/*.h', 'CMakeLists.txt', 'cmake/**') }}
+          restore-keys: |
+            ccache-Linux-v4-
+
+      - name: Create cache directories
+        run: |
+          mkdir -p ci_cache/quantlib ci_cache/boost
+
+      - name: Smoke-test build (cp312-manylinux_x86_64 only)
+        uses: pypa/cibuildwheel@v2.16.5
+        env:
+          CCACHE_DIR: "${{ github.workspace }}/ci_cache/ccache"
+          CIBW_ENVIRONMENT_LINUX: "SKBUILD_STRIP=false"
+          CIBW_CONTAINER_OPTIONS: "-v ${{ github.workspace }}/ci_cache/quantlib:/host/quantlib-cache -v ${{ github.workspace }}/ci_cache/boost:/host/boost-cache -v ${{ github.workspace }}/ci_cache/ccache:/host/ccache -e CCACHE_DIR=/host/ccache"
+          # Single wheel: cp312 linux only for fast feedback
+          CIBW_BUILD: cp312-manylinux_x86_64
+          CIBW_SKIP: "pp* *-musllinux_*"
+          CIBW_ARCHS_LINUX: "x86_64"
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
+          CIBW_BEFORE_ALL_LINUX: >
+            yum install -y epel-release &&
+            yum install -y ccache &&
+            yum install -y wget tar gzip gcc-c++ make &&
+            if [ -f "{project}/scripts/ci_install_boost.sh" ]; then
+                  echo "Running Boost install script..." &&
+                  sh "{project}/scripts/ci_install_boost.sh"
+            else
+                echo "Boost install script not found" && exit 1
+            fi &&
+            yum install -y eigen3-devel &&
+            if [ -f "{project}/scripts/ci_install_quantlib.sh" ]; then
+                  echo "Running QuantLib install script..." &&
+                  sh "{project}/scripts/ci_install_quantlib.sh"
+            else
+                echo "QuantLib install script not found" && exit 1
+            fi
+          CIBW_TEST_COMMAND: pytest {project}/tests
+          CIBW_TEST_REQUIRES: "pytest numpy"
+          CMAKE_ARGS: >
+            -DBUILD_TESTING=OFF
+            -DBUILD_EXAMPLES=OFF
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+            -DCMAKE_PREFIX_PATH="/usr/local"
+
+  # ── Full wheel build ───────────────────────────────────────────────────────
+  # Runs only on release or manual workflow_dispatch.
+  # Builds cp310/cp311/cp312 × linux + macOS-arm64 + macOS-intel.
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
     strategy:
+      fail-fast: false
       matrix:
-        os: [macos-15-intel, macos-14, ubuntu-latest]
+        os: [ubuntu-latest, macos-14, macos-15-intel]
 
     steps:
       - uses: actions/checkout@v4
@@ -50,16 +126,22 @@ jobs:
           restore-keys: |
             ccache-${{ runner.os }}-v4-
 
+      - name: Cache Homebrew packages (macOS)
+        if: runner.os == 'macOS'
+        uses: actions/cache@v4
+        with:
+          # Cache downloaded bottles; keyed on the install script so a dep upgrade busts it.
+          path: ~/Library/Caches/Homebrew
+          key: homebrew-${{ runner.os }}-${{ hashFiles('scripts/ci_install_*.sh', '.github/workflows/build_wheels.yml') }}
+          restore-keys: |
+            homebrew-${{ runner.os }}-
+
       - name: Install dependencies (macOS)
         if: runner.os == 'macOS'
         run: |
-          brew install boost quantlib eigen ccache
-
-      - name: Install OpenMP on macOS
-        if: runner.os == 'macOS'
-        run: |
-          # brew update removed: unnecessary network fetch costs ~1 min with no benefit
-          brew install libomp
+          # Install everything in one brew call to minimise resolver overhead.
+          # libomp is split-keg-only so we export its paths explicitly below.
+          brew install boost quantlib eigen ccache libomp
           LIBOMP_DIR=$(brew --prefix libomp)
           echo "LIBOMP_DIR=$LIBOMP_DIR" >> $GITHUB_ENV
           # Make compiler and CMake find the headers and libs
