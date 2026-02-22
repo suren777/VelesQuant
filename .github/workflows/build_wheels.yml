@@ -44,7 +44,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ci_cache/ccache
-          key: ccache-${{ runner.os }}-v4-${{ hashFiles('.github/workflows/build_wheels.yml') }}
+          # Key on C++ sources + CMake, NOT the workflow file.
+          # This prevents workflow edits (e.g. skip flags) from busting the compiler cache.
+          key: ccache-${{ runner.os }}-v4-${{ hashFiles('src/**/*.cpp', 'src/**/*.hpp', 'src/**/*.h', 'CMakeLists.txt', 'cmake/**') }}
+          restore-keys: |
+            ccache-${{ runner.os }}-v4-
 
       - name: Install dependencies (macOS)
         if: runner.os == 'macOS'
@@ -54,7 +58,7 @@ jobs:
       - name: Install OpenMP on macOS
         if: runner.os == 'macOS'
         run: |
-          brew update
+          # brew update removed: unnecessary network fetch costs ~1 min with no benefit
           brew install libomp
           LIBOMP_DIR=$(brew --prefix libomp)
           echo "LIBOMP_DIR=$LIBOMP_DIR" >> $GITHUB_ENV
