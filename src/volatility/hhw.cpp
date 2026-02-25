@@ -14,7 +14,7 @@ namespace velesquant {
 HHW::HHW(double s0, double v0, double r0, double kappa, double eta, double rho,
          double sigma1, double sigma2, double a)
     : s0_(s0), r0_(r0), v0_(v0), kappa_(kappa), eta_(eta), rho_(rho),
-      sigma1_(sigma1), sigma2_(sigma2), a_(a) {};
+      sigma1_(sigma1), sigma2_(sigma2), a_(a), c1_(0.0), c2_(0.0), c3_(0.0) {};
 
 double HHW::ib(const double &t, const double &T) const {
   return T / 2 * b(t * T / 2 + T / 2) *
